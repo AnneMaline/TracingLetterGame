@@ -1,0 +1,101 @@
+# TESTSPEC — TracingGame
+
+**Status:** Draft
+**Version:** 0.2.0
+**Last Updated:** 2026-09-03
+**Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
+**Traces to:** PRD v0.2.0 · DEVSPEC v0.3.0 · UISPEC v0.2.0
+
+> Content below reflects the official product brief (received 2026-09-03) — segment/vector
+> tracing, boundary box, 80% rule. See §8 Spec Change Log.
+
+## 1. Test Strategy
+
+- **Unit tests (Vitest):** point-to-vector projection/coverage math, boundary-box containment
+  check, deviation-angle calculation (M2), segment-completion state transitions.
+- **Integration tests (React Testing Library):** Tracing/Letter Selection screen components render
+  correct states/visibility per UISPEC; navigation between screens.
+- **E2E tests (Playwright):** full core loop — trace every segment of a letter, get feedback, see
+  the celebration animation, navigate to another letter — across Chrome and iPadOS Safari (or
+  simulated touch viewport).
+
+## 2. Fixtures & Test Data
+
+- `fixtures/letterSegments/*.json` — authored `LetterDefinition` data for all in-scope letters
+  (mirrors `src/data/letterSegments/`).
+- `fixtures/tracePaths/full/<LETTER>-segment<N>.json` — a synthetic traced path per segment
+  covering ≥80% of the vector, staying within the boundary box.
+- `fixtures/tracePaths/partial/<LETTER>-segment<N>.json` — a synthetic traced path covering <80%
+  of the vector, staying within the boundary box, then finger-up.
+- `fixtures/tracePaths/exit-box/<LETTER>-segment<N>.json` — a synthetic traced path that exits the
+  boundary box mid-drag (before finger-up).
+- `fixtures/tracePaths/deviate/<LETTER>-segment<N>.json` (M2) — a synthetic traced path that drifts
+  beyond the deviation threshold while staying inside the boundary box, then returns to the point
+  of departure.
+
+## 3. Test Cases
+
+| ID    | Type        | Traces to                                       | Description                                                                                      | Steps                                                                                   | Expected result                                                                                      |
+| ----- | ----------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| T-001 | unit        | DEVSPEC §3 Segment Completion & Boundary Box    | Coverage calculation is correct for known fixtures                                               | Compute `progressAlongVector` for 0%, 50%, 80%, 100%-coverage synthetic paths           | Computed coverage matches expected value within tolerance                                            |
+| T-002 | unit        | DEVSPEC §3 Segment Completion & Boundary Box    | Boundary-box containment check flags in/out-of-box points correctly                              | Test containment against a set of known in-box and out-of-box sample points             | All classified correctly                                                                             |
+| T-003 | unit        | DEVSPEC §3 Segment Completion & Boundary Box    | Segment marked complete when finger-up coverage ≥80% and stayed in-box                           | Run `fixtures/tracePaths/full/*` through the scoring function                           | Segment marked complete for every fixture                                                            |
+| T-004 | unit        | DEVSPEC §3 Segment Completion & Boundary Box    | Segment resets when finger-up coverage <80%                                                      | Run `fixtures/tracePaths/partial/*` through the scoring function                        | Segment reset for every fixture                                                                      |
+| T-005 | unit        | DEVSPEC §3 Segment Completion & Boundary Box    | Segment resets immediately on boundary-box exit, before finger-up                                | Run `fixtures/tracePaths/exit-box/*` through the scoring function                       | Segment reset triggered at the exit point, not deferred to finger-up                                 |
+| T-006 | unit        | DEVSPEC §3 Deviation Detection (M2)             | Deviation-angle calculation flags beyond-threshold vs. within-threshold points                   | Compute deviation angle for fixture points at known angles                              | Correctly classified against the threshold constant                                                  |
+| T-007 | unit        | DEVSPEC §3 Deviation Detection (M2)             | Pause/resume behavior does not reset progress                                                    | Run `fixtures/tracePaths/deviate/*` through the scoring function                        | Feedback pauses at the point of departure, resumes on return, final coverage unaffected by the pause |
+| T-008 | unit        | DEVSPEC §3 Deviation Detection (M2)             | Boundary-box exit after ≥80% pre-finger-up coverage still resets (M2 stricter rule)              | Construct a fixture that reaches ≥80% coverage then exits the box before finger-up      | Segment resets (regression check vs. MVP finger-up-only rule)                                        |
+| T-009 | integration | UISPEC Tracing screen                           | Current segment renders start/direction/end markers per `LetterDefinition` fixture               | Render Tracing for a fixture letter/segment                                             | All three markers present and positioned per fixture coordinates                                     |
+| T-010 | integration | UISPEC Gherkin: Letter navigation (MVP)         | Next/Previous cycle through all in-scope letters correctly                                       | Render Tracing, click Next/Previous repeatedly                                          | Correct `LetterDefinition` loaded at each step, including first/last-letter boundary behavior        |
+| T-011 | integration | UISPEC Gherkin: Letter selection (M3)           | Letter Selection screen renders all in-scope letters and navigates to Tracing on tap             | Render Letter Selection, click a letter tile                                            | Tracing screen renders with that letter's first segment                                              |
+| T-012 | integration | UISPEC Gherkin: Letter selection (M3)           | Back-to-selection control is reachable from every Tracing state and discards in-progress segment | From each Tracing state, click back-to-selection                                        | Letter Selection screen shown; in-progress segment discarded with no penalty                         |
+| T-013 | integration | UISPEC Gherkin: Letter completion celebration   | Completing all segments triggers the celebration animation exactly once                          | Simulate completing every segment of a fixture letter                                   | Celebration animation state entered exactly once                                                     |
+| T-014 | e2e         | UISPEC Gherkin: Segment tracing completion      | Full happy-path letter trace                                                                     | Trace every segment of one letter to completion via scripted pointer events             | Celebration animation plays; no earlier segment silently skipped                                     |
+| T-015 | e2e         | UISPEC Gherkin: Leaving the boundary box        | Scripted boundary-box exit forces a segment restart end-to-end                                   | Dispatch a pointer path that exits the box mid-drag                                     | Segment visibly resets; feedback stops immediately                                                   |
+| T-016 | e2e         | DEVSPEC §6 Constraints, standalone-game-spec.md | Packaged build launches from `file://` with no network calls                                     | Build container package, load via `file://` in a headless browser with network disabled | App loads and Tracing screen renders with no failed requests                                         |
+| T-017 | unit        | PRD §8 Constraints (non-English content)        | A non-English `LetterDefinition` fixture loads through the same schema without code changes      | Load a fixture using a non-Latin `displayLabel`/`id`                                    | Renders and scores identically to a Latin-letter fixture                                             |
+
+## 4. Dry-Run Protocol
+
+Before marking a milestone done, a human tester manually:
+
+1. Loads the app fresh on a touchscreen device.
+2. Traces at least 3 letters fully, including at least one deliberate boundary-box exit and one
+   deliberate <80%-coverage finger-up.
+3. Confirms feedback is immediate and understandable to a non-reading child.
+4. Repeats on desktop with mouse input.
+5. For M2: tests the deviation pause/resume behavior and the exit-after-80%-still-resets rule.
+6. For M3: tests the full navigate-via-selection-screen and back-navigation-mid-trace flows.
+7. For M4: installs the packaged container build and repeats steps 1–4 inside the Curious Reader
+   container itself.
+
+## 5. Build-and-Test Sequence
+
+```bash
+npm install
+npm run build
+npm run test          # unit + integration
+npm run test:e2e      # Playwright
+```
+
+## 6. Validation Criteria
+
+- Every DEVSPEC module Exit Criterion has at least one passing test case above.
+- Every UISPEC Gherkin scenario has at least one corresponding test case above.
+- 100% of listed test cases pass before a milestone is considered complete.
+- Dry-run protocol completed and signed off by a human reviewer (mandatory human review step).
+
+## 7. Appendix — Open Questions
+
+| Question                                                             | Blocks                        | Owner |
+| -------------------------------------------------------------------- | ----------------------------- | ----- |
+| Exact boundary-box shape/padding, used to author exit-box fixtures   | T-002/T-005 fixture authoring | Eng   |
+| Exact degree-of-deviation threshold, used to author deviate fixtures | T-006/T-007 fixture authoring | Eng   |
+
+## 8. Spec Change Log
+
+_Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
+
+- 2026-09-04 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.3.0 following the DEVSPEC Data Schema review fix; no test-case content changed by that fix (the fixed fields — `departurePoint`, `isWithinBoundaryBox`, `boundaryHalfWidth` — were already implied by T-002/T-006/T-007).
+- 2026-09-03 — Copilot — Replaced whole-letter pass/fail scoring and mastery/persistence test cases with segment/vector-based test cases: coverage math, boundary-box containment, exit-always-resets, 80% finger-up rule, deviation pause/resume (M2), and letter-navigation/selection (MVP/M3) cases. Removed: T-001–T-015 whole-letter scoring, mastery-streak, and localStorage-persistence test cases and fixtures. Added: T-001–T-017 segment-level test cases, new fixture set (`tracePaths/full`, `partial`, `exit-box`, `deviate`), and T-017 non-English data-schema check.
+- 2026-09-03 — Copilot — Re-drafted TESTSPEC under docs/specs/ convention; added T-015 covering offline `file://` container launch.

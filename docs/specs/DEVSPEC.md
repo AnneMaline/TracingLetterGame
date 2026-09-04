@@ -1,0 +1,329 @@
+# DEVSPEC — TracingGame
+
+**Status:** Draft
+**Version:** 0.3.1
+**Last Updated:** 2026-09-04
+**Author(s):** Copilot (drafted with user), pending review
+**Traces to:** PRD v0.2.0
+
+> Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
+> tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
+> mastery/stars placeholder. See §17 Spec Change Log.
+
+---
+
+## Part I — Functional Requirements
+
+### 1. Overview
+
+Single-page React app, buildable both as a standalone browser app (dev/test) and as a packaged
+offline artifact for the Curious Reader container (see `docs/standalone-game-spec.md`). Each
+letter is authored as an ordered list of line-segment vectors (start/end coordinates); the child
+traces one segment at a time with continuous accuracy checking against an invisible boundary box.
+Five logical modules: (1) Letter Navigation, (2) Line Segment Rendering & Directional Guide,
+(3) Segment Completion & Boundary Box, (4) Deviation Detection (Better tier), (5) Celebration
+Animation. Rendered with Tailwind; canvas or SVG-based (`<canvas>`/SVG + Pointer Events) tracing
+surface. Letter/segment data is authored as data files, not hard-coded per letter, so non-English
+scripts can be added later without code changes.
+
+### 2. Data Schema
+
+```ts
+interface Point {
+  x: number;
+  y: number;
+} // normalized 0-1 coordinate space, per letter's own bounding box
+
+interface LineSegment {
+  start: Point;
+  end: Point;
+  boundaryHalfWidth?: number; // normalized units; overrides the default boundary-box padding for this segment (Open Question §13)
+}
+// Segment order is the array index within LetterDefinition.segments (traced in array order) —
+// there is no separate `order` field, so index and trace order can never drift apart.
+
+interface LetterDefinition {
+  id: string; // e.g. "A" (or a non-English glyph identifier)
+  displayLabel: string; // what's shown to the child, may differ from id for non-Latin scripts
+  segments: LineSegment[]; // ordered vectors composing the letter
+}
+
+interface SegmentTraceState {
+  points: Point[]; // captured pointer path for the current attempt; cleared on every restart
+  isWithinBoundaryBox: boolean; // whether the most recently captured point is inside the current segment's boundary box
+  progressAlongVector: number; // 0-1, projected coverage of the segment from start toward end
+  deviationPaused: boolean; // true when M2 deviation-pause is active
+  departurePoint: Point | null; // M2: the point where deviation exceeded the threshold; required to detect "returned to point of departure" and resume without resetting progress; null unless deviationPaused
+}
+
+interface LetterSessionState {
+  letterIndex: number; // position in the ordered letter list (MVP/Better nav)
+  currentSegmentIndex: number; // single source of truth for which segment is active; SegmentTraceState does not duplicate this
+  completedSegments: boolean[]; // one entry per segment in the current letter's `segments` array
+}
+```
+
+Whether `LetterSessionState`/progress persists across reloads is **not specified** in the product
+brief — tracked as an Open Question (§13). MVP may treat all state as in-memory/session-only unless
+resolved otherwise.
+
+### 3. Modules
+
+#### Module: Letter Navigation
+
+- **Goal:** Let the child move between letters to trace.
+- **Tasks:**
+  1. **MVP:** Render Next/Previous buttons; advance/retreat `letterIndex` through the ordered
+     in-scope letter list, wrapping from the last letter to the first and from the first to the
+     last.
+  2. **Great (M3):** Replace Next/Previous with a letter-selection screen listing every in-scope
+     `LetterDefinition`; tapping one loads the Tracing screen for it, resetting `LetterSessionState`.
+  3. **Great (M3):** Add a control on the Tracing screen that returns to the letter-selection
+     screen at any time, from any tracing state, discarding the in-progress segment with no penalty.
+- **Exit Criterion:** MVP — Next/Previous correctly cycles through every in-scope letter, loading
+  the correct `LetterDefinition` each time. Great — selecting any letter from the selection screen
+  opens Tracing for it, and the back-to-selection control is reachable from every Tracing state.
+
+#### Module: Line Segment Rendering & Directional Guide
+
+- **Goal:** Break each letter into line segments and continuously show the child where to start,
+  which direction to trace, and where to end the current segment.
+- **Tasks:**
+  1. Author `LetterDefinition.segments` (ordered start/end coordinates) for each in-scope letter.
+  2. Render only the current segment with a start marker, a direction indicator (e.g. arrow along
+     the start→end vector), and an end marker.
+  3. Advance rendering to the next segment only once the current one is marked complete (see
+     Segment Completion & Boundary Box module).
+- **Exit Criterion:** For every in-scope letter, all segments render in authored order with visible
+  start/direction/end indicators, verified against the authored `LetterDefinition`.
+
+#### Module: Segment Completion & Boundary Box (MVP)
+
+- **Goal:** Track the child's drag path per segment, give real-time visual feedback, and enforce
+  the boundary-box + 80%-completion rule so the child can never finish a letter without tracing
+  each segment adequately.
+- **Boundary Box (Hit-Box) Definition:** An invisible rectangle (or shape) surrounding each line
+  segment, thicker than the line itself and slightly longer than the line (extending equally beyond
+  both endpoints). The boundary box is defined by a single tunable constant `boundaryPadding`
+  (normalized units, same value on all sides and both ends) that specifies how far the hit-box
+  extends outward from the ideal line segment. This allows small fingers/styluses to trace along
+  the line without accidentally exiting the box due to normal motor variance.
+- **Tasks:**
+  1. On pointer-down at the segment's start region, begin capturing points; render visual feedback
+     that follows the drag in real time.
+  2. Compute the boundary box around each segment using `LineSegment` start/end coordinates and
+     the `boundaryPadding` constant (or per-segment override via `LineSegment.boundaryHalfWidth`
+     if defined). Continuously test whether the current pointer position is inside this box.
+  3. If the pointer exits the boundary box at any point: stop visual feedback immediately and
+     require the child to restart tracing that segment from the beginning. The child must never be
+     able to continue/finish the letter after leaving the boundary box.
+  4. On pointer-up (finger up), compute `progressAlongVector` — the coverage of the segment,
+     projected onto its start→end vector. If ≥ 80%, mark the segment complete and advance to the
+     next segment (or trigger the celebration if it was the last). If < 80%, force the child to
+     restart that segment from the beginning.
+- **Exit Criterion:** A scripted trace that exits the boundary box stops feedback and resets the
+  segment. A scripted trace covering ≥80% of the vector that stays in-box is marked complete on
+  pointer-up. A scripted trace covering <80% resets on pointer-up. Verified for at least one
+  segment per in-scope letter.
+
+#### Module: Deviation Detection (Better tier, M2)
+
+- **Goal:** Add finer-grained accuracy feedback based on angular deviation from the ideal vector,
+  layered on top of (not replacing) the boundary box.
+- **Tasks:**
+  1. Compute the angle between the child's current drag direction and the segment's ideal vector.
+  2. If the deviation exceeds a set threshold (Open Question §13: exact degrees) while the pointer
+     is still inside the boundary box: pause visual feedback and hold at the point of departure —
+     do not reset progress.
+  3. When the child's pointer returns to the point of departure, resume visual feedback and
+     continue tracking progress along the vector from where it left off.
+  4. If the pointer exits the boundary box at any point — including after already reaching ≥80%
+     completion prior to finger-up — force a full restart of that segment. This supersedes the
+     MVP rule of only checking completion on finger-up.
+- **Exit Criterion:** A scripted trace that deviates beyond the threshold but stays in-box pauses
+  feedback and resumes correctly once back at the departure point, without resetting progress. A
+  scripted trace that exits the boundary box after reaching ≥80% completion still resets, verified
+  for at least one segment.
+
+#### Module: Celebration Animation
+
+- **Goal:** Reward the child for completing every segment of the current letter, using a
+  lightweight animation that does not stall the tracing interaction or burden legacy hardware.
+- **Tasks:**
+  1. Detect when every entry in `LetterSessionState.completedSegments` is true.
+  2. Play a celebration animation (lightweight only — CSS keyframe animation, simple SVG animation,
+     or a small animated GIF; no heavy canvas redraws or external video/large assets). The animation
+     should last 1–2 seconds and not block child interaction.
+- **Exit Criterion:** Completing every segment of a letter triggers the celebration animation
+  exactly once per completion. The animation is smooth on legacy (2015-era) smartphones.
+
+---
+
+## Part II — Non-Functional Requirements
+
+### 4. Design Principles
+
+- Offline-first: must run with no network calls at runtime, compatible with `file://` launch when
+  packaged for the container.
+- Touch-first input (finger-drag is the primary interaction; Pointer Events API for mouse+touch+
+  stylus parity for dev/testing).
+- Letter/segment content is data-driven (coordinates in `LetterDefinition` files), never hard-coded
+  per-letter in component logic, so non-English scripts can be added without code changes.
+- No child PII collected or transmitted, beyond what standalone-game-spec-data.md explicitly allows.
+- **Performance-first for legacy hardware:** Must run smoothly on a 2015-era smartphone with a
+  touchscreen. This means: animations are either lightweight CSS/SVG (no heavy canvas redraws) or
+  use minimal external assets; no heavy dependencies or client-side rendering bottlenecks.
+  Real-time tracing feedback (following the finger) is the priority; celebration animation is
+  secondary and should not block or stall the tracing interaction.
+
+### 5. Error Handling
+
+| Scenario                                                     | Handling                                                                          |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| Pointer/touch events unsupported                             | Show a static "unsupported browser" message instead of a blank tracing surface.   |
+| Malformed `LetterDefinition` data (e.g. zero-length segment) | Skip the malformed segment, log a console warning; do not crash the tracing loop. |
+| Segment reset (boundary-box exit or <80% completion)         | Must not corrupt already-completed segments' state in `LetterSessionState`.       |
+| Container event channel unavailable (standalone mode)        | Skip event emission silently; local tracing still works.                          |
+
+### 6. Constraints
+
+- Greenfield project — no existing codebase to build on; Advanced difficulty rating — expect
+  nontrivial vector/geometry math (point-to-segment projection, angle calculation) as core work.
+- Must run in latest 2 versions of Chrome, Safari, Edge (desktop + iPadOS Safari) in standalone
+  mode, and in the Curious Reader container's WebView in packaged mode.
+- No third-party analytics/trackers.
+- Must conform to `docs/standalone-game-spec.md` packaging contract before container integration
+  is considered complete (M4).
+
+### 7. Risks & Mitigations
+
+| Risk                                                                                                    | Likelihood | Mitigation                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real-time point-to-vector geometry is sensitive to touch-input jitter, causing false boundary-box exits | High       | Smooth/sample pointer input before geometry checks; tune `boundaryPadding` constant; validate via TESTSPEC fixtures on legacy target hardware before M1 exit. |
+| `boundaryPadding` or 80% threshold miscalibrated for small children's motor control on legacy hardware  | High       | Both exposed as tunable constants; adjust before M1 exit based on dry-run feedback on actual 2015-era device.                                                 |
+| Celebration animation is too heavy, stalls the tracing interaction on legacy hardware                   | High       | Constraint: lightweight animation only (CSS/SVG/small GIF, no heavy canvas or external assets). Validate on target hardware during M1 dry-run.                |
+| Container manifest/data contract not yet finalized                                                      | Medium     | Tracked as Open Question in PRD and standalone-game-spec.md; M4 blocked until resolved.                                                                       |
+
+---
+
+## Part III — Implementation Guide
+
+### 8. Directory Structure
+
+```
+functional tree:
+  TracingGame/
+    src/
+      modules/
+        letter-nav/          # Next/Previous (MVP) and letter-selection screen (Great)
+        tracing/              # segment rendering, boundary box, completion, deviation detection
+        celebration/
+      data/
+        letterSegments/      # authored LetterDefinition data, one file per letter/glyph
+      shared/
+    docs/
+      specs/
+      standalone-game-spec.md
+      standalone-game-spec-data.md
+      tasks/
+        draft/
+        active/
+    .agents/
+      memory/
+    public/
+
+implementation layout (annotated):
+  TracingGame/src/modules/letter-nav/         # versioned
+  TracingGame/src/modules/tracing/            # versioned
+  TracingGame/src/modules/celebration/        # versioned
+  TracingGame/src/data/letterSegments/        # versioned (hand-authored reference data)
+  TracingGame/src/shared/                     # versioned
+  TracingGame/node_modules/                   # ephemeral (npm install)
+  TracingGame/dist/                           # ephemeral (npm run build)
+```
+
+| Directory                  | Classification | Notes                                                                             |
+| -------------------------- | -------------- | --------------------------------------------------------------------------------- |
+| `src/**`                   | versioned      | Source of truth, committed                                                        |
+| `src/data/letterSegments/` | versioned      | Hand-authored, not regenerable — treat carefully even though technically "source" |
+| `.agents/memory/`          | versioned      | Durable lessons; committed, never gitignored                                      |
+| `node_modules/`            | ephemeral      | Regenerate via `npm install`                                                      |
+| `dist/`                    | ephemeral      | Regenerate via `npm run build`                                                    |
+
+### 9. Environment & Config
+
+No environment variables required for MVP standalone mode. Node.js LTS + npm required for local
+dev. Container packaging config TBD once standalone-game-spec.md is finalized.
+
+### 10. Technology Stack
+
+| Layer        | Choice                                             | Rationale                                                                                                                   |
+| ------------ | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Framework    | React 19 + TypeScript                              | Project-wide standard per user preference                                                                                   |
+| Styling      | Tailwind CSS                                       | Project-wide standard per user preference                                                                                   |
+| Build tool   | Vite                                               | Fast dev server, standard React+TS scaffold                                                                                 |
+| Canvas/input | HTML `<canvas>` or SVG + Pointer Events API        | Native browser support, no extra dependency needed for MVP; either is sufficient for line-segment rendering + point capture |
+| Testing      | Vitest + React Testing Library, Playwright for e2e | Standard, fast, TS-native                                                                                                   |
+| Persistence  | None required for MVP (in-memory session state)    | Not specified in the brief; revisit if Open Question on persistence resolves to "yes"                                       |
+
+### 11. Runbook (Clean Machine)
+
+```bash
+git clone https://github.com/AnneMaline/Game1.git TracingGame
+cd TracingGame
+npm install
+npm run dev      # local dev server (standalone mode)
+npm run build    # production build to dist/
+npm test         # unit + integration tests
+```
+
+### 12. Deliverables per Milestone
+
+| Milestone (PRD)                | DEVSPEC deliverable                                                                                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1 — MVP core tracing loop     | Letter Navigation (Next/Previous) + Line Segment Rendering + Segment Completion & Boundary Box + Celebration Animation modules functional end-to-end for all in-scope letters |
+| M2 — Better accuracy detection | Deviation Detection module: pause/resume-at-departure-point, exit-always-resets rule                                                                                          |
+| M3 — Great navigation          | Letter Navigation module: letter-selection screen replaces Next/Previous, anytime back-navigation                                                                             |
+| M4 — Container integration     | Packaging conforms to standalone-game-spec.md; events conform to standalone-game-spec-data.md                                                                                 |
+
+---
+
+## Part IV — Appendices
+
+### 13. Open Questions
+
+| Question                                                                                                 | Blocks                                               | Owner                                          |
+| -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| Exact `boundaryPadding` constant value (normalized units, tuned for touch accuracy on 2015-era hardware) | Segment Completion module + test fixture authoring   | Eng (calibrate via dry-run on target hardware) |
+| Which non-English scripts/languages, if any, are in scope for a given milestone                          | Content authoring scope (`src/data/letterSegments/`) | Product                                        |
+| Celebration animation asset format (CSS keyframes vs. SVG vs. small GIF) — must be lightweight           | Celebration Animation module                         | Design                                         |
+| Curious Reader manifest schema and event payload shapes                                                  | M4 container integration                             | Eng (confirm with container team)              |
+
+### 14. Resolved Decisions
+
+| Date       | Decision                                                                                                                                                                                             | Rationale                                                                                             |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder | Real product requirements now available                                                               |
+| 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                     | Brief does not specify cross-session persistence; avoid building unrequested scope                    |
+| 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                       | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls |
+
+### 15. Out of Scope
+
+- Persisted progress/mastery/stars beyond the per-letter celebration animation, unless later decided.
+- Degree-of-deviation detection and letter-selection screen in MVP (staged into M2/M3).
+- Lowercase letters, numbers, words, and non-English scripts, unless a milestone explicitly scopes them in.
+
+### 16. Lessons Log
+
+_(empty — populate during implementation; fold into spec body or remove at major version boundaries)_
+
+### 17. Spec Change Log
+
+_Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
+
+- 2026-09-04 — Copilot — Clarified boundary-box as a fixed-padding hit-box (uses single `boundaryPadding` constant for all sides and ends, extends beyond line in all directions). Added performance constraint: celebration animation must be lightweight (CSS/SVG/small GIF only) for 2015-era smartphone compatibility. Refined Segment Completion module description with exact boundary-box definition and geometry task. Removed redundant Open Questions (boundary-box shape now defined; degree-of-deviation is M2 not MVP); recorded circular Next/Previous wrapping as the M1 decision, with `boundaryPadding` tuning and celebration animation format remaining open. Updated Risks section with specific mitigations for legacy hardware calibration and animation performance validation.
+- 2026-09-04 — Copilot — Fixed Data Schema gaps found in review:
+
+- 2026-09-04 — Copilot — Fixed Data Schema gaps found in review: removed redundant `LineSegment.order` (segment order is now the array index only) and redundant `SegmentTraceState.segmentIndex` (superseded by `LetterSessionState.currentSegmentIndex` as sole source of truth); added `SegmentTraceState.departurePoint` (was missing — required by the Deviation Detection module's "resume at point of departure" behavior) and optional `LineSegment.boundaryHalfWidth` (per-segment override for the boundary-box Open Question); renamed `withinBoundaryBox` to `isWithinBoundaryBox` for clarity.
+- 2026-09-03 — Copilot — Replaced the whole-path-tolerance + mastery/stars/localStorage model with the real segment/vector tracing model: `LetterDefinition`/`LineSegment`/`SegmentTraceState` data schema, Segment Completion & Boundary Box module (80% finger-up rule, exit-always-resets), Deviation Detection module (M2), Celebration Animation module, and re-scoped milestones to MVP/Better/Great/Container tiers. Removed: `ProgressState`/localStorage schema, mastery-level calculation, Progress & Rewards module, stroke-path-tolerance scoring, `letterPaths/` data directory (renamed to `letterSegments/`). Added: line-segment vector data model, boundary-box + 80% completion rule, degree-of-deviation pause/resume behavior, persistence Open Question.
+- 2026-09-03 — Copilot — Re-drafted DEVSPEC under docs/specs/ convention; added container-integration constraints, event-emission note in Progress module, and M3 milestone deliverable.

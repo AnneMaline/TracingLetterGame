@@ -1,6 +1,6 @@
 # Task 001 — MVP core tracing loop (M1)
 
-**Status:** Active (approved)
+**Status:** Completed (2026-09-04 — dry-run signed off; spec-update pass applied — PRD v0.2.1, DEVSPEC v0.3.2, UISPEC v0.2.1, TESTSPEC v0.2.1)
 **Milestone:** PRD M1 — MVP core tracing loop
 
 ## What & why

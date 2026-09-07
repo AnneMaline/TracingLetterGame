@@ -1,10 +1,10 @@
 # TESTSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.2.0
-**Last Updated:** 2026-09-03
+**Version:** 0.2.1
+**Last Updated:** 2026-09-04
 **Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
-**Traces to:** PRD v0.2.0 · DEVSPEC v0.3.0 · UISPEC v0.2.0
+**Traces to:** PRD v0.2.1 · DEVSPEC v0.3.2 · UISPEC v0.2.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector
 > tracing, boundary box, 80% rule. See §8 Spec Change Log.
@@ -89,13 +89,19 @@ npm run test:e2e      # Playwright
 
 | Question                                                             | Blocks                        | Owner |
 | -------------------------------------------------------------------- | ----------------------------- | ----- |
-| Exact boundary-box shape/padding, used to author exit-box fixtures   | T-002/T-005 fixture authoring | Eng   |
 | Exact degree-of-deviation threshold, used to author deviate fixtures | T-006/T-007 fixture authoring | Eng   |
 
-## 8. Spec Change Log
+## 8. Appendix — Resolved Decisions
+
+| Date       | Decision                                                                                                                                                                      | Rationale                                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-04 | Boundary-box fixtures use the DEVSPEC §14 default `boundaryPadding` = 0.06 (normalized units); `fixtures/tracePaths/exit-box/*` place the departure point just past that halo | Aligns with the resolved DEVSPEC boundary-padding decision from the M1 dry-run so fixtures track live-code behavior |
+
+## 9. Spec Change Log
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-box padding fixture Open Question (fixtures use DEVSPEC default `boundaryPadding` = 0.06); bumped `Traces to:` to PRD v0.2.1 / DEVSPEC v0.3.2 / UISPEC v0.2.1; noted that T-001–T-005, T-009, T-010, T-013, T-014 are implemented and passing as of the M1 core-tracing-loop task (T-016 offline file:// launch deferred to M4 per the task's scope).
 - 2026-09-04 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.3.0 following the DEVSPEC Data Schema review fix; no test-case content changed by that fix (the fixed fields — `departurePoint`, `isWithinBoundaryBox`, `boundaryHalfWidth` — were already implied by T-002/T-006/T-007).
 - 2026-09-03 — Copilot — Replaced whole-letter pass/fail scoring and mastery/persistence test cases with segment/vector-based test cases: coverage math, boundary-box containment, exit-always-resets, 80% finger-up rule, deviation pause/resume (M2), and letter-navigation/selection (MVP/M3) cases. Removed: T-001–T-015 whole-letter scoring, mastery-streak, and localStorage-persistence test cases and fixtures. Added: T-001–T-017 segment-level test cases, new fixture set (`tracePaths/full`, `partial`, `exit-box`, `deviate`), and T-017 non-English data-schema check.
 - 2026-09-03 — Copilot — Re-drafted TESTSPEC under docs/specs/ convention; added T-015 covering offline `file://` container launch.

@@ -10,12 +10,12 @@ the specs relevant to your task.
 
 | Spec                                                               | Version | Covers                                                                  | Traces to                                   |
 | ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------- | ------------------------------------------- |
-| [PRD.md](./PRD.md)                                                 | v0.2.0  | What TracingGame does and why; personas, goals, non-goals, KPIs         | (root — none)                               |
-| [DEVSPEC.md](./DEVSPEC.md)                                         | v0.3.1  | Architecture, data schema, module behavior, non-functional requirements | PRD v0.2.0                                  |
-| [UISPEC.md](./UISPEC.md)                                           | v0.2.0  | Screens, states, visibility rules, Gherkin acceptance criteria          | PRD v0.2.0, DEVSPEC v0.3.1                  |
-| [TESTSPEC.md](./TESTSPEC.md)                                       | v0.2.0  | Test inventory proving DEVSPEC/UISPEC requirements                      | PRD v0.2.0, DEVSPEC v0.3.1, UISPEC v0.2.0   |
-| [../standalone-game-spec.md](../standalone-game-spec.md)           | v0.2.0  | Curious Reader container packaging/manifest/runtime contract            | DEVSPEC v0.3.1                              |
-| [../standalone-game-spec-data.md](../standalone-game-spec-data.md) | v0.2.0  | Curious Reader container data/event contract                            | DEVSPEC v0.3.1, standalone-game-spec v0.2.0 |
+| [PRD.md](./PRD.md)                                                 | v0.2.1  | What TracingGame does and why; personas, goals, non-goals, KPIs         | (root — none)                               |
+| [DEVSPEC.md](./DEVSPEC.md)                                         | v0.3.2  | Architecture, data schema, module behavior, non-functional requirements | PRD v0.2.1                                  |
+| [UISPEC.md](./UISPEC.md)                                           | v0.2.1  | Screens, states, visibility rules, Gherkin acceptance criteria          | PRD v0.2.1, DEVSPEC v0.3.2                  |
+| [TESTSPEC.md](./TESTSPEC.md)                                       | v0.2.1  | Test inventory proving DEVSPEC/UISPEC requirements                      | PRD v0.2.1, DEVSPEC v0.3.2, UISPEC v0.2.1   |
+| [../standalone-game-spec.md](../standalone-game-spec.md)           | v0.2.0  | Curious Reader container packaging/manifest/runtime contract            | DEVSPEC v0.3.2                              |
+| [../standalone-game-spec-data.md](../standalone-game-spec-data.md) | v0.2.0  | Curious Reader container data/event contract                            | DEVSPEC v0.3.2, standalone-game-spec v0.2.0 |
 
 ## Authoring order & rules
 

@@ -1,0 +1,5 @@
+export const DEFAULT_BOUNDARY_PADDING = 0.06;
+
+export const MIN_SEGMENT_COVERAGE = 0.8;
+
+export const CELEBRATION_DURATION_MS = 1500;

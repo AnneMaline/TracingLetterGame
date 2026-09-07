@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.2.0
-**Last Updated:** 2026-09-03
+**Version:** 0.2.1
+**Last Updated:** 2026-09-04
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -114,11 +114,9 @@ paradigm as a sub-app of the Curious Reader container.
 
 | Question                                                                        | Blocks                             | Owner                             |
 | ------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------- |
-| Exact boundary-box shape/padding around each segment                            | DEVSPEC Segment Completion module  | Eng                               |
 | Exact degree-of-deviation threshold (Better tier)                               | DEVSPEC Deviation Detection module | Eng                               |
 | Whether progress/mastery persists across sessions/reloads                       | DEVSPEC Data Schema                | Product                           |
 | Which non-English scripts/languages, if any, are in scope for a given milestone | Content authoring scope            | Product                           |
-| Celebration animation asset source                                              | UISPEC                             | Design                            |
 | Curious Reader container manifest/version requirements                          | standalone-game-spec.md            | Eng (confirm with container team) |
 
 ## 10. Appendix — Resolved Decisions
@@ -127,6 +125,8 @@ paradigm as a sub-app of the Curious Reader container.
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, tiered MVP/Better/Great scope), replacing the earlier placeholder whole-path-tolerance + mastery/stars concept | Real product requirements now available; earlier draft was a placeholder pending this information |
 | 2026-09-04 | MVP Next/Previous navigation wraps between the first and last in-scope letters                                                                                                                                      | Keeps navigation continuous until M3 introduces letter selection                                  |
+| 2026-09-04 | Boundary-box shape is a rectangle around each segment with padding equal on all sides and both ends, tuned via a single `boundaryPadding` constant (MVP default: 0.06 normalized units, verified in M1 dry-run)     | Simplest shape that matches child motor variance; single constant keeps calibration tractable     |
+| 2026-09-04 | Celebration animation is a lightweight CSS-keyframe overlay (star + sparkle emoji glyphs, ~1.5 s, no external asset)                                                                                                | Meets the legacy-hardware performance constraint with no download cost or heavy canvas redraws    |
 
 ## 11. Appendix — Out of Scope
 
@@ -138,5 +138,6 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-box shape/padding open question (rectangle with uniform `boundaryPadding`, MVP default 0.06 normalized units) and the celebration-animation asset open question (lightweight CSS-keyframe overlay, no external asset), following the M1 MVP core tracing loop implementation and dry-run.
 - 2026-09-03 — Copilot — Replaced the placeholder whole-path-tolerance + mastery/stars MVP concept with the real product brief: line-segment vector tracing, invisible boundary box with exit-restart rule, 80% finger-up completion threshold, tiered MVP/Better/Great scope, and a non-English-content-compatible data model constraint. Removed: mastery/stars/locked-practicing-mastered concept, whole-letter path-tolerance scoring, home/letter-select-in-MVP, audio-cue goal. Added: line-segment data model, boundary-box + 80% rule, degree-of-deviation (Better) and letter-selection (Great) tiers, greenfield/non-English project metadata.
 - 2026-09-03 — Copilot — Re-drafted PRD under docs/specs/ convention; added Curious Reader container as a persona/constraint and M3 container-integration milestone.

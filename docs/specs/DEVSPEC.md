@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.3.1
+**Version:** 0.3.2
 **Last Updated:** 2026-09-04
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.2.0
+**Traces to:** PRD v0.2.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -37,7 +37,7 @@ interface Point {
 interface LineSegment {
   start: Point;
   end: Point;
-  boundaryHalfWidth?: number; // normalized units; overrides the default boundary-box padding for this segment (Open Question §13)
+  boundaryHalfWidth?: number; // normalized units; overrides the default `boundaryPadding` for this segment (see §14 Resolved Decisions)
 }
 // Segment order is the array index within LetterDefinition.segments (traced in array order) —
 // there is no separate `order` field, so index and trace order can never drift apart.
@@ -292,20 +292,20 @@ npm test         # unit + integration tests
 
 ### 13. Open Questions
 
-| Question                                                                                                 | Blocks                                               | Owner                                          |
-| -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------- |
-| Exact `boundaryPadding` constant value (normalized units, tuned for touch accuracy on 2015-era hardware) | Segment Completion module + test fixture authoring   | Eng (calibrate via dry-run on target hardware) |
-| Which non-English scripts/languages, if any, are in scope for a given milestone                          | Content authoring scope (`src/data/letterSegments/`) | Product                                        |
-| Celebration animation asset format (CSS keyframes vs. SVG vs. small GIF) — must be lightweight           | Celebration Animation module                         | Design                                         |
-| Curious Reader manifest schema and event payload shapes                                                  | M4 container integration                             | Eng (confirm with container team)              |
+| Question                                                                        | Blocks                                               | Owner                             |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------------- |
+| Which non-English scripts/languages, if any, are in scope for a given milestone | Content authoring scope (`src/data/letterSegments/`) | Product                           |
+| Curious Reader manifest schema and event payload shapes                         | M4 container integration                             | Eng (confirm with container team) |
 
 ### 14. Resolved Decisions
 
-| Date       | Decision                                                                                                                                                                                             | Rationale                                                                                             |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder | Real product requirements now available                                                               |
-| 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                     | Brief does not specify cross-session persistence; avoid building unrequested scope                    |
-| 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                       | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls |
+| Date       | Decision                                                                                                                                                                                                                        | Rationale                                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder                            | Real product requirements now available                                                                                                                                    |
+| 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                                                | Brief does not specify cross-session persistence; avoid building unrequested scope                                                                                         |
+| 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                                                  | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls                                                                      |
+| 2026-09-04 | Default `boundaryPadding` = 0.06 (normalized units), tunable via `LineSegment.boundaryHalfWidth` per segment                                                                                                                    | Verified via M1 dry-run on target hardware; small enough to require deliberate tracing, wide enough for a child's motor variance                                           |
+| 2026-09-04 | Celebration animation implemented as a CSS-keyframe overlay (⭐ + ✨ emoji glyphs, ~1.5 s, `pointer-events: none`, no external asset), preceded by a short pause so the finished letter is visible before the celebration plays | Meets the legacy-hardware performance constraint; no download or heavy canvas redraw cost; the pre-celebration pause gives the child visual closure on the finished letter |
 
 ### 15. Out of Scope
 
@@ -321,6 +321,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-padding Open Question (default `boundaryPadding` = 0.06 normalized units, verified in dry-run) and the celebration-animation-asset Open Question (CSS-keyframe emoji overlay with a short pre-celebration pause so the finished letter is visible before it plays); bumped `Traces to:` PRD reference to v0.2.1; no module behavior or Data Schema changed by this pass.
 - 2026-09-04 — Copilot — Clarified boundary-box as a fixed-padding hit-box (uses single `boundaryPadding` constant for all sides and ends, extends beyond line in all directions). Added performance constraint: celebration animation must be lightweight (CSS/SVG/small GIF only) for 2015-era smartphone compatibility. Refined Segment Completion module description with exact boundary-box definition and geometry task. Removed redundant Open Questions (boundary-box shape now defined; degree-of-deviation is M2 not MVP); recorded circular Next/Previous wrapping as the M1 decision, with `boundaryPadding` tuning and celebration animation format remaining open. Updated Risks section with specific mitigations for legacy hardware calibration and animation performance validation.
 - 2026-09-04 — Copilot — Fixed Data Schema gaps found in review:
 

@@ -27,6 +27,12 @@ as a sub-app inside the Curious Reader container/CMS. Full product intent lives 
    `docs/standalone-game-spec.md` / container integration.
 7. **Publish/deploy (Human-triggered, AI-prepared):** AI prepares the build/package pipeline;
    the human triggers the actual publish/deploy.
+8. **Spec update task (AI, human-approved).** After a task is merged, tested, and approved,
+   run the spec update task (see [docs/specs/README.md](docs/specs/README.md)) to reconcile the
+   PRD/DEVSPEC/UISPEC/TESTSPEC chain with what was actually built.
+9. **Archive the task.** Once the spec-update pass is done, update the task file's `Status:`
+   header to `Completed (YYYY-MM-DD — <spec versions bumped>)` and move the file from
+   `docs/tasks/active/` to `docs/tasks/done/`, preserving the filename/number.
 
 ## Division of labor
 
@@ -75,7 +81,7 @@ gets a follow-up **spec update task** rather than editing specs inline with code
 - `src/` — game source (see [docs/specs/DEVSPEC.md](docs/specs/DEVSPEC.md) §8 for the full tree).
 - `docs/specs/` — living PRD/DEVSPEC/UISPEC/TESTSPEC chain.
 - `docs/standalone-game-spec*.md` — container-facing contracts.
-- `docs/tasks/draft/` and `docs/tasks/active/` — task plans.
+- `docs/tasks/draft/`, `docs/tasks/active/`, and `docs/tasks/done/` — task plans (proposed → approved/in-flight → completed).
 - `.agents/memory/` — durable, committed lessons log.
 
 ## Reference

@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.2.0
-**Last Updated:** 2026-09-03
+**Version:** 0.2.1
+**Last Updated:** 2026-09-04
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.2.0 · DEVSPEC v0.3.0
+**Traces to:** PRD v0.2.1 · DEVSPEC v0.3.2
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -145,23 +145,24 @@ Feature: Letter completion celebration
 
 ## 6. Appendix — Open Questions
 
-| Question                                                                    | Blocks                                  | Owner  |
-| --------------------------------------------------------------------------- | --------------------------------------- | ------ |
-| Exact visual style of the direction indicator/arrow                         | Segment guide implementation            | Design |
-| Celebration animation asset/style                                           | Celebration screen state implementation | Design |
-| Whether `segment-reset` shows a distinct visual cue beyond "feedback stops" | Tracing screen states                   | Design |
+| Question                                                                    | Blocks                       | Owner  |
+| --------------------------------------------------------------------------- | ---------------------------- | ------ |
+| Exact visual style of the direction indicator/arrow                         | Segment guide implementation | Design |
+| Whether `segment-reset` shows a distinct visual cue beyond "feedback stops" | Tracing screen states        | Design |
 
 ## 7. Appendix — Resolved Decisions
 
-| Date       | Decision                                                                    | Rationale                                                                                          |
-| ---------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 2026-09-03 | The boundary box is never rendered in the UI, in any milestone              | Explicit functional requirement in the product brief — it's an accuracy check, not a visible guide |
-| 2026-09-04 | MVP Next/Previous controls wrap between the first and last in-scope letters | Provides continuous navigation until M3 replaces the controls with letter selection                |
+| Date       | Decision                                                                                                                                                                                                                                              | Rationale                                                                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-03 | The boundary box is never rendered in the UI, in any milestone                                                                                                                                                                                        | Explicit functional requirement in the product brief — it's an accuracy check, not a visible guide                                   |
+| 2026-09-04 | MVP Next/Previous controls wrap between the first and last in-scope letters                                                                                                                                                                           | Provides continuous navigation until M3 replaces the controls with letter selection                                                  |
+| 2026-09-04 | Celebration animation is a full-tracing-surface CSS-keyframe overlay (⭐ pop + ✨ spin, ~1.5 s, `pointer-events: none`), preceded by a short pause after the last segment completes so the finished letter stays visible before the celebration plays | Meets DEVSPEC legacy-hardware performance constraint; gives the child visual closure on the completed letter before the reward plays |
 
 ## 8. Spec Change Log
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-04 — Copilot — M1 spec-update pass: resolved the celebration-animation style Open Question (full-viewport CSS-keyframe emoji overlay with a short pre-celebration pause that keeps the completed letter visible); bumped `Traces to:` to PRD v0.2.1 and DEVSPEC v0.3.2; no screen inventory, state machine, or Gherkin scenario changed by this pass.
 - 2026-09-04 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.3.0 following the DEVSPEC Data Schema review fix; no UI/screen content changed by that fix.
 - 2026-09-03 — Copilot — Replaced Home/letter-grid-with-mastery-badges + whole-letter tracing screen with the real UI: a single Tracing screen driven by per-segment states (awaiting-start/tracing/tracing-paused/segment-reset/segment-complete/letter-complete), Next/Previous (MVP) vs. Letter Selection screen (M3), and Gherkin scenarios matching the boundary-box/80%-rule/deviation-detection mechanics. Removed: Home screen, Reward Overlay screen, Progress screen, mastery badge visibility rules, star-count UI. Added: segment state machine, deviation pause/resume scenarios, "boundary box never rendered" accessibility/resolved-decision note.
 - 2026-09-03 — Copilot — Re-drafted UISPEC under docs/specs/ convention (content unchanged from prior draft, header/traces line updated).

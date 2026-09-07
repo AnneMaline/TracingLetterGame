@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.3.2
-**Last Updated:** 2026-09-04
+**Version:** 0.4.0
+**Last Updated:** 2026-09-07
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.2.1
+**Traces to:** PRD v0.2.2
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -52,8 +52,6 @@ interface SegmentTraceState {
   points: Point[]; // captured pointer path for the current attempt; cleared on every restart
   isWithinBoundaryBox: boolean; // whether the most recently captured point is inside the current segment's boundary box
   progressAlongVector: number; // 0-1, projected coverage of the segment from start toward end
-  deviationPaused: boolean; // true when M2 deviation-pause is active
-  departurePoint: Point | null; // M2: the point where deviation exceeded the threshold; required to detect "returned to point of departure" and resume without resetting progress; null unless deviationPaused
 }
 
 interface LetterSessionState {
@@ -109,41 +107,53 @@ resolved otherwise.
   extends outward from the ideal line segment. This allows small fingers/styluses to trace along
   the line without accidentally exiting the box due to normal motor variance.
 - **Tasks:**
-  1. On pointer-down at the segment's start region, begin capturing points; render visual feedback
-     that follows the drag in real time.
+  1. On pointer-down inside the segment's **start region** (a normalized-radius disc around
+     `LineSegment.start`, tunable via `startRegionRadius`; MVP default matches the visible green
+     start marker plus a small forgiveness margin), begin capturing points and render visual
+     feedback that follows the drag in real time. Taps that land inside the boundary box but
+     outside the start region are ignored.
   2. Compute the boundary box around each segment using `LineSegment` start/end coordinates and
      the `boundaryPadding` constant (or per-segment override via `LineSegment.boundaryHalfWidth`
      if defined). Continuously test whether the current pointer position is inside this box.
   3. If the pointer exits the boundary box at any point: stop visual feedback immediately and
      require the child to restart tracing that segment from the beginning. The child must never be
      able to continue/finish the letter after leaving the boundary box.
-  4. On pointer-up (finger up), compute `progressAlongVector` — the coverage of the segment,
-     projected onto its start→end vector. If ≥ 80%, mark the segment complete and advance to the
-     next segment (or trigger the celebration if it was the last). If < 80%, force the child to
-     restart that segment from the beginning.
+  4. **End-region auto-complete:** while `tracing`, if the pointer enters the segment's **end
+     region** (a normalized-radius disc around `LineSegment.end`, tunable via `endRegionRadius`;
+     MVP default matches the visible end marker) and `progressAlongVector` is already ≥ 80%,
+     mark the segment complete and advance to the next segment (or trigger the celebration if
+     it was the last) without waiting for finger-up.
+  5. On pointer-up (finger up) without having reached the end region, compute
+     `progressAlongVector`. If ≥ 80%, mark the segment complete and advance. If < 80%, force
+     the child to restart that segment from the beginning.
 - **Exit Criterion:** A scripted trace that exits the boundary box stops feedback and resets the
-  segment. A scripted trace covering ≥80% of the vector that stays in-box is marked complete on
-  pointer-up. A scripted trace covering <80% resets on pointer-up. Verified for at least one
-  segment per in-scope letter.
+  segment. A scripted trace covering ≥80% of the vector that stays in-box is marked complete
+  either on pointer-up or on entry into the end region. A scripted trace covering <80% resets
+  on pointer-up. A pointer-down that lands inside the boundary box but outside the start region
+  is ignored. Verified for at least one segment per in-scope letter.
 
 #### Module: Deviation Detection (Better tier, M2)
 
 - **Goal:** Add finer-grained accuracy feedback based on angular deviation from the ideal vector,
   layered on top of (not replacing) the boundary box.
 - **Tasks:**
-  1. Compute the angle between the child's current drag direction and the segment's ideal vector.
-  2. If the deviation exceeds a set threshold (Open Question §13: exact degrees) while the pointer
-     is still inside the boundary box: pause visual feedback and hold at the point of departure —
-     do not reset progress.
-  3. When the child's pointer returns to the point of departure, resume visual feedback and
-     continue tracking progress along the vector from where it left off.
-  4. If the pointer exits the boundary box at any point — including after already reaching ≥80%
-     completion prior to finger-up — force a full restart of that segment. This supersedes the
+  1. During `tracing`, compute the child's current drag direction as the chord from the most
+     recent pointer sample back to the earliest sample whose straight-line distance to the
+     newest one is at least `dragDirectionBaseline` (normalized units). A distance-based
+     baseline is stable across sampling rates and averages out per-frame jitter without smearing
+     genuine turns.
+  2. Compute the angle between this drag direction and the segment's ideal (start→end) vector.
+     Check only the **current tail** on each pointer event; do not re-check historical samples.
+  3. If the angle exceeds `deviationThresholdDegrees` while the pointer is still inside the
+     boundary box, treat it identically to a boundary-box exit: stop visual feedback immediately
+     and require the child to restart the segment. There is no pause or resume state.
+  4. Boundary-box exit **always** resets the segment, including when the exit happens after
+     `progressAlongVector` has already crossed 0.8 but before finger-up. This supersedes the
      MVP rule of only checking completion on finger-up.
-- **Exit Criterion:** A scripted trace that deviates beyond the threshold but stays in-box pauses
-  feedback and resumes correctly once back at the departure point, without resetting progress. A
-  scripted trace that exits the boundary box after reaching ≥80% completion still resets, verified
-  for at least one segment.
+- **Exit Criterion:** A scripted trace whose direction exceeds the threshold while in-box resets
+  the segment immediately. A scripted trace that stays under the threshold and inside the box
+  is unaffected by this module. A scripted trace that exits the boundary box after reaching
+  ≥80% completion still resets, verified for at least one segment.
 
 #### Module: Celebration Animation
 
@@ -282,7 +292,7 @@ npm test         # unit + integration tests
 | Milestone (PRD)                | DEVSPEC deliverable                                                                                                                                                           |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M1 — MVP core tracing loop     | Letter Navigation (Next/Previous) + Line Segment Rendering + Segment Completion & Boundary Box + Celebration Animation modules functional end-to-end for all in-scope letters |
-| M2 — Better accuracy detection | Deviation Detection module: pause/resume-at-departure-point, exit-always-resets rule                                                                                          |
+| M2 — Better accuracy detection | Deviation Detection module: cancel-on-threshold behavior, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                                |
 | M3 — Great navigation          | Letter Navigation module: letter-selection screen replaces Next/Previous, anytime back-navigation                                                                             |
 | M4 — Container integration     | Packaging conforms to standalone-game-spec.md; events conform to standalone-game-spec-data.md                                                                                 |
 
@@ -299,18 +309,21 @@ npm test         # unit + integration tests
 
 ### 14. Resolved Decisions
 
-| Date       | Decision                                                                                                                                                                                                                        | Rationale                                                                                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder                            | Real product requirements now available                                                                                                                                    |
-| 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                                                | Brief does not specify cross-session persistence; avoid building unrequested scope                                                                                         |
-| 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                                                  | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls                                                                      |
-| 2026-09-04 | Default `boundaryPadding` = 0.06 (normalized units), tunable via `LineSegment.boundaryHalfWidth` per segment                                                                                                                    | Verified via M1 dry-run on target hardware; small enough to require deliberate tracing, wide enough for a child's motor variance                                           |
-| 2026-09-04 | Celebration animation implemented as a CSS-keyframe overlay (⭐ + ✨ emoji glyphs, ~1.5 s, `pointer-events: none`, no external asset), preceded by a short pause so the finished letter is visible before the celebration plays | Meets the legacy-hardware performance constraint; no download or heavy canvas redraw cost; the pre-celebration pause gives the child visual closure on the finished letter |
+| Date       | Decision                                                                                                                                                                                                                        | Rationale                                                                                                                                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder                            | Real product requirements now available                                                                                                                                                                                                   |
+| 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                                                | Brief does not specify cross-session persistence; avoid building unrequested scope                                                                                                                                                        |
+| 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                                                  | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls                                                                                                                                     |
+| 2026-09-04 | Default `boundaryPadding` = 0.06 (normalized units), tunable via `LineSegment.boundaryHalfWidth` per segment                                                                                                                    | Verified via M1 dry-run on target hardware; small enough to require deliberate tracing, wide enough for a child's motor variance                                                                                                          |
+| 2026-09-04 | Celebration animation implemented as a CSS-keyframe overlay (⭐ + ✨ emoji glyphs, ~1.5 s, `pointer-events: none`, no external asset), preceded by a short pause so the finished letter is visible before the celebration plays | Meets the legacy-hardware performance constraint; no download or heavy canvas redraw cost; the pre-celebration pause gives the child visual closure on the finished letter                                                                |
+| 2026-09-07 | M2 Deviation Detection **cancels** the segment on threshold exceedance (same effect as a boundary-box exit); the earlier pause/resume-at-departure model was dropped after M2 dry-run                                           | Return-to-departure produced a visible straight-line snap that felt buggy for children; cancel-and-restart is clearer and consistent with the box-exit rule. Simplifies the state machine (no `tracing-paused`, no departure point)       |
+| 2026-09-07 | `deviationThresholdDegrees` = 45, `dragDirectionBaseline` = 0.03 (normalized units), and direction is checked only at the current tail (not at every historical sample)                                                         | Distance-based baseline is stable across pointer sampling rates and averages jitter; tail-only avoids false cancels from a single noisy historical sample                                                                                 |
+| 2026-09-07 | `startRegionRadius` = 0.08 (normalized units); `endRegionRadius` = 0.035 (normalized units, matches the visible end marker)                                                                                                     | Enforces the "start at the green dot" wording of §3 task 1; the tight end-region radius requires the child to actually reach the end marker to auto-complete, while overshooting past it now safely stops the trace instead of failing it |
 
 ### 15. Out of Scope
 
 - Persisted progress/mastery/stars beyond the per-letter celebration animation, unless later decided.
-- Degree-of-deviation detection and letter-selection screen in MVP (staged into M2/M3).
+- Letter-selection screen in MVP (staged into M3).
 - Lowercase letters, numbers, words, and non-English scripts, unless a milestone explicitly scopes them in.
 
 ### 16. Lessons Log
@@ -321,6 +334,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-07 — Copilot — M2 spec-update pass: replaced the Deviation Detection module's pause/resume behavior with cancel-on-threshold (matches shipped behavior; dry-run showed pause/resume produced a jarring straight-line snap). Removed `SegmentTraceState.deviationPaused` and `SegmentTraceState.departurePoint` from the Data Schema (dead now that pause/resume is gone). Added the start-region and end-region tasks to the Segment Completion module (start-region enforcement was implicit before; end-region auto-complete is a new UX affordance). Bumped `Traces to:` PRD reference to v0.2.2. Closed the deviation-threshold Open Question; added Resolved Decisions for the deviation semantics, drag-direction sampling method, and start/end region radii.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-padding Open Question (default `boundaryPadding` = 0.06 normalized units, verified in dry-run) and the celebration-animation-asset Open Question (CSS-keyframe emoji overlay with a short pre-celebration pause so the finished letter is visible before it plays); bumped `Traces to:` PRD reference to v0.2.1; no module behavior or Data Schema changed by this pass.
 - 2026-09-04 — Copilot — Clarified boundary-box as a fixed-padding hit-box (uses single `boundaryPadding` constant for all sides and ends, extends beyond line in all directions). Added performance constraint: celebration animation must be lightweight (CSS/SVG/small GIF only) for 2015-era smartphone compatibility. Refined Segment Completion module description with exact boundary-box definition and geometry task. Removed redundant Open Questions (boundary-box shape now defined; degree-of-deviation is M2 not MVP); recorded circular Next/Previous wrapping as the M1 decision, with `boundaryPadding` tuning and celebration animation format remaining open. Updated Risks section with specific mitigations for legacy hardware calibration and animation performance validation.
 - 2026-09-04 — Copilot — Fixed Data Schema gaps found in review:

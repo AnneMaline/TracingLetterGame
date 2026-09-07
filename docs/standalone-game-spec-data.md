@@ -2,9 +2,9 @@
 
 **Status:** Draft
 **Version:** 0.2.0
-**Last Updated:** 2026-09-04
+**Last Updated:** 2026-09-07
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** DEVSPEC v0.3.2, standalone-game-spec.md v0.2.0
+**Traces to:** DEVSPEC v0.4.0, standalone-game-spec.md v0.2.0
 
 > Defines the data/event contract between TracingGame and the Curious Reader container/CMS.
 > **Placeholder — not yet confirmed with the container team.**
@@ -50,6 +50,7 @@ of the child leave the game.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-07 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.4.0 following the M2 spec-update pass; no content change in this file.
 - 2026-09-04 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.3.2 following the M1 spec-update pass; no content change in this file.
 - 2026-09-04 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.3.0 following the DEVSPEC Data Schema review fix; no content change in this file.
 - 2026-09-03 — Copilot — Renamed `letter_trace_success` to `segment_complete` and added `letter_complete`, matching the real segment-based DEVSPEC model; removed star-based `session_complete` payload (no star mechanic in the real brief). Bumped `Traces to:` to DEVSPEC v0.2.0.

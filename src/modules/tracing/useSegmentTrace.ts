@@ -1,7 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 import type { LetterDefinition, Point } from "../../types";
-import { computeBoundaryBox, isPointInBox } from "./geometry";
-import { evaluatePath } from "./scoring";
+import {
+  END_REGION_RADIUS,
+  MIN_SEGMENT_COVERAGE,
+  START_REGION_RADIUS,
+} from "../../shared/constants";
+import { computeBoundaryBox, distanceBetween, isPointInBox } from "./geometry";
+import { evaluatePathM2 } from "./scoring";
 
 export type SegmentStatus =
   | "awaiting-start"
@@ -58,11 +63,31 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     [letter.segments.length],
   );
 
+  const resetSegment = useCallback(() => {
+    setStatus("segment-reset");
+    setPoints([]);
+    setCoverage(0);
+    setWithin(false);
+  }, []);
+
+  const completeSegment = useCallback(() => {
+    setCompletedSegments((prev) => {
+      const nextCompleted = [...prev];
+      nextCompleted[currentSegmentIndex] = true;
+      return nextCompleted;
+    });
+    setStatus("segment-complete");
+    const nextIndex = currentSegmentIndex + 1;
+    setTimeout(() => advanceOrComplete(nextIndex), 250);
+  }, [advanceOrComplete, currentSegmentIndex]);
+
   const onPointerDown = useCallback(
     (p: Point) => {
       if (!currentSegment || !box) return;
       if (status !== "awaiting-start" && status !== "segment-reset") return;
       if (!isPointInBox(p, box)) return;
+      if (distanceBetween(p, currentSegment.start) > START_REGION_RADIUS)
+        return;
       setPoints([p]);
       setCoverage(0);
       setWithin(true);
@@ -73,49 +98,47 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
 
   const onPointerMove = useCallback(
     (p: Point) => {
-      if (status !== "tracing" || !currentSegment) return;
-      setPoints((prev) => {
-        const next = [...prev, p];
-        const outcome = evaluatePath(next, currentSegment, false);
-        if (outcome.kind === "exit-box") {
-          setCoverage(outcome.coverage);
-          setWithin(false);
-          setStatus("segment-reset");
-          return [];
-        }
-        setCoverage(outcome.kind === "in-progress" ? outcome.coverage : 0);
-        setWithin(true);
-        return next;
-      });
+      if (!currentSegment || !box) return;
+      if (status !== "tracing") return;
+
+      const next = [...points, p];
+      const outcome = evaluatePathM2(next, currentSegment, false);
+      if (outcome.kind === "exit-box" || outcome.kind === "deviation-reset") {
+        setCoverage(outcome.coverage);
+        setWithin(false);
+        setStatus("segment-reset");
+        setPoints([]);
+        return;
+      }
+
+      const currentCoverage =
+        outcome.kind === "in-progress" ? outcome.coverage : 0;
+      setPoints(next);
+      setCoverage(currentCoverage);
+      setWithin(true);
+
+      if (
+        currentCoverage >= MIN_SEGMENT_COVERAGE &&
+        distanceBetween(p, currentSegment.end) <= END_REGION_RADIUS
+      ) {
+        completeSegment();
+      }
     },
-    [currentSegment, status],
+    [box, completeSegment, currentSegment, points, status],
   );
 
   const onPointerUp = useCallback(() => {
-    if (status !== "tracing" || !currentSegment) return;
-    const outcome = evaluatePath(points, currentSegment, true);
+    if (!currentSegment) return;
+    if (status !== "tracing") return;
+
+    const outcome = evaluatePathM2(points, currentSegment, true);
     setCoverage(outcome.coverage);
     if (outcome.kind === "complete") {
-      const nextCompleted = [...completedSegments];
-      nextCompleted[currentSegmentIndex] = true;
-      setCompletedSegments(nextCompleted);
-      setStatus("segment-complete");
-      const nextIndex = currentSegmentIndex + 1;
-      setTimeout(() => advanceOrComplete(nextIndex), 250);
-    } else if (outcome.kind === "reset" || outcome.kind === "exit-box") {
-      setStatus("segment-reset");
-      setPoints([]);
-      setCoverage(0);
-      setWithin(false);
+      completeSegment();
+    } else {
+      resetSegment();
     }
-  }, [
-    advanceOrComplete,
-    completedSegments,
-    currentSegment,
-    currentSegmentIndex,
-    points,
-    status,
-  ]);
+  }, [completeSegment, currentSegment, points, resetSegment, status]);
 
   const reset = useCallback(() => {
     setCurrentSegmentIndex(0);

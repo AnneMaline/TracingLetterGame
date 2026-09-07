@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.2.1
-**Last Updated:** 2026-09-04
+**Version:** 0.2.2
+**Last Updated:** 2026-09-07
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -76,10 +76,15 @@ paradigm as a sub-app of the Curious Reader container.
 
 ### Better (M2)
 
-- Degree-of-deviation detection: pause (not reset) feedback when the child drifts beyond a threshold
-  angle while still inside the boundary box; resume when they return to the point of departure.
+- Degree-of-deviation detection: when the child's drag direction deviates beyond a threshold
+  angle from the ideal vector while still inside the boundary box, cancel the segment (same
+  visible effect as a boundary-box exit; the child must restart that segment).
 - Stricter reset rule: exiting the boundary box always forces a restart, even if ≥80% of the segment
   was already covered before the finger-up event.
+- Start-region requirement: pointer-down must land within a small radius of the segment's start
+  marker, not merely anywhere along the segment.
+- End-region auto-complete: reaching the segment's end marker mid-drag (with ≥80% coverage)
+  completes the segment immediately without needing a finger-up.
 
 ### Great (M3)
 
@@ -93,12 +98,12 @@ paradigm as a sub-app of the Curious Reader container.
 
 ## 7. Milestones
 
-| Milestone                      | Description                                                                                  | Target date |
-| ------------------------------ | -------------------------------------------------------------------------------------------- | ----------- |
-| M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation | TBD         |
-| M2 — Better accuracy detection | Degree-of-deviation pause/resume, stricter exit-always-resets rule                           | TBD         |
-| M3 — Great navigation          | Letter-selection screen, anytime back-navigation                                             | TBD         |
-| M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                             | TBD         |
+| Milestone                      | Description                                                                                                                   | Target date |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation                                  | TBD         |
+| M2 — Better accuracy detection | Degree-of-deviation cancel-on-threshold, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete | TBD         |
+| M3 — Great navigation          | Letter-selection screen, anytime back-navigation                                                                              | TBD         |
+| M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                                                              | TBD         |
 
 ## 8. Constraints & Assumptions
 
@@ -112,21 +117,23 @@ paradigm as a sub-app of the Curious Reader container.
 
 ## 9. Appendix — Open Questions
 
-| Question                                                                        | Blocks                             | Owner                             |
-| ------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------- |
-| Exact degree-of-deviation threshold (Better tier)                               | DEVSPEC Deviation Detection module | Eng                               |
-| Whether progress/mastery persists across sessions/reloads                       | DEVSPEC Data Schema                | Product                           |
-| Which non-English scripts/languages, if any, are in scope for a given milestone | Content authoring scope            | Product                           |
-| Curious Reader container manifest/version requirements                          | standalone-game-spec.md            | Eng (confirm with container team) |
+| Question                                                                        | Blocks                  | Owner                             |
+| ------------------------------------------------------------------------------- | ----------------------- | --------------------------------- |
+| Whether progress/mastery persists across sessions/reloads                       | DEVSPEC Data Schema     | Product                           |
+| Which non-English scripts/languages, if any, are in scope for a given milestone | Content authoring scope | Product                           |
+| Curious Reader container manifest/version requirements                          | standalone-game-spec.md | Eng (confirm with container team) |
 
 ## 10. Appendix — Resolved Decisions
 
-| Date       | Decision                                                                                                                                                                                                            | Rationale                                                                                         |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, tiered MVP/Better/Great scope), replacing the earlier placeholder whole-path-tolerance + mastery/stars concept | Real product requirements now available; earlier draft was a placeholder pending this information |
-| 2026-09-04 | MVP Next/Previous navigation wraps between the first and last in-scope letters                                                                                                                                      | Keeps navigation continuous until M3 introduces letter selection                                  |
-| 2026-09-04 | Boundary-box shape is a rectangle around each segment with padding equal on all sides and both ends, tuned via a single `boundaryPadding` constant (MVP default: 0.06 normalized units, verified in M1 dry-run)     | Simplest shape that matches child motor variance; single constant keeps calibration tractable     |
-| 2026-09-04 | Celebration animation is a lightweight CSS-keyframe overlay (star + sparkle emoji glyphs, ~1.5 s, no external asset)                                                                                                | Meets the legacy-hardware performance constraint with no download cost or heavy canvas redraws    |
+| Date       | Decision                                                                                                                                                                                                                        | Rationale                                                                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, tiered MVP/Better/Great scope), replacing the earlier placeholder whole-path-tolerance + mastery/stars concept             | Real product requirements now available; earlier draft was a placeholder pending this information                                                             |
+| 2026-09-04 | MVP Next/Previous navigation wraps between the first and last in-scope letters                                                                                                                                                  | Keeps navigation continuous until M3 introduces letter selection                                                                                              |
+| 2026-09-04 | Boundary-box shape is a rectangle around each segment with padding equal on all sides and both ends, tuned via a single `boundaryPadding` constant (MVP default: 0.06 normalized units, verified in M1 dry-run)                 | Simplest shape that matches child motor variance; single constant keeps calibration tractable                                                                 |
+| 2026-09-04 | Celebration animation is a lightweight CSS-keyframe overlay (star + sparkle emoji glyphs, ~1.5 s, no external asset)                                                                                                            | Meets the legacy-hardware performance constraint with no download cost or heavy canvas redraws                                                                |
+| 2026-09-07 | M2 deviation past threshold **cancels** the segment (same effect as a boundary-box exit); the earlier pause-and-resume model was dropped after M2 dry-run                                                                       | Return-to-departure produced a visible straight-line snap that felt buggy; cancel is clearer and consistent with the box-exit rule                            |
+| 2026-09-07 | M2 deviation threshold = 45°, measured as the angle between the ideal vector and the chord over the last ~0.03 normalized units of pointer motion (tail-only check); direction is not re-checked at historical samples          | Sample-count windows are unstable across sampling rates; a distance-based chord averages jitter; tail-only avoids false cancels from one noisy earlier sample |
+| 2026-09-07 | M2 pointer-down must land within 0.08 normalized units of the segment's start marker; segment auto-completes when the pointer enters 0.035 normalized units of the end marker (with ≥80% coverage), without needing a finger-up | Enforces "start at the green dot" wording of DEVSPEC §3; makes overshooting the end marker safe instead of a failure mode                                     |
 
 ## 11. Appendix — Out of Scope
 
@@ -138,6 +145,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-07 — Copilot — M2 spec-update pass: rewrote the M2 scope from "deviation pauses and resumes at the point of departure" to "deviation cancels the segment"; added start-region enforcement and end-region auto-complete to the M2 scope; resolved the deviation-threshold Open Question (45°) and added Resolved Decisions for the deviation semantics, drag-direction sampling method, and start/end region radii.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-box shape/padding open question (rectangle with uniform `boundaryPadding`, MVP default 0.06 normalized units) and the celebration-animation asset open question (lightweight CSS-keyframe overlay, no external asset), following the M1 MVP core tracing loop implementation and dry-run.
 - 2026-09-03 — Copilot — Replaced the placeholder whole-path-tolerance + mastery/stars MVP concept with the real product brief: line-segment vector tracing, invisible boundary box with exit-restart rule, 80% finger-up completion threshold, tiered MVP/Better/Great scope, and a non-English-content-compatible data model constraint. Removed: mastery/stars/locked-practicing-mastered concept, whole-letter path-tolerance scoring, home/letter-select-in-MVP, audio-cue goal. Added: line-segment data model, boundary-box + 80% rule, degree-of-deviation (Better) and letter-selection (Great) tiers, greenfield/non-English project metadata.
 - 2026-09-03 — Copilot — Re-drafted PRD under docs/specs/ convention; added Curious Reader container as a persona/constraint and M3 container-integration milestone.

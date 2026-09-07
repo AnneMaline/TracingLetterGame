@@ -19,8 +19,6 @@ export interface SegmentTraceState {
   points: Point[];
   isWithinBoundaryBox: boolean;
   progressAlongVector: number;
-  deviationPaused: boolean;
-  departurePoint: Point | null;
 }
 
 export interface LetterSessionState {

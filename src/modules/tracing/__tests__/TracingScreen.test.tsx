@@ -187,3 +187,88 @@ describe("Boundary-box exit resets the current segment", () => {
     expect(screen.queryByTestId("trace-feedback")).not.toBeInTheDocument();
   });
 });
+
+// M2 deviation cancels the trace
+describe("Deviation past threshold cancels the trace (M2)", () => {
+  it("resets the segment on steep drift inside the box (feedback stops immediately)", () => {
+    render(<TracingScreen letters={[A]} />);
+    const surface = screen.getByTestId(
+      "trace-surface",
+    ) as unknown as SVGSVGElement;
+    mockRect(surface);
+
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
+    for (let t = 0; t <= 0.5; t += 0.05) {
+      fireEvent.pointerMove(surface, {
+        pointerId: 1,
+        ...toClient(0.2 + 0.6 * t, 0.5),
+      });
+    }
+    // Single steep drift point inside the box triggers deviation-reset.
+    fireEvent.pointerMove(surface, { pointerId: 1, ...toClient(0.505, 0.55) });
+
+    expect(surface.getAttribute("data-segment-status")).toBe("segment-reset");
+    expect(screen.queryByTestId("trace-feedback")).not.toBeInTheDocument();
+  });
+});
+
+// Regression: tracing must begin at the segment's start marker, not anywhere along the line.
+describe("Segment must start at the green start marker", () => {
+  it("ignores a pointer-down that lands on the line but away from the start point", () => {
+    render(<TracingScreen letters={[A]} />);
+    const surface = screen.getByTestId(
+      "trace-surface",
+    ) as unknown as SVGSVGElement;
+    mockRect(surface);
+
+    // Segment A runs from (0.2, 0.5) to (0.8, 0.5). A tap at the midpoint is inside the box
+    // but well outside the start-region radius (0.08).
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.5, 0.5) });
+
+    expect(surface.getAttribute("data-segment-status")).toBe("awaiting-start");
+    expect(screen.queryByTestId("trace-feedback")).not.toBeInTheDocument();
+  });
+
+  it("accepts a pointer-down within the forgiveness radius of the start point", () => {
+    render(<TracingScreen letters={[A]} />);
+    const surface = screen.getByTestId(
+      "trace-surface",
+    ) as unknown as SVGSVGElement;
+    mockRect(surface);
+
+    // ~0.04 offset from start (0.2, 0.5); within the 0.08 forgiveness radius.
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.24, 0.51) });
+
+    expect(surface.getAttribute("data-segment-status")).toBe("tracing");
+  });
+});
+
+// Regression: reaching the end region auto-completes the segment (no need to lift the finger).
+describe("Segment auto-completes when the trace reaches the end region", () => {
+  it("transitions to segment-complete without a pointer-up when the pointer enters the end region", async () => {
+    vi.useFakeTimers();
+    render(<TracingScreen letters={[A]} />);
+    const surface = screen.getByTestId(
+      "trace-surface",
+    ) as unknown as SVGSVGElement;
+    mockRect(surface);
+
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
+    for (let t = 0; t <= 1; t += 0.1) {
+      fireEvent.pointerMove(surface, {
+        pointerId: 1,
+        ...toClient(0.2 + 0.6 * t, 0.5),
+      });
+    }
+    // No pointerUp yet — the entry into the end region should have completed the segment.
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(screen.getByTestId("celebration")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+});

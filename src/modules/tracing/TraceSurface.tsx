@@ -14,7 +14,7 @@ interface Props {
 }
 
 const VIEWBOX_SIZE = 400;
-export const CURVE_X = 0.75;
+const CURVE_X = 0.75;
 const OVAL_PATH_STEPS = 96;
 
 export const curvePath = (segment: LineSegment) => {

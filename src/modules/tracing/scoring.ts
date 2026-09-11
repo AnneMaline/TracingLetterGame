@@ -10,8 +10,12 @@ import {
   computeCoverage,
   computeDragDirection,
   isPointInBox,
+  projectPointOntoSegment,
   segmentDirection,
+  segmentTangentAt,
 } from "./geometry";
+
+const BACKTRACK_TOLERANCE = 0.02;
 
 export type SegmentOutcome =
   | { kind: "in-progress"; coverage: number }
@@ -67,7 +71,6 @@ export function evaluatePathM2(
   const baselineDistance = options.baselineDistance ?? DRAG_DIRECTION_BASELINE;
 
   const box = computeBoundaryBox(segment);
-  const ideal = segmentDirection(segment);
 
   for (let i = 0; i < points.length; i++) {
     if (!isPointInBox(points[i], box)) {
@@ -79,9 +82,25 @@ export function evaluatePathM2(
     }
   }
 
-  if (ideal && points.length >= 2) {
+  if (points.length >= 2) {
+    const prev = points[points.length - 2];
+    const tail = points[points.length - 1];
+    const prevT = projectPointOntoSegment(prev, segment);
+    const tailT = projectPointOntoSegment(tail, segment);
+
+    if (tailT + BACKTRACK_TOLERANCE < prevT) {
+      return {
+        kind: "deviation-reset",
+        coverage: computeCoverage(points, segment),
+        departureIndex: points.length - 1,
+      };
+    }
+
+    const ideal = segment.isCurve
+      ? segmentTangentAt(segment, tailT)
+      : segmentDirection(segment);
     const drag = computeDragDirection(points, baselineDistance);
-    if (drag && angleBetweenDegrees(drag, ideal) > thresholdDegrees) {
+    if (ideal && drag && angleBetweenDegrees(drag, ideal) > thresholdDegrees) {
       return {
         kind: "deviation-reset",
         coverage: computeCoverage(points, segment),

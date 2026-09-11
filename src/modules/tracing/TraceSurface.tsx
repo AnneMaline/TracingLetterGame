@@ -1,7 +1,8 @@
 import { useCallback, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import type { LetterDefinition, Point } from "../../types";
+import type { LetterDefinition, LineSegment, Point } from "../../types";
 import { SegmentGuide } from "./SegmentGuide";
+import { curvePointAt } from "./geometry";
 import type { SegmentTraceView } from "./useSegmentTrace";
 
 interface Props {
@@ -13,6 +14,40 @@ interface Props {
 }
 
 const VIEWBOX_SIZE = 400;
+export const CURVE_X = 0.75;
+const OVAL_PATH_STEPS = 96;
+
+export const curvePath = (segment: LineSegment) => {
+  if (segment.curveKind === "oval" || segment.curveKind === "polyline") {
+    const points: Point[] = [];
+    for (let i = 0; i <= OVAL_PATH_STEPS; i++) {
+      points.push(curvePointAt(segment, i / OVAL_PATH_STEPS));
+    }
+    return (
+      `M ${points[0].x} ${points[0].y} ` +
+      points
+        .slice(1)
+        .map((p) => `L ${p.x} ${p.y}`)
+        .join(" ")
+    );
+  }
+  const cx = segment.curveControlX ?? CURVE_X;
+  const sx = segment.start.x;
+  const sy = segment.start.y;
+  const ey = segment.end.y;
+  const outward = cx >= sx ? 1 : -1;
+  const radius = Math.abs(ey - sy) / 2;
+  const arcX = cx - outward * radius;
+  const rawFlat = outward * (arcX - sx);
+  const flat = rawFlat > 0 ? rawFlat : 0;
+  const armEndX = sx + outward * flat;
+  const sweepFlag = ey > sy === outward > 0 ? 1 : 0;
+  return (
+    `M ${sx} ${sy} L ${armEndX} ${sy} ` +
+    `A ${radius} ${radius} 0 0 ${sweepFlag} ${armEndX} ${ey} ` +
+    `L ${sx} ${ey}`
+  );
+};
 
 export function TraceSurface({
   letter,
@@ -113,6 +148,18 @@ export function TraceSurface({
     >
       {letter.segments.map((seg, i) => {
         if (!view.completedSegments[i]) return null;
+        if (letter.segments[i].isCurve) {
+          return (
+            <path
+              d={curvePath(seg)}
+              fill="none"
+              stroke="#3aa856"
+              strokeWidth={0.03}
+              strokeLinecap="round"
+              key={i}
+            />
+          );
+        }
         return (
           <line
             key={i}

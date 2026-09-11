@@ -1,10 +1,10 @@
 # Standalone Game Spec (Contract) — TracingGame
 
 **Status:** Draft
-**Version:** 0.2.0
-**Last Updated:** 2026-09-07
+**Version:** 0.2.1
+**Last Updated:** 2026-09-11
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** DEVSPEC v0.4.0
+**Traces to:** DEVSPEC v0.4.1
 
 > This is the **upstream contract** the Curious Reader container relies on to accept, package, and
 > launch TracingGame as a ZIP artifact. Exact schema/runtime details below are placeholders pending
@@ -60,6 +60,7 @@ Follows DEVSPEC's semantic versioning; container compatibility handling TBD.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-11 — Copilot — Task 003 spec-update pass: bumped `Traces to:` to DEVSPEC v0.4.1 after uppercase A-Z fixture-authoring decisions were recorded; no contract content changes in this placeholder doc.
 - 2026-09-07 — Copilot — Bumped `Traces to:` to DEVSPEC v0.4.0 following the M2 spec-update pass (deviation-cancel semantics and start/end region rules); no content change in this file.
 - 2026-09-04 — Copilot — Bumped `Traces to:` to DEVSPEC v0.3.2 following the M1 spec-update pass (boundary-padding and celebration-animation resolutions); no content change in this file.
 - 2026-09-04 — Copilot — Bumped `Traces to:` to DEVSPEC v0.3.0 following the DEVSPEC Data Schema review fix; no content change in this file.

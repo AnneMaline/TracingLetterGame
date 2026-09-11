@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.3.0
-**Last Updated:** 2026-09-07
+**Version:** 0.3.1
+**Last Updated:** 2026-09-11
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.2.2 · DEVSPEC v0.4.0
+**Traces to:** PRD v0.2.2 · DEVSPEC v0.4.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -168,6 +168,7 @@ Feature: Letter completion celebration
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-11 — Copilot — Task 003 spec-update pass: bumped `Traces to:` DEVSPEC reference to v0.4.1 after uppercase A-Z fixture authoring decisions were recorded; no screen/state/Gherkin behavior changed in UISPEC.
 - 2026-09-07 — Copilot — M2 spec-update pass: removed the `tracing-paused` state and its transitions (deviation now cancels the segment rather than pausing); added a `tracing → segment-complete` transition on entering the end region with ≥80% coverage; added start-region enforcement to the state machine; rewrote the M2 Gherkin scenarios ("deviation cancels the trace" replaces the pause/resume feature); bumped `Traces to:` to PRD v0.2.2 and DEVSPEC v0.4.0.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the celebration-animation style Open Question (full-viewport CSS-keyframe emoji overlay with a short pre-celebration pause that keeps the completed letter visible); bumped `Traces to:` to PRD v0.2.1 and DEVSPEC v0.3.2; no screen inventory, state machine, or Gherkin scenario changed by this pass.
 - 2026-09-04 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.3.0 following the DEVSPEC Data Schema review fix; no UI/screen content changed by that fix.

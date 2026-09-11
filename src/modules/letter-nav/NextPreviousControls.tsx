@@ -12,7 +12,7 @@ export function NextPreviousControls({
   return (
     <nav
       aria-label="Letter navigation"
-      className="flex items-center justify-between gap-4 w-full max-w-[480px] mt-6"
+      className="flex items-center justify-between gap-4 w-full max-w-120 mt-6"
     >
       <button
         type="button"

@@ -12,6 +12,11 @@ const horizontal: LineSegment = {
   start: { x: 0.2, y: 0.5 },
   end: { x: 0.8, y: 0.5 },
 };
+const curveTopB: LineSegment = {
+  start: { x: 0.25, y: 0.14 },
+  end: { x: 0.25, y: 0.5 },
+  isCurve: true,
+};
 
 function pathAlong(segment: LineSegment, targetT: number, steps = 20): Point[] {
   const pts: Point[] = [];
@@ -167,5 +172,32 @@ describe("Natural curves under the threshold do not cancel (regression)", () => 
     ];
     const out = evaluatePathM2(jittery, horizontal, true);
     expect(out.kind).toBe("complete");
+  });
+});
+
+describe("Curve segments cancel zigzags and backtracking", () => {
+  it("emits deviation-reset on a large off-tangent motion inside the curve boundary", () => {
+    const pts: Point[] = [
+      { x: 0.25, y: 0.14 },
+      { x: 0.49, y: 0.18 },
+      { x: 0.61, y: 0.27 },
+      { x: 0.625, y: 0.32 },
+      { x: 0.68, y: 0.32 },
+    ];
+    const out = evaluatePathM2(pts, curveTopB, false);
+    expect(out.kind).toBe("deviation-reset");
+  });
+
+  it("emits deviation-reset when the child moves backward along the curve", () => {
+    const pts: Point[] = [
+      { x: 0.25, y: 0.14 },
+      { x: 0.49, y: 0.18 },
+      { x: 0.61, y: 0.27 },
+      { x: 0.61, y: 0.37 },
+      { x: 0.49, y: 0.46 },
+      { x: 0.61, y: 0.37 },
+    ];
+    const out = evaluatePathM2(pts, curveTopB, false);
+    expect(out.kind).toBe("deviation-reset");
   });
 });

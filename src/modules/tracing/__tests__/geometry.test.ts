@@ -3,6 +3,7 @@ import type { LineSegment, Point } from "../../../types";
 import {
   computeBoundaryBox,
   computeCoverage,
+  curvePointAt,
   isPointInBox,
   projectPointOntoSegment,
 } from "../geometry";
@@ -15,6 +16,24 @@ const horizontal: LineSegment = {
 const diagonal: LineSegment = {
   start: { x: 0.1, y: 0.1 },
   end: { x: 0.9, y: 0.9 },
+};
+const curve: LineSegment = {
+  start: { x: 0.25, y: 0.14 },
+  end: { x: 0.25, y: 0.5 },
+  isCurve: true,
+};
+
+const ovalLoop: LineSegment = {
+  start: { x: 0.5, y: 0.15 },
+  end: { x: 0.506, y: 0.151 },
+  isCurve: true,
+  curveKind: "oval",
+  ovalCenter: { x: 0.5, y: 0.5 },
+  ovalRadiusX: 0.255,
+  ovalRadiusY: 0.35,
+  ovalStartAngleDeg: 90,
+  ovalEndAngleDeg: 448,
+  ovalCounterClockwise: true,
 };
 
 describe("projectPointOntoSegment", () => {
@@ -124,5 +143,41 @@ describe("boundary box containment (T-002)", () => {
     const box = computeBoundaryBox(seg);
     expect(box.halfWidth).toBeCloseTo(0.15, 6);
     expect(isPointInBox({ x: 0.5, y: 0.5 + 0.1 }, box)).toBe(true);
+  });
+
+  it("uses curve distance for curved segments", () => {
+    const box = computeBoundaryBox(curve);
+    expect(isPointInBox({ x: 0.25, y: 0.14 }, box)).toBe(true);
+    expect(isPointInBox({ x: 0.625, y: 0.32 }, box)).toBe(true);
+    expect(isPointInBox({ x: 0.25, y: 0.32 }, box)).toBe(false);
+  });
+});
+
+describe("curve projection", () => {
+  it("projects points along the curve and reaches near-complete coverage", () => {
+    const pts: Point[] = [
+      { x: 0.25, y: 0.14 },
+      { x: 0.43, y: 0.2 },
+      { x: 0.56, y: 0.3 },
+      { x: 0.43, y: 0.42 },
+      { x: 0.25, y: 0.5 },
+    ];
+    expect(computeCoverage(pts, curve)).toBeGreaterThan(0.85);
+  });
+
+  it("does not award near-complete oval coverage when only start and end markers are touched", () => {
+    const nearStart = curvePointAt(ovalLoop, 0);
+    const nearEnd = curvePointAt(ovalLoop, 1);
+    const pts: Point[] = [nearStart, nearEnd];
+    expect(computeCoverage(pts, ovalLoop)).toBeLessThan(0.15);
+  });
+
+  it("still reaches high oval coverage when tracing around the loop", () => {
+    const pts: Point[] = [];
+    const steps = 64;
+    for (let i = 0; i <= steps; i++) {
+      pts.push(curvePointAt(ovalLoop, i / steps));
+    }
+    expect(computeCoverage(pts, ovalLoop)).toBeGreaterThan(0.9);
   });
 });

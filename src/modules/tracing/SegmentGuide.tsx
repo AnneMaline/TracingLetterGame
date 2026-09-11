@@ -1,47 +1,86 @@
 import type { LineSegment } from "../../types";
+import { curvePath } from "./TraceSurface";
+import { curvePointAt, segmentTangentAt } from "./geometry";
 
 interface Props {
   segment: LineSegment;
 }
 
-export function SegmentGuide({ segment }: Props) {
+const calculateArrowPosition = ({
+  segment,
+  t = segment.isCurve ? 0.2 : 0.5,
+}: {
+  segment: LineSegment;
+  t?: number;
+}) => {
+  const arrowSize = 0.04;
+  const arrowLengthCurve = 0.08;
+
   const { start, end } = segment;
-  const midX = (start.x + end.x) / 2;
-  const midY = (start.y + end.y) / 2;
   const dx = end.x - start.x;
   const dy = end.y - start.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const ux = dx / len;
-  const uy = dy / len;
 
-  const arrowSize = 0.04;
-  const arrowTipX = midX + ux * arrowSize;
-  const arrowTipY = midY + uy * arrowSize;
-  const arrowBaseX = midX - ux * arrowSize;
-  const arrowBaseY = midY - uy * arrowSize;
-  const perpX = -uy * arrowSize * 0.6;
-  const perpY = ux * arrowSize * 0.6;
+  let arrowTipX = 0;
+  let arrowTipY = 0;
+  let ux = 0;
+  let uy = 0;
+
+  if (segment.isCurve) {
+    const p = curvePointAt(segment, t);
+    const tangent = segmentTangentAt(segment, t);
+    arrowTipX = p.x;
+    arrowTipY = p.y;
+    ux = tangent?.x ?? 1;
+    uy = tangent?.y ?? 0;
+  } else {
+    // Line
+    const len = Math.hypot(dx, dy) || 1;
+    ux = dx / len;
+    uy = dy / len;
+    arrowTipX = start.x + dx * t + ux * arrowSize;
+    arrowTipY = start.y + dy * t + uy * arrowSize;
+  }
+
+  // Return
+  const arrowBaseX = segment.isCurve
+    ? arrowTipX - ux * arrowLengthCurve
+    : start.x + dx * t - ux * arrowSize;
+  const arrowBaseY = segment.isCurve
+    ? arrowTipY - uy * arrowLengthCurve
+    : start.y + dy * t - uy * arrowSize;
+  const perpX = -uy * arrowSize * 0.75;
+  const perpY = ux * arrowSize * 0.75;
+
+  return `${arrowTipX},${arrowTipY} ${arrowBaseX + perpX},${arrowBaseY + perpY} ${arrowBaseX - perpX},${arrowBaseY - perpY}`;
+};
+
+export function SegmentGuide({ segment }: Props) {
+  const { start, end } = segment;
 
   return (
     <g data-testid="segment-guide">
-      <line
-        x1={start.x}
-        y1={start.y}
-        x2={end.x}
-        y2={end.y}
-        stroke="#c0d3e7"
-        strokeWidth={0.02}
-        strokeLinecap="round"
-        strokeDasharray="0.03 0.02"
-        data-testid="segment-guide-line"
-      />
-      <circle
-        cx={start.x}
-        cy={start.y}
-        r={0.05}
-        fill="#3aa856"
-        data-testid="segment-guide-start"
-      />
+      {segment.isCurve ? (
+        <path
+          d={curvePath(segment)}
+          fill="none"
+          stroke="#c0d3e7"
+          strokeWidth={0.02}
+          strokeLinecap="round"
+          strokeDasharray="0.03 0.02"
+        />
+      ) : (
+        <line
+          x1={start.x}
+          y1={start.y}
+          x2={end.x}
+          y2={end.y}
+          stroke="#c0d3e7"
+          strokeWidth={0.02}
+          strokeLinecap="round"
+          strokeDasharray="0.03 0.02"
+          data-testid="segment-guide-line"
+        />
+      )}
       <circle
         cx={end.x}
         cy={end.y}
@@ -51,11 +90,25 @@ export function SegmentGuide({ segment }: Props) {
         strokeWidth={0.012}
         data-testid="segment-guide-end"
       />
+      <circle
+        cx={start.x}
+        cy={start.y}
+        r={0.05}
+        fill="#3aa856"
+        data-testid="segment-guide-start"
+      />
       <polygon
-        points={`${arrowTipX},${arrowTipY} ${arrowBaseX + perpX},${arrowBaseY + perpY} ${arrowBaseX - perpX},${arrowBaseY - perpY}`}
+        points={calculateArrowPosition({ segment })}
         fill="#17324d"
         data-testid="segment-guide-arrow"
       />
+      {segment.isCurve && (
+        <polygon
+          points={calculateArrowPosition({ segment, t: 0.9 })}
+          fill="#17324d"
+          data-testid="segment-guide-arrow-secondary"
+        />
+      )}
     </g>
   );
 }

@@ -9,7 +9,7 @@ const letterD: LetterDefinition = {
       start: { x: 0.25, y: 0.14 },
       end: { x: 0.25, y: 0.86 },
       isCurve: true,
-      curveControlX: 0.75,
+      curveControlX: 0.85,
     },
   ],
 };

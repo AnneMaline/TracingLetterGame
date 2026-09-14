@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LineSegment, Point } from "../../../types";
-import { evaluatePathM2 } from "../scoring";
+import { evaluatePath } from "../scoring";
 
 const horizontal: LineSegment = {
   start: { x: 0.2, y: 0.5 },
@@ -22,13 +22,13 @@ function pathAlong(segment: LineSegment, targetT: number, steps = 20): Point[] {
 // T-003
 describe("segment complete on finger-up when coverage >= 80% (T-003)", () => {
   it("marks complete at exactly 80%", () => {
-    const out = evaluatePathM2(pathAlong(horizontal, 0.8), horizontal, true);
+    const out = evaluatePath(pathAlong(horizontal, 0.8), horizontal, true);
     expect(out.kind).toBe("complete");
     if (out.kind === "complete")
       expect(out.coverage).toBeGreaterThanOrEqual(0.8);
   });
   it("marks complete at 100%", () => {
-    const out = evaluatePathM2(pathAlong(horizontal, 1), horizontal, true);
+    const out = evaluatePath(pathAlong(horizontal, 1), horizontal, true);
     expect(out.kind).toBe("complete");
   });
 });
@@ -36,11 +36,11 @@ describe("segment complete on finger-up when coverage >= 80% (T-003)", () => {
 // T-004
 describe("segment resets on finger-up when coverage < 80% (T-004)", () => {
   it("resets at 50%", () => {
-    const out = evaluatePathM2(pathAlong(horizontal, 0.5), horizontal, true);
+    const out = evaluatePath(pathAlong(horizontal, 0.5), horizontal, true);
     expect(out.kind).toBe("reset");
   });
   it("resets just below 80%", () => {
-    const out = evaluatePathM2(pathAlong(horizontal, 0.79), horizontal, true);
+    const out = evaluatePath(pathAlong(horizontal, 0.79), horizontal, true);
     expect(out.kind).toBe("reset");
   });
 });
@@ -51,7 +51,7 @@ describe("segment resets immediately on boundary-box exit (T-005)", () => {
     const inBox = pathAlong(horizontal, 0.6);
     const outsidePoint: Point = { x: 0.5, y: 0.9 };
     const pts = [...inBox, outsidePoint];
-    const out = evaluatePathM2(pts, horizontal, false);
+    const out = evaluatePath(pts, horizontal, false);
     expect(out.kind).toBe("exit-box");
     if (out.kind === "exit-box") {
       expect(out.exitIndex).toBe(inBox.length);
@@ -62,7 +62,7 @@ describe("segment resets immediately on boundary-box exit (T-005)", () => {
     const inBox = pathAlong(horizontal, 0.9);
     const outsidePoint: Point = { x: 0.5, y: 0.9 };
     const pts = [...inBox, outsidePoint];
-    const out = evaluatePathM2(pts, horizontal, true);
+    const out = evaluatePath(pts, horizontal, true);
     expect(out.kind).toBe("exit-box");
   });
 });

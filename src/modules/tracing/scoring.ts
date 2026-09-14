@@ -23,6 +23,28 @@ export type SegmentOutcome =
   | { kind: "complete"; coverage: number }
   | { kind: "reset"; coverage: number };
 
+export function evaluatePath(
+  points: readonly Point[],
+  segment: LineSegment,
+  fingerUp: boolean,
+): SegmentOutcome {
+  const box = computeBoundaryBox(segment);
+  for (let i = 0; i < points.length; i++) {
+    if (!isPointInBox(points[i], box)) {
+      return {
+        kind: "exit-box",
+        coverage: computeCoverage(points.slice(0, i), segment),
+        exitIndex: i,
+      };
+    }
+  }
+  const coverage = computeCoverage(points, segment);
+  if (!fingerUp) return { kind: "in-progress", coverage };
+  return coverage >= MIN_SEGMENT_COVERAGE
+    ? { kind: "complete", coverage }
+    : { kind: "reset", coverage };
+}
+
 export type SegmentOutcomeM2 =
   | SegmentOutcome
   | {

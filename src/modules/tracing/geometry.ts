@@ -128,97 +128,28 @@ function getCurveControlX(segment: LineSegment): number {
   return segment.curveControlX ?? CURVE_CONTROL_X;
 }
 
-interface StadiumParams {
-  sx: number;
-  sy: number;
-  ey: number;
-  outward: 1 | -1;
-  radius: number;
-  arcCenterX: number;
-  arcCenterY: number;
-  flatLength: number;
-  arcLength: number;
-  totalLength: number;
-}
-
-// Composite path: straight arm from start -> semicircular bulge -> straight arm to end.
-// Gives longer near-parallel sections at the endpoints and a blunt round on the far side,
-// instead of a plain cubic Bezier that curves sharply right away.
-function getStadiumParams(segment: LineSegment): StadiumParams {
-  const sx = segment.start.x;
-  const sy = segment.start.y;
-  const ey = segment.end.y;
-  const cx = getCurveControlX(segment);
-  const outward: 1 | -1 = cx >= sx ? 1 : -1;
-  const height = Math.abs(ey - sy);
-  const radius = height / 2;
-  const arcCenterX = cx - outward * radius;
-  const arcCenterY = (sy + ey) / 2;
-  const rawFlat = outward * (arcCenterX - sx);
-  const flatLength = rawFlat > 0 ? rawFlat : 0;
-  const arcLength = Math.PI * radius;
+function cubicPoint(segment: LineSegment, t: number): Point {
+  const mt = 1 - t;
+  const cp1x = getCurveControlX(segment);
+  const cp2x = getCurveControlX(segment);
   return {
-    sx,
-    sy,
-    ey,
-    outward,
-    radius,
-    arcCenterX,
-    arcCenterY,
-    flatLength,
-    arcLength,
-    totalLength: 2 * flatLength + arcLength,
+    x:
+      mt * mt * mt * segment.start.x +
+      3 * mt * mt * t * cp1x +
+      3 * mt * t * t * cp2x +
+      t * t * t * segment.end.x,
+    y:
+      mt * mt * mt * segment.start.y +
+      3 * mt * mt * t * segment.start.y +
+      3 * mt * t * t * segment.end.y +
+      t * t * t * segment.end.y,
   };
-}
-
-function stadiumPointAt(segment: LineSegment, t: number): Point {
-  const p = getStadiumParams(segment);
-  if (p.totalLength === 0) return { x: p.sx, y: p.sy };
-  const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
-  const s = clampedT * p.totalLength;
-  const vertical = p.ey >= p.sy ? 1 : -1;
-
-  if (s <= p.flatLength) {
-    return { x: p.sx + p.outward * s, y: p.sy };
-  }
-  const afterTop = s - p.flatLength;
-  if (afterTop <= p.arcLength) {
-    const alpha = p.arcLength === 0 ? 0 : afterTop / p.arcLength;
-    const theta = Math.PI * alpha;
-    return {
-      x: p.arcCenterX + p.outward * p.radius * Math.sin(theta),
-      y: p.arcCenterY - vertical * p.radius * Math.cos(theta),
-    };
-  }
-  const afterArc = afterTop - p.arcLength;
-  return { x: p.arcCenterX - p.outward * afterArc, y: p.ey };
-}
-
-function stadiumTangentAt(segment: LineSegment, t: number): UnitVector | null {
-  const p = getStadiumParams(segment);
-  if (p.totalLength === 0) return null;
-  const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
-  const s = clampedT * p.totalLength;
-  const vertical = p.ey >= p.sy ? 1 : -1;
-
-  if (s <= p.flatLength) return { x: p.outward, y: 0 };
-  const afterTop = s - p.flatLength;
-  if (afterTop <= p.arcLength) {
-    const alpha = p.arcLength === 0 ? 0 : afterTop / p.arcLength;
-    const theta = Math.PI * alpha;
-    const tx = p.outward * Math.cos(theta);
-    const ty = vertical * Math.sin(theta);
-    const len = Math.hypot(tx, ty);
-    if (len === 0) return null;
-    return { x: tx / len, y: ty / len };
-  }
-  return { x: -p.outward, y: 0 };
 }
 
 export function curvePointAt(segment: LineSegment, t: number): Point {
   if (isOvalCurve(segment)) return ovalPointAt(segment, t);
   if (isPolylineCurve(segment)) return polylinePointAt(segment, t);
-  return stadiumPointAt(segment, t);
+  return cubicPoint(segment, t);
 }
 
 function sampleCurve(
@@ -502,7 +433,19 @@ export function segmentTangentAt(
     if (len === 0) return null;
     return { x: tx / len, y: ty / len };
   }
-  return stadiumTangentAt(segment, t);
+  const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
+  const mt = 1 - clampedT;
+  const cp1x = getCurveControlX(segment);
+  const cp2x = getCurveControlX(segment);
+
+  const tx =
+    3 * mt * mt * (cp1x - segment.start.x) +
+    6 * mt * clampedT * (cp2x - cp1x) +
+    3 * clampedT * clampedT * (segment.end.x - cp2x);
+  const ty = 6 * mt * clampedT * (segment.end.y - segment.start.y);
+  const len = Math.hypot(tx, ty);
+  if (len === 0) return null;
+  return { x: tx / len, y: ty / len };
 }
 
 // Walks backward from the newest sample until straight-line distance from `last` reaches

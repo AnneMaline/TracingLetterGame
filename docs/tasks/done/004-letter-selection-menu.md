@@ -1,6 +1,6 @@
 # Task 004 — Letter selection menu and top-bar navigation (M3)
 
-**Status:** Active
+**Status:** Completed (2026-09-14 — dry-run signed off; spec-update pass applied — PRD v0.3.0, DEVSPEC v0.5.0, UISPEC v0.4.0, TESTSPEC v0.4.0)
 **Milestone:** PRD M3 — Great navigation
 
 ## What & why

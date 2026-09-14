@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.2.2
-**Last Updated:** 2026-09-07
+**Version:** 0.3.0
+**Last Updated:** 2026-09-14
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -88,9 +88,11 @@ paradigm as a sub-app of the Curious Reader container.
 
 ### Great (M3)
 
-- Remove Next/Previous; add a letter-selection screen listing all in-scope letters.
-- Add a control that returns the child to the letter-selection screen from the tracing screen at any time.
-- Flow: child picks a letter on the selection screen → taken to the tracing screen for it.
+- Replace the legacy bottom Next/Previous controls with a letter-selection-first flow and a top-bar navigation model.
+- Add a letter-selection screen listing all in-scope letters as the default app entry point.
+- Add a top-left Menu control that returns the child to the letter-selection screen from the tracing screen at any time.
+- Keep top-right Next navigation on the tracing screen to quickly advance letters with wraparound behavior.
+- Flow: app opens on letter selection → child picks a letter → tracing starts at segment 1 for that letter.
 
 ### Container integration (M4, Curious Learning convention)
 
@@ -102,7 +104,7 @@ paradigm as a sub-app of the Curious Reader container.
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation                                  | TBD         |
 | M2 — Better accuracy detection | Degree-of-deviation cancel-on-threshold, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete | TBD         |
-| M3 — Great navigation          | Letter-selection screen, anytime back-navigation                                                                              | TBD         |
+| M3 — Great navigation          | Letter-selection screen as app entry, top-bar Menu back-navigation, and top-bar Next wrap navigation                          | TBD         |
 | M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                                                              | TBD         |
 
 ## 8. Constraints & Assumptions
@@ -145,6 +147,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-14 — Copilot — Task 004 spec-update pass: clarified M3 navigation to match shipped behavior (letter-selection as app entry plus top-bar Menu and top-bar Next-with-wrap controls) and updated the M3 milestone description accordingly.
 - 2026-09-07 — Copilot — M2 spec-update pass: rewrote the M2 scope from "deviation pauses and resumes at the point of departure" to "deviation cancels the segment"; added start-region enforcement and end-region auto-complete to the M2 scope; resolved the deviation-threshold Open Question (45°) and added Resolved Decisions for the deviation semantics, drag-direction sampling method, and start/end region radii.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-box shape/padding open question (rectangle with uniform `boundaryPadding`, MVP default 0.06 normalized units) and the celebration-animation asset open question (lightweight CSS-keyframe overlay, no external asset), following the M1 MVP core tracing loop implementation and dry-run.
 - 2026-09-03 — Copilot — Replaced the placeholder whole-path-tolerance + mastery/stars MVP concept with the real product brief: line-segment vector tracing, invisible boundary box with exit-restart rule, 80% finger-up completion threshold, tiered MVP/Better/Great scope, and a non-English-content-compatible data model constraint. Removed: mastery/stars/locked-practicing-mastered concept, whole-letter path-tolerance scoring, home/letter-select-in-MVP, audio-cue goal. Added: line-segment data model, boundary-box + 80% rule, degree-of-deviation (Better) and letter-selection (Great) tiers, greenfield/non-English project metadata.

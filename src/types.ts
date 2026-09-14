@@ -9,7 +9,7 @@ export interface LineSegment {
   boundaryHalfWidth?: number;
   isCurve?: boolean;
   curveControlX?: number;
-  curveKind?: "cubic" | "oval" | "polyline";
+  curveKind?: "oval" | "polyline";
   polylinePoints?: Point[];
   ovalCenter?: Point;
   ovalRadiusX?: number;
@@ -23,16 +23,4 @@ export interface LetterDefinition {
   id: string;
   displayLabel: string;
   segments: LineSegment[];
-}
-
-export interface SegmentTraceState {
-  points: Point[];
-  isWithinBoundaryBox: boolean;
-  progressAlongVector: number;
-}
-
-export interface LetterSessionState {
-  letterIndex: number;
-  currentSegmentIndex: number;
-  completedSegments: boolean[];
 }

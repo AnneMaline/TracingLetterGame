@@ -6,7 +6,7 @@ import { TracingScreen } from "../TracingScreen";
 describe("TracingScreen smoke test — every letter renders (task 003)", () => {
   it("renders each letter's start/end/arrow markers when navigated to", () => {
     render(<TracingScreen letters={letters} />);
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("A");
     expect(screen.getByTestId("segment-guide-start")).toBeInTheDocument();
     expect(screen.getByTestId("segment-guide-end")).toBeInTheDocument();
 
@@ -14,8 +14,8 @@ describe("TracingScreen smoke test — every letter renders (task 003)", () => {
     // 25 clicks brings us from A to Z; a final click wraps back to A.
     for (let i = 1; i < letters.length; i++) {
       fireEvent.click(nextButton);
-      expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
-        `Letter ${letters[i].displayLabel}`,
+      expect(screen.getByTestId("current-letter-label")).toHaveTextContent(
+        letters[i].displayLabel,
       );
       expect(screen.getByTestId("segment-guide-start")).toBeInTheDocument();
       expect(screen.getByTestId("segment-guide-end")).toBeInTheDocument();
@@ -23,8 +23,8 @@ describe("TracingScreen smoke test — every letter renders (task 003)", () => {
     }
 
     fireEvent.click(nextButton);
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
-      `Letter ${letters[0].displayLabel}`,
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent(
+      letters[0].displayLabel,
     );
   });
 });

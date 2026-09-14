@@ -51,24 +51,25 @@ describe("Tracing screen renders start/direction/end markers (T-009)", () => {
   });
 });
 
-// T-010 & T-012 (M3 Top-bar navigation)
-describe("Top-bar navigation: Next and Menu (T-010, T-012)", () => {
-  it("advances forward through every letter and wraps to first via next-letter", () => {
+// T-010
+describe("Next/Previous cycle through letters (T-010)", () => {
+  it("advances forward through every letter and wraps to first", () => {
     render(<TracingScreen letters={[A, B, C]} />);
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("A");
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter B");
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("B");
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter C");
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("C");
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("A");
   });
 
-  it("calls onBackToMenu when menu button is clicked (T-012)", () => {
-    const onBack = vi.fn();
-    render(<TracingScreen letters={[A, B, C]} onBackToMenu={onBack} />);
-    fireEvent.click(screen.getByTestId("menu-button"));
-    expect(onBack).toHaveBeenCalledTimes(1);
+  it("previous from first wraps to last, then walks backward", () => {
+    render(<TracingScreen letters={[A, B, C]} />);
+    fireEvent.click(screen.getByTestId("prev-letter"));
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("C");
+    fireEvent.click(screen.getByTestId("prev-letter"));
+    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("B");
   });
 });
 

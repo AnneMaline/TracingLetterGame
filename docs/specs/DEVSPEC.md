@@ -1,7 +1,7 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.4.1
+**Version:** 0.4.2
 **Last Updated:** 2026-09-11
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** PRD v0.2.2
@@ -60,6 +60,11 @@ interface LetterSessionState {
   completedSegments: boolean[]; // one entry per segment in the current letter's `segments` array
 }
 ```
+
+`SegmentTraceState` and `LetterSessionState` are **conceptual** shapes: the implementation
+realizes them as hook-local `useState` variables inside `useSegmentTrace` (plus a `SegmentTraceView`
+DTO the hook exposes to its render tree). They are not currently exported as top-level TypeScript
+interfaces from `src/types.ts` because no other code needed to import them.
 
 Whether `LetterSessionState`/progress persists across reloads is **not specified** in the product
 brief — tracked as an Open Question (§13). MVP may treat all state as in-memory/session-only unless
@@ -337,6 +342,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-11 — Copilot — Dead-code cleanup pass: removed unused `SegmentTraceState` and `LetterSessionState` interface declarations from `src/types.ts` (never imported) and clarified in §2 that they remain conceptual shapes realized as hook-local state; removed the unused `"cubic"` member from `LineSegment.curveKind` (only `"oval"` and `"polyline"` have code paths); removed the dead M1 `evaluatePath` helper from `src/modules/tracing/scoring.ts` (production has used `evaluatePathM2` since M2 shipped) and migrated its unit tests to `evaluatePathM2` — behavior unchanged. Bumped DEVSPEC to v0.4.2 (patch: no behavior change).
 - 2026-09-11 — Copilot — Task 003 spec-update pass: documented uppercase A-Z fixture completion as the baseline authored set, added resolved decisions for uppercase stroke-order and curve-polyline authoring conventions, and bumped DEVSPEC to v0.4.1 (PRD trace unchanged at v0.2.2).
 - 2026-09-07 — Copilot — M2 spec-update pass: replaced the Deviation Detection module's pause/resume behavior with cancel-on-threshold (matches shipped behavior; dry-run showed pause/resume produced a jarring straight-line snap). Removed `SegmentTraceState.deviationPaused` and `SegmentTraceState.departurePoint` from the Data Schema (dead now that pause/resume is gone). Added the start-region and end-region tasks to the Segment Completion module (start-region enforcement was implicit before; end-region auto-complete is a new UX affordance). Bumped `Traces to:` PRD reference to v0.2.2. Closed the deviation-threshold Open Question; added Resolved Decisions for the deviation semantics, drag-direction sampling method, and start/end region radii.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-padding Open Question (default `boundaryPadding` = 0.06 normalized units, verified in dry-run) and the celebration-animation-asset Open Question (CSS-keyframe emoji overlay with a short pre-celebration pause so the finished letter is visible before it plays); bumped `Traces to:` PRD reference to v0.2.1; no module behavior or Data Schema changed by this pass.

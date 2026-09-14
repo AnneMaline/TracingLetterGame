@@ -1,10 +1,10 @@
 # TESTSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.3.1
+**Version:** 0.3.2
 **Last Updated:** 2026-09-11
 **Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
-**Traces to:** PRD v0.2.2 · DEVSPEC v0.4.1 · UISPEC v0.3.1
+**Traces to:** PRD v0.2.2 · DEVSPEC v0.4.2 · UISPEC v0.3.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector
 > tracing, boundary box, 80% rule. See §8 Spec Change Log.
@@ -106,6 +106,7 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-11 — Copilot — Dead-code cleanup pass (paired with DEVSPEC v0.4.2): T-003/T-004/T-005 unit tests migrated from the removed M1 `evaluatePath` helper to the production `evaluatePathM2` (behavior unchanged — the M1 rules the tests exercise are a subset of M2). Bumped `Traces to:` DEVSPEC reference to v0.4.2. Flagged four pre-existing curve-related test failures introduced in the task-003 merge (`geometry.test.ts` "uses curve distance for curved segments" and "projects points along the curve and reaches near-complete coverage"; `deviation.test.ts` "Curve segments cancel zigzags and backtracking" both cases) — they assert a filled-stadium-region containment model that the shipped code does not implement (code uses a narrow corridor around the curve line, per DEVSPEC §3 boundary-box definition). Left the failing tests untouched pending a human decision on whether to correct the assertions or change the curve-boundary model.
 - 2026-09-11 — Copilot — Task 003 spec-update pass: updated fixtures section to match the shipped in-repo TypeScript fixture strategy, added T-020 (alphabet fixture invariants) and T-021 (all-letter render smoke), and bumped `Traces to:` to PRD v0.2.2 / DEVSPEC v0.4.1 / UISPEC v0.3.1.
 - 2026-09-07 — Copilot — M2 spec-update pass: rewrote T-007 from "pause preserves progress" to "deviation past threshold cancels the trace" (asserts the `deviation-reset` outcome, not a pause/resume flow); added T-018 (start-region enforcement) and T-019 (end-region auto-complete); updated the deviate-fixture description and the M2 dry-run protocol step; closed the deviation-threshold Open Question; bumped `Traces to:` to PRD v0.2.2 / DEVSPEC v0.4.0 / UISPEC v0.3.0.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-box padding fixture Open Question (fixtures use DEVSPEC default `boundaryPadding` = 0.06); bumped `Traces to:` to PRD v0.2.1 / DEVSPEC v0.3.2 / UISPEC v0.2.1; noted that T-001–T-005, T-009, T-010, T-013, T-014 are implemented and passing as of the M1 core-tracing-loop task (T-016 offline file:// launch deferred to M4 per the task's scope).

@@ -14,7 +14,7 @@ interface Props {
 }
 
 const VIEWBOX_SIZE = 400;
-export const CURVE_X = 0.75;
+const CURVE_X = 0.75;
 const OVAL_PATH_STEPS = 96;
 
 export const curvePath = (segment: LineSegment) => {
@@ -31,7 +31,22 @@ export const curvePath = (segment: LineSegment) => {
         .join(" ")
     );
   }
-  return `M ${segment.start.x} ${segment.start.y} C ${segment.curveControlX ?? CURVE_X} ${segment.start.y} ${segment.curveControlX ?? CURVE_X} ${segment.end.y} ${segment.end.x} ${segment.end.y}`;
+  const cx = segment.curveControlX ?? CURVE_X;
+  const sx = segment.start.x;
+  const sy = segment.start.y;
+  const ey = segment.end.y;
+  const outward = cx >= sx ? 1 : -1;
+  const radius = Math.abs(ey - sy) / 2;
+  const arcX = cx - outward * radius;
+  const rawFlat = outward * (arcX - sx);
+  const flat = rawFlat > 0 ? rawFlat : 0;
+  const armEndX = sx + outward * flat;
+  const sweepFlag = ey > sy === outward > 0 ? 1 : 0;
+  return (
+    `M ${sx} ${sy} L ${armEndX} ${sy} ` +
+    `A ${radius} ${radius} 0 0 ${sweepFlag} ${armEndX} ${ey} ` +
+    `L ${sx} ${ey}`
+  );
 };
 
 export function TraceSurface({

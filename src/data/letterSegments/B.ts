@@ -9,13 +9,13 @@ const letterB: LetterDefinition = {
       start: { x: 0.25, y: 0.14 },
       end: { x: 0.25, y: 0.5 },
       isCurve: true,
-      curveControlX: 0.72,
+      curveControlX: 0.65,
     },
     {
       start: { x: 0.25, y: 0.5 },
       end: { x: 0.25, y: 0.86 },
       isCurve: true,
-      curveControlX: 0.72,
+      curveControlX: 0.65,
     },
   ],
 };

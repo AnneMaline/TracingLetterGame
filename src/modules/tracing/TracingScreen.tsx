@@ -1,20 +1,22 @@
 import { useCallback, useState } from "react";
 import type { LetterDefinition } from "../../types";
-import { NextPreviousControls } from "../letter-nav/NextPreviousControls";
 import { LetterTracer } from "./LetterTracer";
+import { TracingHeader } from "./TracingHeader";
 
 interface Props {
   letters: LetterDefinition[];
+  initialLetterIndex?: number;
+  onBackToMenu?: () => void;
 }
 
-export function TracingScreen({ letters }: Props) {
-  const [letterIndex, setLetterIndex] = useState(0);
+export function TracingScreen({
+  letters,
+  initialLetterIndex = 0,
+  onBackToMenu,
+}: Props) {
+  const [letterIndex, setLetterIndex] = useState(initialLetterIndex);
   const total = letters.length;
   const letter = letters[letterIndex];
-
-  const goPrevious = useCallback(() => {
-    setLetterIndex((i) => (i - 1 + total) % total);
-  }, [total]);
 
   const goNext = useCallback(() => {
     setLetterIndex((i) => (i + 1) % total);
@@ -27,29 +29,17 @@ export function TracingScreen({ letters }: Props) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "1.5rem 1rem",
+        padding: "1rem",
         gap: "1rem",
       }}
       data-testid="tracing-screen"
     >
-      <h1
-        style={{
-          fontSize: "1.25rem",
-          fontWeight: 600,
-          letterSpacing: "0.05em",
-          textTransform: "uppercase",
-          color: "#7a8ba0",
-          margin: 0,
-        }}
-      >
-        TraceQuest
-      </h1>
-      <LetterTracer key={letter.id} letter={letter} />
-      <NextPreviousControls
+      <TracingHeader
         displayLabel={letter.displayLabel}
-        onPrevious={goPrevious}
+        onBackToMenu={onBackToMenu}
         onNext={goNext}
       />
+      <LetterTracer key={letter.id} letter={letter} />
     </main>
   );
 }

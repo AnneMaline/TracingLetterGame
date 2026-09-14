@@ -4,7 +4,7 @@
 **Version:** 0.3.2
 **Last Updated:** 2026-09-11
 **Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
-**Traces to:** PRD v0.2.2 · DEVSPEC v0.4.2 · UISPEC v0.3.1
+**Traces to:** PRD v0.2.2 · DEVSPEC v0.4.1 · UISPEC v0.3.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector
 > tracing, boundary box, 80% rule. See §8 Spec Change Log.

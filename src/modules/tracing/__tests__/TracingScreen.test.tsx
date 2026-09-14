@@ -51,25 +51,24 @@ describe("Tracing screen renders start/direction/end markers (T-009)", () => {
   });
 });
 
-// T-010
-describe("Next/Previous cycle through letters (T-010)", () => {
-  it("advances forward through every letter and wraps to first", () => {
+// T-010 & T-012 (M3 Top-bar navigation)
+describe("Top-bar navigation: Next and Menu (T-010, T-012)", () => {
+  it("advances forward through every letter and wraps to first via next-letter", () => {
     render(<TracingScreen letters={[A, B, C]} />);
-    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("A");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("B");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter B");
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("C");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter C");
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("A");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
   });
 
-  it("previous from first wraps to last, then walks backward", () => {
-    render(<TracingScreen letters={[A, B, C]} />);
-    fireEvent.click(screen.getByTestId("prev-letter"));
-    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("C");
-    fireEvent.click(screen.getByTestId("prev-letter"));
-    expect(screen.getByTestId("current-letter-label")).toHaveTextContent("B");
+  it("calls onBackToMenu when menu button is clicked (T-012)", () => {
+    const onBack = vi.fn();
+    render(<TracingScreen letters={[A, B, C]} onBackToMenu={onBack} />);
+    fireEvent.click(screen.getByTestId("menu-button"));
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });
 

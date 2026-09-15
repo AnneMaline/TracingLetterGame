@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.4.2
-**Last Updated:** 2026-09-11
+**Version:** 0.5.0
+**Last Updated:** 2026-09-14
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.2.2
+**Traces to:** PRD v0.3.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -79,13 +79,16 @@ resolved otherwise.
   1. **MVP:** Render Next/Previous buttons; advance/retreat `letterIndex` through the ordered
      in-scope letter list, wrapping from the last letter to the first and from the first to the
      last.
-  2. **Great (M3):** Replace Next/Previous with a letter-selection screen listing every in-scope
-     `LetterDefinition`; tapping one loads the Tracing screen for it, resetting `LetterSessionState`.
-  3. **Great (M3):** Add a control on the Tracing screen that returns to the letter-selection
-     screen at any time, from any tracing state, discarding the in-progress segment with no penalty.
+  2. **Great (M3):** Make the letter-selection screen the default app entry point, listing every
+     in-scope `LetterDefinition`; tapping one loads the Tracing screen for it, resetting `LetterSessionState`.
+  3. **Great (M3):** Replace bottom Next/Previous with a top bar on the Tracing screen containing:
+     (a) a top-left Menu control that returns to the letter-selection screen at any time from any
+     tracing state and discards any in-progress segment, and (b) a top-right Next control that
+     advances to the next letter with wraparound and resets to segment 1.
 - **Exit Criterion:** MVP — Next/Previous correctly cycles through every in-scope letter, loading
-  the correct `LetterDefinition` each time. Great — selecting any letter from the selection screen
-  opens Tracing for it, and the back-to-selection control is reachable from every Tracing state.
+  the correct `LetterDefinition` each time. Great — app launch opens letter selection; selecting any
+  letter opens Tracing for it; the top-left Menu control is reachable from every Tracing state; and
+  the top-right Next control advances through all letters with wraparound.
 
 #### Module: Line Segment Rendering & Directional Guide
 
@@ -342,6 +345,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-14 — Copilot — Task 004 spec-update pass: updated the Letter Navigation module to match shipped M3 behavior (letter-selection as app entry, top-bar Menu back-to-selection control from any tracing state, and top-bar Next wrap navigation) and bumped `Traces to:` PRD to v0.3.0.
 - 2026-09-11 — Copilot — Dead-code cleanup pass: removed unused `SegmentTraceState` and `LetterSessionState` interface declarations from `src/types.ts` (never imported) and clarified in §2 that they remain conceptual shapes realized as hook-local state; removed the unused `"cubic"` member from `LineSegment.curveKind` (only `"oval"` and `"polyline"` have code paths); removed the dead M1 `evaluatePath` helper from `src/modules/tracing/scoring.ts` (production has used `evaluatePathM2` since M2 shipped) and migrated its unit tests to `evaluatePathM2` — behavior unchanged. Bumped DEVSPEC to v0.4.2 (patch: no behavior change).
 - 2026-09-11 — Copilot — Task 003 spec-update pass: documented uppercase A-Z fixture completion as the baseline authored set, added resolved decisions for uppercase stroke-order and curve-polyline authoring conventions, and bumped DEVSPEC to v0.4.1 (PRD trace unchanged at v0.2.2).
 - 2026-09-07 — Copilot — M2 spec-update pass: replaced the Deviation Detection module's pause/resume behavior with cancel-on-threshold (matches shipped behavior; dry-run showed pause/resume produced a jarring straight-line snap). Removed `SegmentTraceState.deviationPaused` and `SegmentTraceState.departurePoint` from the Data Schema (dead now that pause/resume is gone). Added the start-region and end-region tasks to the Segment Completion module (start-region enforcement was implicit before; end-region auto-complete is a new UX affordance). Bumped `Traces to:` PRD reference to v0.2.2. Closed the deviation-threshold Open Question; added Resolved Decisions for the deviation semantics, drag-direction sampling method, and start/end region radii.

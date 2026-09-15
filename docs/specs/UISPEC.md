@@ -1,20 +1,20 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.3.1
-**Last Updated:** 2026-09-11
+**Version:** 0.4.0
+**Last Updated:** 2026-09-14
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.2.2 · DEVSPEC v0.4.1
+**Traces to:** PRD v0.3.0 · DEVSPEC v0.5.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
 
 ## 1. Screen Inventory
 
-| Screen           | Purpose                                                 | Entry point(s)                                     | Milestone  |
-| ---------------- | ------------------------------------------------------- | -------------------------------------------------- | ---------- |
-| Tracing          | Trace the current letter's line segments, one at a time | App launch, Next/Previous, Letter Selection        | M1         |
-| Letter Selection | Choose which letter to trace                            | App launch (M3+), "back to selection" from Tracing | M3 (Great) |
+| Screen           | Purpose                                                 | Entry point(s)                              | Milestone  |
+| ---------------- | ------------------------------------------------------- | ------------------------------------------- | ---------- |
+| Tracing          | Trace the current letter's line segments, one at a time | Letter Selection, top-bar Next              | M1         |
+| Letter Selection | Choose which letter to trace                            | App launch (M3+), top-bar Menu from Tracing | M3 (Great) |
 
 ## 2. Screen Details
 
@@ -22,11 +22,13 @@
 
 - **Layout:** The current line segment is shown with a start marker, a direction indicator
   (arrow along the start→end vector), and an end marker. The boundary box is **never rendered**
-  (it's an invisible accuracy check, per DEVSPEC Segment Completion module). MVP: Next/Previous
-  buttons. M3 (Great): Next/Previous are removed and replaced by a "back to selection" control.
+  (it's an invisible accuracy check, per DEVSPEC Segment Completion module). MVP: bottom
+  Next/Previous buttons. M3 (Great): bottom Next/Previous are removed and replaced by a top bar
+  with a left "Menu" control and right "Next" control.
 - **Components:** `SegmentGuide` (start/direction/end markers, references DEVSPEC Line Segment
   Rendering module), `TraceSurface` (captures drag input, references DEVSPEC Segment Completion &
-  Boundary Box module), `NextPreviousControls` (MVP only), `BackToSelectionControl` (M3 only).
+  Boundary Box module), `NextPreviousControls` (MVP only), and `TracingHeader` with
+  `menu-button`/`next-letter` actions (M3 only).
 - **States:**
   - `awaiting-start` — segment guide shown, no drag in progress.
   - `tracing` — child is actively dragging inside the boundary box; visual feedback follows the drag.
@@ -35,13 +37,13 @@
   - `segment-complete` — coverage ≥ 80% confirmed either on finger-up while in-box or on
     pointer entry into the segment's end region (M2); brief transition to the next segment.
   - `letter-complete` — all segments done; celebration animation plays.
-- **Visibility rules:** Next/Previous visible only in MVP (removed once M3 ships). Back-to-selection
-  control visible only once M3 ships, and must be reachable from every state above. The boundary
+- **Visibility rules:** Bottom Next/Previous visible only in MVP (removed once M3 ships). M3 top-bar
+  Menu and Next controls are visible in Tracing and reachable from every state above. The boundary
   box itself is never visible in any state, in any milestone.
 - **Transitions:** `segment-complete` → next segment's `awaiting-start`, or `letter-complete` if
   it was the last segment. `segment-reset` → `awaiting-start` for the same segment (progress on
   that segment discarded; other completed segments unaffected). `letter-complete` → celebration
-  ends → next letter via Next (MVP) or back to Letter Selection (M3).
+  ends → remain on the completed letter with top-bar Menu/Next available.
 
 ### Screen: Letter Selection (M3 — Great tier)
 
@@ -96,6 +98,17 @@ Feature: Letter navigation (MVP)
     When the child taps "Next"
     Then the Tracing screen shows the first segment of letter "B"
 
+Feature: Top-bar navigation (M3 — Great tier)
+  Scenario: Advancing to the next letter via top-right Next
+    Given the Tracing screen is displayed for letter "B"
+    When the child taps the top-right "Next" button
+    Then the Tracing screen is displayed for letter "C"
+
+  Scenario: Top-right Next wraps from Z to A
+    Given the Tracing screen is displayed for letter "Z"
+    When the child taps the top-right "Next" button
+    Then the Tracing screen is displayed for letter "A"
+
 Feature: Deviation cancels the trace (M2 — Better tier)
   Scenario: Drifting beyond the threshold cancels the segment
     Given the child is tracing a segment and stays within the boundary box
@@ -128,7 +141,7 @@ Feature: Letter selection (M3 — Great tier)
 
   Scenario: Returning to selection mid-trace
     Given the Tracing screen is displayed for any letter and segment
-    When the child taps the back-to-selection control
+    When the child taps the top-left "Menu" control
     Then the Letter Selection screen is displayed
     And the in-progress segment is discarded with no penalty
 
@@ -140,7 +153,7 @@ Feature: Letter completion celebration
 
 ## 5. Accessibility Requirements
 
-- Minimum touch target size 44x44px for Next/Previous, letter tiles, and the back-to-selection control.
+- Minimum touch target size 44x44px for Next/Previous (MVP), letter tiles, and the M3 top-bar Menu/Next controls.
 - Text/marker contrast ratio ≥ 4.5:1 against background (WCAG AA).
 - All interactive controls reachable and operable via keyboard for desktop fallback (Tab + Enter/Space).
 - The boundary box is intentionally never shown to the child (functional requirement) — this is a
@@ -163,11 +176,13 @@ Feature: Letter completion celebration
 | 2026-09-04 | Celebration animation is a full-tracing-surface CSS-keyframe overlay (⭐ pop + ✨ spin, ~1.5 s, `pointer-events: none`), preceded by a short pause after the last segment completes so the finished letter stays visible before the celebration plays | Meets DEVSPEC legacy-hardware performance constraint; gives the child visual closure on the completed letter before the reward plays               |
 | 2026-09-07 | Removed the `tracing-paused` state and its pause/resume transitions; M2 deviation past threshold now transitions directly `tracing → segment-reset` (same visible effect as a boundary-box exit)                                                      | Follows the DEVSPEC v0.4.0 deviation model change                                                                                                  |
 | 2026-09-07 | Added a `tracing → segment-complete` transition when the pointer enters the segment's end region with ≥80% coverage (no finger-up required)                                                                                                           | Overshooting the end marker used to risk a false fail; auto-complete on end-region entry makes reaching the end marker itself the completion event |
+| 2026-09-14 | M3 navigation ships as a top bar in Tracing (`Menu` left, `Next` right), replacing only the legacy bottom Next/Previous controls while preserving next-letter wrap navigation                                                                         | Matches Task 004 implementation and keeps fast in-game progression while making Letter Selection the primary entry flow                            |
 
 ## 8. Spec Change Log
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-14 — Copilot — Task 004 spec-update pass: reconciled M3 navigation wording to the shipped top-bar model (`Menu` + `Next`), updated screen entry points/visibility rules/transitions (including post-celebration staying on the completed letter with top-bar controls available), and bumped `Traces to:` to PRD v0.3.0 / DEVSPEC v0.5.0.
 - 2026-09-11 — Copilot — Task 003 spec-update pass: bumped `Traces to:` DEVSPEC reference to v0.4.1 after uppercase A-Z fixture authoring decisions were recorded; no screen/state/Gherkin behavior changed in UISPEC.
 - 2026-09-07 — Copilot — M2 spec-update pass: removed the `tracing-paused` state and its transitions (deviation now cancels the segment rather than pausing); added a `tracing → segment-complete` transition on entering the end region with ≥80% coverage; added start-region enforcement to the state machine; rewrote the M2 Gherkin scenarios ("deviation cancels the trace" replaces the pause/resume feature); bumped `Traces to:` to PRD v0.2.2 and DEVSPEC v0.4.0.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the celebration-animation style Open Question (full-viewport CSS-keyframe emoji overlay with a short pre-celebration pause that keeps the completed letter visible); bumped `Traces to:` to PRD v0.2.1 and DEVSPEC v0.3.2; no screen inventory, state machine, or Gherkin scenario changed by this pass.

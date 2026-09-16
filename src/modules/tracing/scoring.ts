@@ -16,6 +16,40 @@ import {
 } from "./geometry";
 
 const BACKTRACK_TOLERANCE = 0.02;
+const POLYLINE_CORNER_TOLERANCE = 0.04;
+
+function getPolylineCornerParameters(segment: LineSegment): number[] {
+  if (segment.curveKind !== "polyline" || !segment.polylinePoints?.length) {
+    return [];
+  }
+
+  const points = [segment.start, ...segment.polylinePoints, segment.end];
+  const lengths: number[] = [];
+  let totalLength = 0;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const length = Math.hypot(
+      points[i + 1].x - points[i].x,
+      points[i + 1].y - points[i].y,
+    );
+    lengths.push(length);
+    totalLength += length;
+  }
+
+  if (totalLength === 0) return [];
+
+  let walked = 0;
+  return lengths.slice(0, -1).map((length) => {
+    walked += length;
+    return walked / totalLength;
+  });
+}
+
+function isNearPolylineCorner(segment: LineSegment, t: number): boolean {
+  return getPolylineCornerParameters(segment).some(
+    (cornerT) => Math.abs(t - cornerT) <= POLYLINE_CORNER_TOLERANCE,
+  );
+}
 
 export type SegmentOutcome =
   | { kind: "in-progress"; coverage: number }
@@ -66,7 +100,9 @@ export function evaluatePathM2(
     const prevT = projectPointOntoSegment(prev, segment);
     const tailT = projectPointOntoSegment(tail, segment);
 
-    if (tailT + BACKTRACK_TOLERANCE < prevT) {
+    const nearPolylineCorner = isNearPolylineCorner(segment, tailT);
+
+    if (tailT + BACKTRACK_TOLERANCE < prevT && !nearPolylineCorner) {
       return {
         kind: "deviation-reset",
         coverage: computeCoverage(points, segment),
@@ -78,7 +114,12 @@ export function evaluatePathM2(
       ? segmentTangentAt(segment, tailT)
       : segmentDirection(segment);
     const drag = computeDragDirection(points, baselineDistance);
-    if (ideal && drag && angleBetweenDegrees(drag, ideal) > thresholdDegrees) {
+    if (
+      ideal &&
+      drag &&
+      !nearPolylineCorner &&
+      angleBetweenDegrees(drag, ideal) > thresholdDegrees
+    ) {
       return {
         kind: "deviation-reset",
         coverage: computeCoverage(points, segment),

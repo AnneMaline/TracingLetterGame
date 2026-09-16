@@ -148,20 +148,18 @@ describe("boundary box containment (T-002)", () => {
   it("uses curve distance for curved segments", () => {
     const box = computeBoundaryBox(curve);
     expect(isPointInBox({ x: 0.25, y: 0.14 }, box)).toBe(true);
-    expect(isPointInBox({ x: 0.625, y: 0.32 }, box)).toBe(true);
+    expect(isPointInBox(curvePointAt(curve, 0.5), box)).toBe(true);
     expect(isPointInBox({ x: 0.25, y: 0.32 }, box)).toBe(false);
   });
 });
 
 describe("curve projection", () => {
   it("projects points along the curve and reaches near-complete coverage", () => {
-    const pts: Point[] = [
-      { x: 0.25, y: 0.14 },
-      { x: 0.43, y: 0.2 },
-      { x: 0.56, y: 0.3 },
-      { x: 0.43, y: 0.42 },
-      { x: 0.25, y: 0.5 },
-    ];
+    const pts: Point[] = [];
+    const steps = 64;
+    for (let i = 0; i <= steps; i++) {
+      pts.push(curvePointAt(curve, i / steps));
+    }
     expect(computeCoverage(pts, curve)).toBeGreaterThan(0.85);
   });
 

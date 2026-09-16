@@ -7,11 +7,16 @@ const letterR: LetterDefinition = {
     { start: { x: 0.25, y: 0.14 }, end: { x: 0.25, y: 0.86 } },
     {
       start: { x: 0.25, y: 0.14 },
-      end: { x: 0.25, y: 0.5 },
+      end: { x: 0.6, y: 0.86 },
       isCurve: true,
-      curveControlX: 0.65,
+      curveKind: "polyline",
+      polylinePoints: [
+        { x: 0.50, y: 0.14 },
+        { x: 0.68, y: 0.28 },
+        { x: 0.58, y: 0.46 },
+        { x: 0.25, y: 0.50 },
+      ],
     },
-    { start: { x: 0.25, y: 0.5 }, end: { x: 0.6, y: 0.86 } },
   ],
 };
 

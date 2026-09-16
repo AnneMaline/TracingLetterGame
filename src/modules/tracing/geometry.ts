@@ -45,6 +45,11 @@ type SplineCurveSegment = LineSegment & {
   splinePoints: Point[];
 };
 
+type BezierCurveSegment = LineSegment & {
+  curveKind: "bezier";
+  bezierSegments: NonNullable<LineSegment["bezierSegments"]>;
+};
+
 function isOvalCurve(segment: LineSegment): segment is OvalCurveSegment {
   return (
     segment.curveKind === "oval" &&
@@ -71,6 +76,14 @@ function isSplineCurve(segment: LineSegment): segment is SplineCurveSegment {
     segment.curveKind === "spline" &&
     Array.isArray(segment.splinePoints) &&
     segment.splinePoints.length >= 1
+  );
+}
+
+function isBezierCurve(segment: LineSegment): segment is BezierCurveSegment {
+  return (
+    segment.curveKind === "bezier" &&
+    Array.isArray(segment.bezierSegments) &&
+    segment.bezierSegments.length >= 1
   );
 }
 
@@ -130,6 +143,43 @@ function getControlPathLengths(points: readonly Point[]) {
   }
 
   return { lengths, totalLength };
+}
+
+function cubicBezierPoint(
+  start: Point,
+  control1: Point,
+  control2: Point,
+  end: Point,
+  t: number,
+): Point {
+  const mt = 1 - t;
+  return {
+    x:
+      mt * mt * mt * start.x +
+      3 * mt * mt * t * control1.x +
+      3 * mt * t * t * control2.x +
+      t * t * t * end.x,
+    y:
+      mt * mt * mt * start.y +
+      3 * mt * mt * t * control1.y +
+      3 * mt * t * t * control2.y +
+      t * t * t * end.y,
+  };
+}
+
+function bezierPointAt(segment: LineSegment, t: number): Point {
+  if (!isBezierCurve(segment)) return segment.start;
+  const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
+  const scaledT = clampedT * segment.bezierSegments.length;
+  const index = Math.min(
+    segment.bezierSegments.length - 1,
+    Math.floor(scaledT),
+  );
+  const localT = scaledT - index;
+  const start =
+    index === 0 ? segment.start : segment.bezierSegments[index - 1].end;
+  const { control1, control2, end } = segment.bezierSegments[index];
+  return cubicBezierPoint(start, control1, control2, end, localT);
 }
 
 function splinePointAt(segment: LineSegment, t: number): Point {
@@ -296,6 +346,7 @@ function stadiumTangentAt(segment: LineSegment, t: number): UnitVector | null {
 
 export function curvePointAt(segment: LineSegment, t: number): Point {
   if (isOvalCurve(segment)) return ovalPointAt(segment, t);
+  if (isBezierCurve(segment)) return bezierPointAt(segment, t);
   if (isSplineCurve(segment)) return splinePointAt(segment, t);
   if (isPolylineCurve(segment)) return polylinePointAt(segment, t);
   return stadiumPointAt(segment, t);
@@ -582,7 +633,7 @@ export function segmentTangentAt(
     if (len === 0) return null;
     return { x: tx / len, y: ty / len };
   }
-  if (isSplineCurve(segment)) {
+  if (isSplineCurve(segment) || isBezierCurve(segment)) {
     const before = curvePointAt(segment, Math.max(0, t - 0.01));
     const after = curvePointAt(segment, Math.min(1, t + 0.01));
     const dx = after.x - before.x;

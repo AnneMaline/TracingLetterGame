@@ -9,12 +9,18 @@ const letterR: LetterDefinition = {
       start: { x: 0.25, y: 0.14 },
       end: { x: 0.6, y: 0.86 },
       isCurve: true,
-      curveKind: "spline",
-      splinePoints: [
-        { x: 0.50, y: 0.14 },
-        { x: 0.68, y: 0.28 },
-        { x: 0.58, y: 0.46 },
-        { x: 0.25, y: 0.50 },
+      curveKind: "bezier",
+      bezierSegments: [
+        {
+          control1: { x: 0.62, y: 0.14 },
+          control2: { x: 0.68, y: 0.50 },
+          end: { x: 0.25, y: 0.50 },
+        },
+        {
+          control1: { x: 0.36, y: 0.57 },
+          control2: { x: 0.50, y: 0.72 },
+          end: { x: 0.60, y: 0.86 },
+        },
       ],
     },
   ],

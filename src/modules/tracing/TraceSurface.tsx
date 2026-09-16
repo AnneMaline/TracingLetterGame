@@ -19,6 +19,7 @@ const OVAL_PATH_STEPS = 96;
 
 export const curvePath = (segment: LineSegment) => {
   if (
+    segment.curveKind === "bezier" ||
     segment.curveKind === "oval" ||
     segment.curveKind === "polyline" ||
     segment.curveKind === "spline"

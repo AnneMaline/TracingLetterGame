@@ -3,13 +3,20 @@ export interface Point {
   y: number;
 }
 
+export interface BezierSegment {
+  control1: Point;
+  control2: Point;
+  end: Point;
+}
+
 export interface LineSegment {
   start: Point;
   end: Point;
   boundaryHalfWidth?: number;
   isCurve?: boolean;
   curveControlX?: number;
-  curveKind?: "oval" | "polyline" | "spline";
+  curveKind?: "bezier" | "oval" | "polyline" | "spline";
+  bezierSegments?: BezierSegment[];
   polylinePoints?: Point[];
   splinePoints?: Point[];
   ovalCenter?: Point;

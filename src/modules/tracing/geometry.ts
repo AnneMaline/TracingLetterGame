@@ -40,6 +40,11 @@ type PolylineCurveSegment = LineSegment & {
   polylinePoints: Point[];
 };
 
+type SplineCurveSegment = LineSegment & {
+  curveKind: "spline";
+  splinePoints: Point[];
+};
+
 function isOvalCurve(segment: LineSegment): segment is OvalCurveSegment {
   return (
     segment.curveKind === "oval" &&
@@ -61,9 +66,22 @@ function isPolylineCurve(
   );
 }
 
+function isSplineCurve(segment: LineSegment): segment is SplineCurveSegment {
+  return (
+    segment.curveKind === "spline" &&
+    Array.isArray(segment.splinePoints) &&
+    segment.splinePoints.length >= 1
+  );
+}
+
 function getPolylinePath(segment: LineSegment): Point[] {
   if (!isPolylineCurve(segment)) return [segment.start, segment.end];
   return [segment.start, ...segment.polylinePoints, segment.end];
+}
+
+function getSplinePath(segment: LineSegment): Point[] {
+  if (!isSplineCurve(segment)) return [segment.start, segment.end];
+  return [segment.start, ...segment.splinePoints, segment.end];
 }
 
 function polylinePointAt(segment: LineSegment, t: number): Point {
@@ -99,6 +117,67 @@ function polylinePointAt(segment: LineSegment, t: number): Point {
   }
 
   return points[points.length - 1];
+}
+
+function getControlPathLengths(points: readonly Point[]) {
+  const lengths: number[] = [];
+  let totalLength = 0;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const len = distanceBetween(points[i], points[i + 1]);
+    lengths.push(len);
+    totalLength += len;
+  }
+
+  return { lengths, totalLength };
+}
+
+function splinePointAt(segment: LineSegment, t: number): Point {
+  const points = getSplinePath(segment);
+  if (points.length === 0) return segment.start;
+  if (points.length === 1) return points[0];
+
+  const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
+  const { lengths, totalLength } = getControlPathLengths(points);
+  if (totalLength === 0) return points[0];
+
+  const targetLength = totalLength * clampedT;
+  let walked = 0;
+  let segmentIndex = 0;
+  let localT = 0;
+
+  for (let i = 0; i < lengths.length; i++) {
+    const segLength = lengths[i];
+    const nextWalked = walked + segLength;
+    if (targetLength <= nextWalked || i === lengths.length - 1) {
+      segmentIndex = i;
+      localT = segLength === 0 ? 0 : (targetLength - walked) / segLength;
+      break;
+    }
+    walked = nextWalked;
+  }
+
+  const p0 = points[Math.max(0, segmentIndex - 1)];
+  const p1 = points[segmentIndex];
+  const p2 = points[Math.min(points.length - 1, segmentIndex + 1)];
+  const p3 = points[Math.min(points.length - 1, segmentIndex + 2)];
+  const tt = localT * localT;
+  const ttt = tt * localT;
+
+  return {
+    x:
+      0.5 *
+      (2 * p1.x +
+        (-p0.x + p2.x) * localT +
+        (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * tt +
+        (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * ttt),
+    y:
+      0.5 *
+      (2 * p1.y +
+        (-p0.y + p2.y) * localT +
+        (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * tt +
+        (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * ttt),
+  };
 }
 
 function getOvalSweepDeltaDeg(segment: LineSegment): number {
@@ -217,6 +296,7 @@ function stadiumTangentAt(segment: LineSegment, t: number): UnitVector | null {
 
 export function curvePointAt(segment: LineSegment, t: number): Point {
   if (isOvalCurve(segment)) return ovalPointAt(segment, t);
+  if (isSplineCurve(segment)) return splinePointAt(segment, t);
   if (isPolylineCurve(segment)) return polylinePointAt(segment, t);
   return stadiumPointAt(segment, t);
 }
@@ -501,6 +581,15 @@ export function segmentTangentAt(
     const len = Math.hypot(tx, ty);
     if (len === 0) return null;
     return { x: tx / len, y: ty / len };
+  }
+  if (isSplineCurve(segment)) {
+    const before = curvePointAt(segment, Math.max(0, t - 0.01));
+    const after = curvePointAt(segment, Math.min(1, t + 0.01));
+    const dx = after.x - before.x;
+    const dy = after.y - before.y;
+    const len = Math.hypot(dx, dy);
+    if (len === 0) return null;
+    return { x: dx / len, y: dy / len };
   }
   return stadiumTangentAt(segment, t);
 }

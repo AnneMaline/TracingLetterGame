@@ -18,7 +18,11 @@ const CURVE_X = 0.75;
 const OVAL_PATH_STEPS = 96;
 
 export const curvePath = (segment: LineSegment) => {
-  if (segment.curveKind === "oval" || segment.curveKind === "polyline") {
+  if (
+    segment.curveKind === "oval" ||
+    segment.curveKind === "polyline" ||
+    segment.curveKind === "spline"
+  ) {
     const points: Point[] = [];
     for (let i = 0; i <= OVAL_PATH_STEPS; i++) {
       points.push(curvePointAt(segment, i / OVAL_PATH_STEPS));

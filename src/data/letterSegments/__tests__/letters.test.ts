@@ -35,6 +35,20 @@ function expectPolyline(
   expectPoint(segment.end, expected.end);
 }
 
+function expectSpline(
+  segment: LineSegment,
+  expected: { start: Point; points: Point[]; end: Point },
+) {
+  expect(segment.isCurve).toBe(true);
+  expect(segment.curveKind).toBe("spline");
+  expectPoint(segment.start, expected.start);
+  expect(segment.splinePoints).toHaveLength(expected.points.length);
+  for (const [index, point] of expected.points.entries()) {
+    expectPoint(segment.splinePoints![index], point);
+  }
+  expectPoint(segment.end, expected.end);
+}
+
 function sampleSegment(segment: LineSegment, steps = 96): Point[] {
   const points: Point[] = [];
   for (let i = 0; i <= steps; i++) {
@@ -158,6 +172,46 @@ describe("letter stroke-order corrections (task 005)", () => {
         { x: 0.2, y: 0.86 },
       ],
       end: { x: 0.75, y: 0.86 },
+    });
+  });
+
+  it("uses rounded spline arches for B, G, and R", () => {
+    expectSpline(byId("B").segments[1], {
+      start: { x: 0.25, y: 0.14 },
+      points: [
+        { x: 0.48, y: 0.14 },
+        { x: 0.66, y: 0.22 },
+        { x: 0.66, y: 0.4 },
+        { x: 0.25, y: 0.5 },
+        { x: 0.68, y: 0.58 },
+        { x: 0.68, y: 0.78 },
+        { x: 0.48, y: 0.86 },
+      ],
+      end: { x: 0.25, y: 0.86 },
+    });
+    expectSpline(byId("G").segments[0], {
+      start: { x: 0.7, y: 0.26 },
+      points: [
+        { x: 0.56, y: 0.15 },
+        { x: 0.34, y: 0.18 },
+        { x: 0.23, y: 0.38 },
+        { x: 0.25, y: 0.64 },
+        { x: 0.4, y: 0.83 },
+        { x: 0.63, y: 0.8 },
+        { x: 0.76, y: 0.62 },
+        { x: 0.76, y: 0.53 },
+      ],
+      end: { x: 0.55, y: 0.53 },
+    });
+    expectSpline(byId("R").segments[1], {
+      start: { x: 0.25, y: 0.14 },
+      points: [
+        { x: 0.5, y: 0.14 },
+        { x: 0.68, y: 0.28 },
+        { x: 0.58, y: 0.46 },
+        { x: 0.25, y: 0.5 },
+      ],
+      end: { x: 0.6, y: 0.86 },
     });
   });
 

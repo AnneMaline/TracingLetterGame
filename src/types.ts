@@ -9,8 +9,9 @@ export interface LineSegment {
   boundaryHalfWidth?: number;
   isCurve?: boolean;
   curveControlX?: number;
-  curveKind?: "oval" | "polyline";
+  curveKind?: "oval" | "polyline" | "spline";
   polylinePoints?: Point[];
+  splinePoints?: Point[];
   ovalCenter?: Point;
   ovalRadiusX?: number;
   ovalRadiusY?: number;

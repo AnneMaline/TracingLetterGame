@@ -8,8 +8,8 @@ const letterG: LetterDefinition = {
       start: { x: 0.7, y: 0.26 },
       end: { x: 0.55, y: 0.53 },
       isCurve: true,
-      curveKind: "polyline",
-      polylinePoints: [
+      curveKind: "spline",
+      splinePoints: [
         { x: 0.56, y: 0.15 },
         { x: 0.34, y: 0.18 },
         { x: 0.23, y: 0.38 },

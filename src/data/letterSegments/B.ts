@@ -9,8 +9,8 @@ const letterB: LetterDefinition = {
       start: { x: 0.25, y: 0.14 },
       end: { x: 0.25, y: 0.86 },
       isCurve: true,
-      curveKind: "polyline",
-      polylinePoints: [
+      curveKind: "spline",
+      splinePoints: [
         { x: 0.48, y: 0.14 },
         { x: 0.66, y: 0.22 },
         { x: 0.66, y: 0.40 },

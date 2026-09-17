@@ -12,7 +12,15 @@ const sampleLetters: LetterDefinition[] = [
 describe("LetterSelectionScreen (T-011)", () => {
   it("renders all letter tiles", () => {
     const onSelect = vi.fn();
-    render(<LetterSelectionScreen letters={sampleLetters} onSelectLetter={onSelect} />);
+    const onToggleHardMode = vi.fn();
+    render(
+      <LetterSelectionScreen
+        letters={sampleLetters}
+        isHardMode={false}
+        onToggleHardMode={onToggleHardMode}
+        onSelectLetter={onSelect}
+      />,
+    );
 
     expect(screen.getByTestId("letter-selection-screen")).toBeInTheDocument();
     expect(screen.getByTestId("letter-tile-A")).toBeInTheDocument();
@@ -22,10 +30,50 @@ describe("LetterSelectionScreen (T-011)", () => {
 
   it("calls onSelectLetter with corresponding index when a tile is clicked", () => {
     const onSelect = vi.fn();
-    render(<LetterSelectionScreen letters={sampleLetters} onSelectLetter={onSelect} />);
+    const onToggleHardMode = vi.fn();
+    render(
+      <LetterSelectionScreen
+        letters={sampleLetters}
+        isHardMode={false}
+        onToggleHardMode={onToggleHardMode}
+        onSelectLetter={onSelect}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("letter-tile-B"));
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(1);
+  });
+
+  it("renders a Hard mode toggle reflecting the current state", () => {
+    const onSelect = vi.fn();
+    const onToggleHardMode = vi.fn();
+    render(
+      <LetterSelectionScreen
+        letters={sampleLetters}
+        isHardMode={true}
+        onToggleHardMode={onToggleHardMode}
+        onSelectLetter={onSelect}
+      />,
+    );
+
+    const toggle = screen.getByTestId("hard-mode-toggle");
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("calls onToggleHardMode when the Hard mode toggle is clicked", () => {
+    const onSelect = vi.fn();
+    const onToggleHardMode = vi.fn();
+    render(
+      <LetterSelectionScreen
+        letters={sampleLetters}
+        isHardMode={false}
+        onToggleHardMode={onToggleHardMode}
+        onSelectLetter={onSelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("hard-mode-toggle"));
+    expect(onToggleHardMode).toHaveBeenCalledTimes(1);
   });
 });

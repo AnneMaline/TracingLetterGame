@@ -13,8 +13,8 @@ const letterO: LetterDefinition = {
       ovalRadiusX: 0.255,
       ovalRadiusY: 0.35,
       ovalStartAngleDeg: 90,
-      ovalEndAngleDeg: 448,
-      ovalCounterClockwise: true,
+      ovalEndAngleDeg: -268,
+      ovalCounterClockwise: false,
     },
   ],
 };

@@ -1,0 +1,7 @@
+{
+  "id": "tracing-game",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "languages": ["en"],
+  "protocolVersion": 1
+}

@@ -7,12 +7,16 @@ interface Props {
   letters: LetterDefinition[];
   initialLetterIndex?: number;
   onBackToMenu?: () => void;
+  onSegmentComplete?: (letterId: string, segmentIndex: number) => void;
+  onLetterComplete?: (letterId: string) => void;
 }
 
 export function TracingScreen({
   letters,
   initialLetterIndex = 0,
   onBackToMenu,
+  onSegmentComplete,
+  onLetterComplete,
 }: Props) {
   const [letterIndex, setLetterIndex] = useState(initialLetterIndex);
   const total = letters.length;
@@ -39,7 +43,14 @@ export function TracingScreen({
         onBackToMenu={onBackToMenu}
         onNext={goNext}
       />
-      <LetterTracer key={letter.id} letter={letter} />
+      <LetterTracer
+        key={letter.id}
+        letter={letter}
+        onSegmentComplete={(segmentIndex) =>
+          onSegmentComplete?.(letter.id, segmentIndex)
+        }
+        onLetterComplete={() => onLetterComplete?.(letter.id)}
+      />
     </main>
   );
 }

@@ -4,10 +4,17 @@ import { LetterTile } from "./LetterTile";
 
 interface Props {
   letters: LetterDefinition[];
+  isHardMode: boolean;
+  onToggleHardMode: () => void;
   onSelectLetter: (index: number) => void;
 }
 
-export function LetterSelectionScreen({ letters, onSelectLetter }: Props) {
+export function LetterSelectionScreen({
+  letters,
+  isHardMode,
+  onToggleHardMode,
+  onSelectLetter,
+}: Props) {
   return (
     <main
       data-testid="letter-selection-screen"
@@ -21,6 +28,63 @@ export function LetterSelectionScreen({ letters, onSelectLetter }: Props) {
         background: "#f4f7fb",
       }}
     >
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <button
+          type="button"
+          data-testid="hard-mode-toggle"
+          role="switch"
+          aria-checked={isHardMode}
+          onClick={onToggleHardMode}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            border: "none",
+            borderRadius: "999px",
+            padding: "0.4rem 0.9rem",
+            background: isHardMode ? "#17324d" : "#e2e8f0",
+            color: isHardMode ? "#ffffff" : "#334155",
+            fontWeight: 700,
+            fontSize: "0.9rem",
+            cursor: "pointer",
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              display: "inline-block",
+              width: "2rem",
+              height: "1.1rem",
+              borderRadius: "999px",
+              background: isHardMode ? "#4ade80" : "#94a3b8",
+              position: "relative",
+              transition: "background 0.15s ease",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: "0.15rem",
+                left: isHardMode ? "1.05rem" : "0.15rem",
+                width: "0.8rem",
+                height: "0.8rem",
+                borderRadius: "50%",
+                background: "#ffffff",
+                transition: "left 0.15s ease",
+              }}
+            />
+          </span>
+          Hard mode
+        </button>
+      </div>
+
       <header style={{ textAlign: "center" }}>
         <h1
           style={{

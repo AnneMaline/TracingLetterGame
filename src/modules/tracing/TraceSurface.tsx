@@ -2,7 +2,7 @@ import { useCallback, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
 import { SegmentGuide } from "./SegmentGuide";
-import { curvePointAt } from "./geometry";
+import { curvePointAt, isCurvedSegment } from "./geometry";
 import type { SegmentTraceView } from "./useSegmentTrace";
 
 interface Props {
@@ -148,7 +148,7 @@ export function TraceSurface({
     >
       {letter.segments.map((seg, i) => {
         if (!view.completedSegments[i]) return null;
-        if (letter.segments[i].isCurve) {
+        if (isCurvedSegment(letter.segments[i])) {
           return (
             <path
               d={curvePath(seg)}

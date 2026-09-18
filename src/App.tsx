@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { letters } from "./data/letterSegments";
+import { letters as harderLetters } from "./data/harderLetterSegments";
 import { LetterSelectionScreen } from "./modules/letter-nav/LetterSelectionScreen";
 import { TracingScreen } from "./modules/tracing/TracingScreen";
 
@@ -8,6 +9,9 @@ type Screen = "menu" | "tracing";
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("menu");
   const [selectedLetterIndex, setSelectedLetterIndex] = useState(0);
+  const [isHardMode, setIsHardMode] = useState(false);
+
+  const activeLetters = isHardMode ? harderLetters : letters;
 
   const handleSelectLetter = (index: number) => {
     setSelectedLetterIndex(index);
@@ -18,10 +22,16 @@ export default function App() {
     setCurrentScreen("menu");
   };
 
+  const handleToggleHardMode = () => {
+    setIsHardMode((previous) => !previous);
+  };
+
   if (currentScreen === "menu") {
     return (
       <LetterSelectionScreen
-        letters={letters}
+        letters={activeLetters}
+        isHardMode={isHardMode}
+        onToggleHardMode={handleToggleHardMode}
         onSelectLetter={handleSelectLetter}
       />
     );
@@ -29,7 +39,7 @@ export default function App() {
 
   return (
     <TracingScreen
-      letters={letters}
+      letters={activeLetters}
       initialLetterIndex={selectedLetterIndex}
       onBackToMenu={handleBackToMenu}
     />

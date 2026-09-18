@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.4.0
-**Last Updated:** 2026-09-14
+**Version:** 0.5.0
+**Last Updated:** 2026-09-18
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.3.0 · DEVSPEC v0.5.0
+**Traces to:** PRD v0.4.0 · DEVSPEC v0.6.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -47,13 +47,15 @@
 
 ### Screen: Letter Selection (M3 — Great tier)
 
-- **Layout:** Grid/list of every in-scope letter.
-- **Components:** `LetterTile` (references DEVSPEC Letter Navigation module).
-- **States:** `loading`, `ready`.
+- **Layout:** Top-middle Hard mode toggle above the title, plus a grid/list of every in-scope letter.
+- **Components:** Hard mode toggle (`role="switch"`, `data-testid="hard-mode-toggle"`) and
+  `LetterTile` (references DEVSPEC Letter Navigation module).
+- **States:** `loading`, `ready` + `hard-mode-off` / `hard-mode-on` sub-state.
 - **Visibility rules:** Only exists once M3 ships; before that, Next/Previous on the Tracing
   screen serve this purpose instead.
-- **Transitions:** Tap a letter tile → Tracing screen, `awaiting-start` for that letter's first
-  segment.
+- **Transitions:** Toggle Hard mode on/off while on Letter Selection (updates which fixture set
+  opens when a tile is selected). Tap a letter tile → Tracing screen, `awaiting-start` for that
+  letter's first segment.
 
 ## 3. State Machine (Tracing screen, per segment)
 
@@ -145,6 +147,17 @@ Feature: Letter selection (M3 — Great tier)
     Then the Letter Selection screen is displayed
     And the in-progress segment is discarded with no penalty
 
+Feature: Hard mode fixture selection (M3)
+  Scenario: Hard mode starts off on app load
+    Given the app has just loaded
+    Then the Letter Selection screen shows Hard mode in the off state
+
+  Scenario: Enabling Hard mode swaps the fixture set used when launching letters
+    Given the child is on the Letter Selection screen
+    When the child toggles Hard mode on
+    Then selecting a corrected letter opens that letter from the harder fixture set
+    And letters already open in Tracing are not hot-swapped until returning to Letter Selection
+
 Feature: Letter completion celebration
   Scenario: Completing all segments plays a celebration
     Given the child has completed every segment of letter "E"
@@ -177,11 +190,13 @@ Feature: Letter completion celebration
 | 2026-09-07 | Removed the `tracing-paused` state and its pause/resume transitions; M2 deviation past threshold now transitions directly `tracing → segment-reset` (same visible effect as a boundary-box exit)                                                      | Follows the DEVSPEC v0.4.0 deviation model change                                                                                                  |
 | 2026-09-07 | Added a `tracing → segment-complete` transition when the pointer enters the segment's end region with ≥80% coverage (no finger-up required)                                                                                                           | Overshooting the end marker used to risk a false fail; auto-complete on end-region entry makes reaching the end marker itself the completion event |
 | 2026-09-14 | M3 navigation ships as a top bar in Tracing (`Menu` left, `Next` right), replacing only the legacy bottom Next/Previous controls while preserving next-letter wrap navigation                                                                         | Matches Task 004 implementation and keeps fast in-game progression while making Letter Selection the primary entry flow                            |
+| 2026-09-18 | Letter Selection includes a Hard mode switch (`role="switch"`) that defaults off and selects between baseline and harder fixture sets only for menu-launched letters                                                                                  | Matches shipped M3 behavior while avoiding mid-trace fixture hot-swaps and persistence scope                                                       |
 
 ## 8. Spec Change Log
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-18 — Copilot — Task 005/006 spec-update pass: added the shipped Letter Selection Hard mode toggle UI/states/transitions and new M3 Gherkin coverage for fixture-set switching; bumped `Traces to:` PRD v0.4.0 / DEVSPEC v0.6.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: reconciled M3 navigation wording to the shipped top-bar model (`Menu` + `Next`), updated screen entry points/visibility rules/transitions (including post-celebration staying on the completed letter with top-bar controls available), and bumped `Traces to:` to PRD v0.3.0 / DEVSPEC v0.5.0.
 - 2026-09-11 — Copilot — Task 003 spec-update pass: bumped `Traces to:` DEVSPEC reference to v0.4.1 after uppercase A-Z fixture authoring decisions were recorded; no screen/state/Gherkin behavior changed in UISPEC.
 - 2026-09-07 — Copilot — M2 spec-update pass: removed the `tracing-paused` state and its transitions (deviation now cancels the segment rather than pausing); added a `tracing → segment-complete` transition on entering the end region with ≥80% coverage; added start-region enforcement to the state machine; rewrote the M2 Gherkin scenarios ("deviation cancels the trace" replaces the pause/resume feature); bumped `Traces to:` to PRD v0.2.2 and DEVSPEC v0.4.0.

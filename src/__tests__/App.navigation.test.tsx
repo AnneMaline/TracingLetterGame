@@ -37,3 +37,31 @@ describe("App full navigation flow (M3 Letter selection + Tracing navigation)", 
     expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
   });
 });
+
+describe("App Hard mode toggle", () => {
+  it("boots with Hard mode off and uses the standard letter fixtures", () => {
+    render(<App />);
+
+    const toggle = screen.getByTestId("hard-mode-toggle");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("switches to the harder letter fixtures once Hard mode is enabled", () => {
+    render(<App />);
+
+    // R has 3 traceable segments in the standard fixture set.
+    fireEvent.click(screen.getByTestId("letter-tile-R"));
+    expect(screen.getByTestId("progress-label")).toHaveTextContent("Segment 1 of 3");
+
+    fireEvent.click(screen.getByTestId("menu-button"));
+    fireEvent.click(screen.getByTestId("hard-mode-toggle"));
+    expect(screen.getByTestId("hard-mode-toggle")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    // R has 2 traceable segments (a continuous bowl+leg stroke) in Hard mode.
+    fireEvent.click(screen.getByTestId("letter-tile-R"));
+    expect(screen.getByTestId("progress-label")).toHaveTextContent("Segment 1 of 2");
+  });
+});

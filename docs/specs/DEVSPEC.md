@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.5.0
-**Last Updated:** 2026-09-14
+**Version:** 0.6.0
+**Last Updated:** 2026-09-18
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.3.0
+**Traces to:** PRD v0.4.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -59,9 +59,13 @@ interface LetterSessionState {
   currentSegmentIndex: number; // single source of truth for which segment is active; SegmentTraceState does not duplicate this
   completedSegments: boolean[]; // one entry per segment in the current letter's `segments` array
 }
+
+interface AppNavigationState {
+  isHardMode: boolean; // false by default on every app load; toggled only from Letter Selection screen
+}
 ```
 
-`SegmentTraceState` and `LetterSessionState` are **conceptual** shapes: the implementation
+`SegmentTraceState`, `LetterSessionState`, and `AppNavigationState` are **conceptual** shapes: the implementation
 realizes them as hook-local `useState` variables inside `useSegmentTrace` (plus a `SegmentTraceView`
 DTO the hook exposes to its render tree). They are not currently exported as top-level TypeScript
 interfaces from `src/types.ts` because no other code needed to import them.
@@ -81,14 +85,21 @@ resolved otherwise.
      last.
   2. **Great (M3):** Make the letter-selection screen the default app entry point, listing every
      in-scope `LetterDefinition`; tapping one loads the Tracing screen for it, resetting `LetterSessionState`.
-  3. **Great (M3):** Replace bottom Next/Previous with a top bar on the Tracing screen containing:
+  3. **Great (M3):** Add a Letter Selection Hard mode toggle (`role="switch"`, `aria-checked`)
+     that selects the active fixture set (`src/data/letterSegments` baseline or
+     `src/data/harderLetterSegments` corrected set). Hard mode defaults to off on every app load
+     and is in-memory only (no persistence).
+  4. **Great (M3):** Replace bottom Next/Previous with a top bar on the Tracing screen containing:
      (a) a top-left Menu control that returns to the letter-selection screen at any time from any
      tracing state and discards any in-progress segment, and (b) a top-right Next control that
      advances to the next letter with wraparound and resets to segment 1.
+  5. Fixture-set switching takes effect only when selecting/opening a letter from Letter Selection;
+     it does not hot-swap an already-open Tracing screen.
 - **Exit Criterion:** MVP — Next/Previous correctly cycles through every in-scope letter, loading
   the correct `LetterDefinition` each time. Great — app launch opens letter selection; selecting any
-  letter opens Tracing for it; the top-left Menu control is reachable from every Tracing state; and
-  the top-right Next control advances through all letters with wraparound.
+  letter opens Tracing for it; Hard mode toggle reflects and flips active fixture-set state;
+  the top-left Menu control is reachable from every Tracing state; and the top-right Next control
+  advances through all letters with wraparound.
 
 #### Module: Line Segment Rendering & Directional Guide
 
@@ -237,7 +248,8 @@ functional tree:
         tracing/              # segment rendering, boundary box, completion, deviation detection
         celebration/
       data/
-        letterSegments/      # authored LetterDefinition data, one file per letter/glyph
+        letterSegments/      # baseline authored LetterDefinition data, one file per letter/glyph
+        harderLetterSegments/ # corrected/harder authored LetterDefinition data (same shape/order)
       shared/
     docs/
       specs/
@@ -254,19 +266,21 @@ implementation layout (annotated):
   TracingGame/src/modules/letter-nav/         # versioned
   TracingGame/src/modules/tracing/            # versioned
   TracingGame/src/modules/celebration/        # versioned
-  TracingGame/src/data/letterSegments/        # versioned (hand-authored reference data)
+  TracingGame/src/data/letterSegments/        # versioned (baseline hand-authored reference data)
+  TracingGame/src/data/harderLetterSegments/  # versioned (hard-mode reference data)
   TracingGame/src/shared/                     # versioned
   TracingGame/node_modules/                   # ephemeral (npm install)
   TracingGame/dist/                           # ephemeral (npm run build)
 ```
 
-| Directory                  | Classification | Notes                                                                             |
-| -------------------------- | -------------- | --------------------------------------------------------------------------------- |
-| `src/**`                   | versioned      | Source of truth, committed                                                        |
-| `src/data/letterSegments/` | versioned      | Hand-authored, not regenerable — treat carefully even though technically "source" |
-| `.agents/memory/`          | versioned      | Durable lessons; committed, never gitignored                                      |
-| `node_modules/`            | ephemeral      | Regenerate via `npm install`                                                      |
-| `dist/`                    | ephemeral      | Regenerate via `npm run build`                                                    |
+| Directory                        | Classification | Notes                                                              |
+| -------------------------------- | -------------- | ------------------------------------------------------------------ |
+| `src/**`                         | versioned      | Source of truth, committed                                         |
+| `src/data/letterSegments/`       | versioned      | Baseline hand-authored fixtures, not regenerable — treat carefully |
+| `src/data/harderLetterSegments/` | versioned      | Hard-mode hand-authored fixtures, same schema/order as baseline    |
+| `.agents/memory/`                | versioned      | Durable lessons; committed, never gitignored                       |
+| `node_modules/`                  | ephemeral      | Regenerate via `npm install`                                       |
+| `dist/`                          | ephemeral      | Regenerate via `npm run build`                                     |
 
 ### 9. Environment & Config
 
@@ -327,9 +341,10 @@ npm test         # unit + integration tests
 | 2026-09-07 | M2 Deviation Detection **cancels** the segment on threshold exceedance (same effect as a boundary-box exit); the earlier pause/resume-at-departure model was dropped after M2 dry-run                                              | Return-to-departure produced a visible straight-line snap that felt buggy for children; cancel-and-restart is clearer and consistent with the box-exit rule. Simplifies the state machine (no `tracing-paused`, no departure point)       |
 | 2026-09-07 | `deviationThresholdDegrees` = 45, `dragDirectionBaseline` = 0.03 (normalized units), and direction is checked only at the current tail (not at every historical sample)                                                            | Distance-based baseline is stable across pointer sampling rates and averages jitter; tail-only avoids false cancels from a single noisy historical sample                                                                                 |
 | 2026-09-07 | `startRegionRadius` = 0.08 (normalized units); `endRegionRadius` = 0.035 (normalized units, matches the visible end marker)                                                                                                        | Enforces the "start at the green dot" wording of §3 task 1; the tight end-region radius requires the child to actually reach the end marker to auto-complete, while overshooting past it now safely stops the trace instead of failing it |
-| 2026-09-11 | Uppercase A-Z `LetterDefinition` fixtures are now authored and shipped under `src/data/letterSegments/`, exported alphabetically by `index.ts`, and used as the MVP/M2 baseline content set                                        | Completes Task 003 content authoring so navigation and tracing dry-runs operate over a realistic letter set rather than the MVP-only A/L/T sample                                                                                         |
+| 2026-09-11 | Uppercase A-Z `LetterDefinition` fixtures are authored/exported alphabetically and used as the baseline content set (`src/data/letterSegments/`)                                                                                   | Completes Task 003 content authoring so navigation and tracing dry-runs operate over a realistic letter set rather than the MVP-only A/L/T sample                                                                                         |
 | 2026-09-11 | Stroke-order convention for uppercase fixtures: prefer primary-school manuscript order, choosing top-to-bottom / left-to-right directions where a natural option exists; A/L/T were reviewed and retained as authored              | Keeps expected drag direction intuitive for children and consistent across letters                                                                                                                                                        |
 | 2026-09-11 | Curved uppercase letters are approximated with short polylines (typically 3-4 segments) with gentle turns chosen to stay comfortably below the M2 45-degree deviation threshold; no per-segment `boundaryHalfWidth` overrides used | Balances trace smoothness with maintainable fixture complexity while avoiding overlap-tuning churn unless a concrete collision issue appears                                                                                              |
+| 2026-09-18 | Corrected uppercase stroke-order/grouping fixtures are maintained in a second authored dataset (`src/data/harderLetterSegments/`) and selected by M3 Hard mode from Letter Selection; toggle defaults off per session              | Preserves original MVP-friendly letter flow as default while exposing a stricter continuous-stroke model without letter-specific tracing logic                                                                                            |
 
 ### 15. Out of Scope
 
@@ -345,6 +360,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-18 — Copilot — Task 005/006 spec-update pass: documented dual fixture datasets (`letterSegments` baseline + `harderLetterSegments` corrected), added M3 Hard mode toggle behavior in Letter Navigation, and bumped `Traces to:` PRD to v0.4.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: updated the Letter Navigation module to match shipped M3 behavior (letter-selection as app entry, top-bar Menu back-to-selection control from any tracing state, and top-bar Next wrap navigation) and bumped `Traces to:` PRD to v0.3.0.
 - 2026-09-11 — Copilot — Dead-code cleanup pass: removed unused `SegmentTraceState` and `LetterSessionState` interface declarations from `src/types.ts` (never imported) and clarified in §2 that they remain conceptual shapes realized as hook-local state; removed the unused `"cubic"` member from `LineSegment.curveKind` (only `"oval"` and `"polyline"` have code paths); removed the dead M1 `evaluatePath` helper from `src/modules/tracing/scoring.ts` (production has used `evaluatePathM2` since M2 shipped) and migrated its unit tests to `evaluatePathM2` — behavior unchanged. Bumped DEVSPEC to v0.4.2 (patch: no behavior change).
 - 2026-09-11 — Copilot — Task 003 spec-update pass: documented uppercase A-Z fixture completion as the baseline authored set, added resolved decisions for uppercase stroke-order and curve-polyline authoring conventions, and bumped DEVSPEC to v0.4.1 (PRD trace unchanged at v0.2.2).

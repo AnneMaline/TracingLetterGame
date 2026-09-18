@@ -2,9 +2,9 @@
 
 **Status:** Draft
 **Version:** 0.2.2
-**Last Updated:** 2026-09-14
+**Last Updated:** 2026-09-18
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** DEVSPEC v0.5.0, standalone-game-spec.md v0.2.2
+**Traces to:** DEVSPEC v0.6.0, standalone-game-spec.md v0.2.2
 
 > Defines the data/event contract between TracingGame and the Curious Reader container/CMS.
 > **Placeholder — not yet confirmed with the container team.**
@@ -50,6 +50,7 @@ of the child leave the game.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-18 — Copilot — Task 005/006 spec-update pass propagation: bumped `Traces to:` to DEVSPEC v0.6.0 and standalone-game-spec v0.2.2 after the spec-chain update; no data/event contract content changes in this placeholder doc.
 - 2026-09-14 — Copilot — Task 004 spec-update pass propagation: bumped `Traces to:` to DEVSPEC v0.5.0 and standalone-game-spec v0.2.2 after the spec-chain update; no data/event contract content changes in this placeholder doc.
 - 2026-09-11 — Copilot — Task 003 spec-update pass: bumped `Traces to:` to DEVSPEC v0.4.1 and standalone-game-spec v0.2.1 after the spec chain update; no data/event contract content change in this placeholder doc.
 - 2026-09-07 — Copilot — Bumped `Traces to:` DEVSPEC reference to v0.4.0 following the M2 spec-update pass; no content change in this file.

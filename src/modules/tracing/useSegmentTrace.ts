@@ -32,7 +32,15 @@ export interface SegmentTraceApi {
   reset: () => void;
 }
 
-export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
+interface Options {
+  onSegmentComplete?: (segmentIndex: number) => void;
+  onLetterComplete?: () => void;
+}
+
+export function useSegmentTrace(
+  letter: LetterDefinition,
+  { onSegmentComplete, onLetterComplete }: Options = {},
+): SegmentTraceApi {
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
   const [completedSegments, setCompletedSegments] = useState<boolean[]>(() =>
     letter.segments.map(() => false),
@@ -52,6 +60,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     (nextIndex: number) => {
       if (nextIndex >= letter.segments.length) {
         setStatus("letter-complete");
+        onLetterComplete?.();
       } else {
         setCurrentSegmentIndex(nextIndex);
         setStatus("awaiting-start");
@@ -60,7 +69,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
       setCoverage(0);
       setWithin(false);
     },
-    [letter.segments.length],
+    [letter.segments.length, onLetterComplete],
   );
 
   const resetSegment = useCallback(() => {
@@ -71,6 +80,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
   }, []);
 
   const completeSegment = useCallback(() => {
+    onSegmentComplete?.(currentSegmentIndex);
     setCompletedSegments((prev) => {
       const nextCompleted = [...prev];
       nextCompleted[currentSegmentIndex] = true;
@@ -79,7 +89,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     setStatus("segment-complete");
     const nextIndex = currentSegmentIndex + 1;
     setTimeout(() => advanceOrComplete(nextIndex), 250);
-  }, [advanceOrComplete, currentSegmentIndex]);
+  }, [advanceOrComplete, currentSegmentIndex, onSegmentComplete]);
 
   const onPointerDown = useCallback(
     (p: Point) => {

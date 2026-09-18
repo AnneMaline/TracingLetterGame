@@ -6,10 +6,19 @@ import { useSegmentTrace } from "./useSegmentTrace";
 
 interface Props {
   letter: LetterDefinition;
+  onSegmentComplete?: (segmentIndex: number) => void;
+  onLetterComplete?: () => void;
 }
 
-export function LetterTracer({ letter }: Props) {
-  const trace = useSegmentTrace(letter);
+export function LetterTracer({
+  letter,
+  onSegmentComplete,
+  onLetterComplete,
+}: Props) {
+  const trace = useSegmentTrace(letter, {
+    onSegmentComplete,
+    onLetterComplete,
+  });
   const { view } = trace;
 
   const [celebrationVisible, setCelebrationVisible] = useState(false);

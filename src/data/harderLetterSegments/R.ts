@@ -8,19 +8,15 @@ const letterR: LetterDefinition = {
     {
       start: { x: 0.25, y: 0.14 },
       end: { x: 0.6, y: 0.86 },
-      isCurve: true,
-      curveKind: "bezier",
-      bezierSegments: [
+      curveKind: "polyline",
+      polylinePoints: [
         {
-          control1: { x: 0.62, y: 0.14 },
-          control2: { x: 0.68, y: 0.50 },
-          end: { x: 0.25, y: 0.50 },
+          start: { x: 0.25, y: 0.14 },
+          end: { x: 0.27, y: 0.5 },
+          isCurve: true,
+          curveControlX: 0.65,
         },
-        {
-          control1: { x: 0.36, y: 0.57 },
-          control2: { x: 0.50, y: 0.72 },
-          end: { x: 0.60, y: 0.86 },
-        },
+        { start: { x: 0.27, y: 0.5 }, end: { x: 0.6, y: 0.86 } },
       ],
     },
   ],

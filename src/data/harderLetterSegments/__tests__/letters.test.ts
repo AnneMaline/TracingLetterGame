@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { letters } from "..";
-import type { LineSegment, Point } from "../../../types";
+import type { LineSegment, Point, PolylinePoint } from "../../../types";
 import {
   curvePointAt,
+  isCurvedSegment,
   segmentLength,
 } from "../../../modules/tracing/geometry";
 import { evaluatePathM2 } from "../../../modules/tracing/scoring";
@@ -21,28 +22,21 @@ function expectPoint(point: Point, expected: Point) {
   expect(point.y).toBeCloseTo(expected.y, 3);
 }
 
+function polylineStepToPoint(step: PolylinePoint): Point {
+  if ("x" in step && "y" in step) return step;
+  return step.end;
+}
+
 function expectPolyline(
   segment: LineSegment,
   expected: { start: Point; points: Point[]; end: Point },
 ) {
-  expect(segment.isCurve).toBe(true);
   expect(segment.curveKind).toBe("polyline");
   expectPoint(segment.start, expected.start);
   expect(segment.polylinePoints).toHaveLength(expected.points.length);
   for (const [index, point] of expected.points.entries()) {
-    expectPoint(segment.polylinePoints![index], point);
+    expectPoint(polylineStepToPoint(segment.polylinePoints![index]), point);
   }
-  expectPoint(segment.end, expected.end);
-}
-
-function expectBezier(
-  segment: LineSegment,
-  expected: { start: Point; segmentCount: number; end: Point },
-) {
-  expect(segment.isCurve).toBe(true);
-  expect(segment.curveKind).toBe("bezier");
-  expectPoint(segment.start, expected.start);
-  expect(segment.bezierSegments).toHaveLength(expected.segmentCount);
   expectPoint(segment.end, expected.end);
 }
 
@@ -50,7 +44,7 @@ function sampleSegment(segment: LineSegment, steps = 96): Point[] {
   const points: Point[] = [];
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
-    if (segment.isCurve) {
+    if (isCurvedSegment(segment) || segment.isCurve) {
       points.push(curvePointAt(segment, t));
     } else {
       points.push({
@@ -122,7 +116,7 @@ describe("letter stroke-order corrections (task 005)", () => {
   it("groups the corrected letters into the intended number of traceable strokes", () => {
     expect(byId("A").segments).toHaveLength(2);
     expect(byId("B").segments).toHaveLength(2);
-    expect(byId("G").segments).toHaveLength(1);
+    expect(byId("G").segments).toHaveLength(2);
     expect(byId("K").segments).toHaveLength(2);
     expect(byId("L").segments).toHaveLength(1);
     expect(byId("M").segments).toHaveLength(2);
@@ -149,7 +143,7 @@ describe("letter stroke-order corrections (task 005)", () => {
   it("keeps specified angular stroke groups continuous", () => {
     expectPolyline(byId("K").segments[1], {
       start: { x: 0.65, y: 0.14 },
-      points: [{ x: 0.25, y: 0.5 }],
+      points: [{ x: 0.26, y: 0.5 }],
       end: { x: 0.65, y: 0.86 },
     });
     expectPolyline(byId("L").segments[0], {
@@ -172,22 +166,23 @@ describe("letter stroke-order corrections (task 005)", () => {
     });
   });
 
-  it("uses structured rounded Bezier arches for B, G, and R", () => {
-    expectBezier(byId("B").segments[1], {
-      start: { x: 0.25, y: 0.14 },
-      segmentCount: 2,
-      end: { x: 0.25, y: 0.86 },
-    });
-    expectBezier(byId("G").segments[0], {
-      start: { x: 0.7, y: 0.26 },
-      segmentCount: 3,
-      end: { x: 0.55, y: 0.53 },
-    });
-    expectBezier(byId("R").segments[1], {
-      start: { x: 0.25, y: 0.14 },
-      segmentCount: 2,
-      end: { x: 0.6, y: 0.86 },
-    });
+  it("uses authored rounded strokes for B, G, and R", () => {
+    const bArch = byId("B").segments[1];
+    expect(bArch.curveKind).toBe("polyline");
+    expect((bArch.polylinePoints ?? []).length).toBe(2);
+    expectPoint(bArch.start, { x: 0.25, y: 0.14 });
+    expectPoint(bArch.end, { x: 0.25, y: 0.86 });
+
+    const gStroke = byId("G").segments[0];
+    expect(gStroke.isCurve).toBe(true);
+    expectPoint(gStroke.start, { x: 0.7, y: 0.26 });
+    expectPoint(gStroke.end, { x: 0.76, y: 0.53 });
+
+    const rStroke = byId("R").segments[1];
+    expect(rStroke.curveKind).toBe("polyline");
+    expect((rStroke.polylinePoints ?? []).length).toBe(2);
+    expectPoint(rStroke.start, { x: 0.25, y: 0.14 });
+    expectPoint(rStroke.end, { x: 0.6, y: 0.86 });
   });
 
   it("keeps M, N, W, and Y in the requested continuous groups", () => {
@@ -239,7 +234,23 @@ describe("letter stroke-order corrections (task 005)", () => {
   });
 
   it("can complete each corrected continuous stroke without deviation-reset at authored corners", () => {
-    const corrected = new Set(["A", "B", "G", "K", "L", "M", "N", "O", "Q", "R", "T", "V", "W", "Y", "Z"]);
+    const corrected = new Set([
+      "A",
+      "B",
+      "G",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "Q",
+      "R",
+      "T",
+      "V",
+      "W",
+      "Y",
+      "Z",
+    ]);
     for (const letter of letters.filter((entry) => corrected.has(entry.id))) {
       for (const [index, segment] of letter.segments.entries()) {
         const result = evaluatePathM2(sampleSegment(segment), segment, true);

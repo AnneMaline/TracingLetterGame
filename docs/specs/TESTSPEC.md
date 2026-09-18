@@ -1,10 +1,10 @@
 # TESTSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.4.0
-**Last Updated:** 2026-09-14
+**Version:** 0.5.0
+**Last Updated:** 2026-09-18
 **Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
-**Traces to:** PRD v0.3.0 · DEVSPEC v0.5.0 · UISPEC v0.4.0
+**Traces to:** PRD v0.4.0 · DEVSPEC v0.6.0 · UISPEC v0.5.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector
 > tracing, boundary box, 80% rule. See §8 Spec Change Log.
@@ -23,10 +23,14 @@
 
 - `src/data/letterSegments/*.ts` — authored `LetterDefinition` fixtures for in-scope letters
   (currently uppercase A-Z), exported by `src/data/letterSegments/index.ts`.
+- `src/data/harderLetterSegments/*.ts` — harder/corrected uppercase fixtures exported by
+  `src/data/harderLetterSegments/index.ts`.
 - Synthetic trace paths are represented inline in unit/integration tests (same approach used in
   tasks 001 and 002), not as committed `fixtures/tracePaths/*.json` files.
 - `src/data/letterSegments/__tests__/letters.test.ts` — fixture invariants for every exported
   letter (alphabet order, non-empty metadata, non-degenerate segments, normalized endpoints).
+- `src/data/harderLetterSegments/__tests__/letters.test.ts` — corrected stroke-order/grouping
+  assertions for affected letters plus baseline invariants.
 - `src/modules/tracing/__tests__/TracingScreen.alphabet.test.tsx` — smoke test that navigates
   through the full `letters` list and asserts segment guide markers render for every letter.
 
@@ -55,6 +59,8 @@
 | T-019 | integration | DEVSPEC §3 Segment Completion (end region, M2)        | Pointer entering the end region with ≥80% coverage completes the segment without a finger-up | Dispatch a scripted pointer path from the start marker straight through the end marker; do not fire pointerup                            | Status becomes `segment-complete` then `letter-complete` (for a single-segment letter); celebration plays         |
 | T-020 | unit        | DEVSPEC §3 Line Segment Rendering & Directional Guide | All authored letters satisfy baseline fixture invariants                                     | Iterate the exported `letters` array and assert A-Z order, non-empty ids/labels, non-zero segment lengths, and normalized endpoints      | Every authored letter passes invariant checks                                                                     |
 | T-021 | integration | UISPEC Gherkin: Top-bar navigation (M3)               | Top-right Next button advances through every authored letter and wraps from Z to A           | Render Tracing with the full `letters` list; click top-right Next (`data-testid="next-letter"`) through all entries including wraparound | For each letter, current label updates and start/end/arrow markers render                                         |
+| T-022 | integration | UISPEC Gherkin: Hard mode fixture selection (M3)      | Letter Selection Hard mode toggle renders and reflects state                                 | Render app at launch, assert `data-testid="hard-mode-toggle"` + `aria-checked="false"`, toggle once                                      | Toggle reflects on-state (`aria-checked="true"`) and remains interactive                                          |
+| T-023 | integration | UISPEC Gherkin: Hard mode fixture selection (M3)      | Hard mode swaps fixture-set used for menu-launched letters                                   | Launch a corrected letter in baseline mode, return to menu, enable Hard mode, relaunch same letter                                       | Segment count/shape reflects harder fixture set after toggle; baseline fixture remains default before toggle      |
 
 ## 4. Dry-Run Protocol
 
@@ -69,7 +75,7 @@ Before marking a milestone done, a human tester manually:
    box resets the segment); the start-region rule (a tap on the middle of the line does not start
    tracing); the end-region auto-complete rule (dragging into the end marker completes the segment
    without a finger-up); and the exit-after-80%-still-resets rule.
-6. For M3: tests the full navigate-via-selection-screen flow, top-left Menu return-to-selection mid-trace, and top-right Next wrap navigation (including Z→A).
+6. For M3: tests the full navigate-via-selection-screen flow, top-left Menu return-to-selection mid-trace, top-right Next wrap navigation (including Z→A), and Hard mode toggle off/on with fixture-set swap verified on at least one corrected letter.
 7. For M4: installs the packaged container build and repeats steps 1–4 inside the Curious Reader
    container itself.
 
@@ -95,17 +101,19 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 ## 8. Appendix — Resolved Decisions
 
-| Date       | Decision                                                                                                                                                                           | Rationale                                                                                                           |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-04 | Boundary-box fixtures use the DEVSPEC §14 default `boundaryPadding` = 0.06 (normalized units); exit-box fixtures place the departure point just past that halo                     | Aligns with the resolved DEVSPEC boundary-padding decision from the M1 dry-run so fixtures track live-code behavior |
-| 2026-09-07 | Deviate fixtures target `deviationThresholdDegrees` = 45 with drift chord ≥ `dragDirectionBaseline` = 0.03; T-007 asserts the `deviation-reset` outcome (cancel), not pause/resume | Aligns with the resolved DEVSPEC v0.4.0 deviation semantics                                                         |
-| 2026-09-07 | Start-region and end-region cases (T-018, T-019) use `startRegionRadius` = 0.08 and `endRegionRadius` = 0.035 respectively                                                         | Aligns with the resolved DEVSPEC v0.4.0 region radii                                                                |
-| 2026-09-11 | Letter-authoring coverage is validated from in-repo TypeScript fixtures/tests (`src/data/letterSegments/**`) rather than mirrored JSON fixture files                               | Matches shipped test assets from Task 003 and keeps fixture source-of-truth single-sited                            |
+| Date       | Decision                                                                                                                                                                                     | Rationale                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-04 | Boundary-box fixtures use the DEVSPEC §14 default `boundaryPadding` = 0.06 (normalized units); exit-box fixtures place the departure point just past that halo                               | Aligns with the resolved DEVSPEC boundary-padding decision from the M1 dry-run so fixtures track live-code behavior |
+| 2026-09-07 | Deviate fixtures target `deviationThresholdDegrees` = 45 with drift chord ≥ `dragDirectionBaseline` = 0.03; T-007 asserts the `deviation-reset` outcome (cancel), not pause/resume           | Aligns with the resolved DEVSPEC v0.4.0 deviation semantics                                                         |
+| 2026-09-07 | Start-region and end-region cases (T-018, T-019) use `startRegionRadius` = 0.08 and `endRegionRadius` = 0.035 respectively                                                                   | Aligns with the resolved DEVSPEC v0.4.0 region radii                                                                |
+| 2026-09-11 | Letter-authoring coverage is validated from in-repo TypeScript fixtures/tests (`src/data/letterSegments/**`) rather than mirrored JSON fixture files                                         | Matches shipped test assets from Task 003 and keeps fixture source-of-truth single-sited                            |
+| 2026-09-18 | Fixture coverage is split across baseline (`src/data/letterSegments/**`) and harder (`src/data/harderLetterSegments/**`) datasets, with hard-mode behavior asserted by app integration tests | Mirrors shipped dual-fixture architecture and M3 hard-mode toggle behavior                                          |
 
 ## 9. Spec Change Log
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-18 — Copilot — Task 005/006 spec-update pass: added dual-fixture test-data coverage, introduced M3 Hard mode cases (T-022/T-023), updated the M3 dry-run checklist, and bumped `Traces to:` PRD v0.4.0 / DEVSPEC v0.6.0 / UISPEC v0.5.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: updated M3 navigation coverage to the shipped top-bar model (T-012 now asserts top-left Menu behavior; T-021 now asserts top-right Next wrap behavior), refreshed dry-run step 6 for M3 flows, and bumped `Traces to:` to PRD v0.3.0 / DEVSPEC v0.5.0 / UISPEC v0.4.0.
 - 2026-09-11 — Copilot — Dead-code cleanup pass (paired with DEVSPEC v0.4.2): T-003/T-004/T-005 unit tests migrated from the removed M1 `evaluatePath` helper to the production `evaluatePathM2` (behavior unchanged — the M1 rules the tests exercise are a subset of M2). Bumped `Traces to:` DEVSPEC reference to v0.4.2. Flagged four pre-existing curve-related test failures introduced in the task-003 merge (`geometry.test.ts` "uses curve distance for curved segments" and "projects points along the curve and reaches near-complete coverage"; `deviation.test.ts` "Curve segments cancel zigzags and backtracking" both cases) — they assert a filled-stadium-region containment model that the shipped code does not implement (code uses a narrow corridor around the curve line, per DEVSPEC §3 boundary-box definition). Left the failing tests untouched pending a human decision on whether to correct the assertions or change the curve-boundary model.
 - 2026-09-11 — Copilot — Task 003 spec-update pass: updated fixtures section to match the shipped in-repo TypeScript fixture strategy, added T-020 (alphabet fixture invariants) and T-021 (all-letter render smoke), and bumped `Traces to:` to PRD v0.2.2 / DEVSPEC v0.4.1 / UISPEC v0.3.1.

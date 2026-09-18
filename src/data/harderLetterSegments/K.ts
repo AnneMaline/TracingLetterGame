@@ -10,7 +10,7 @@ const letterK: LetterDefinition = {
       end: { x: 0.65, y: 0.86 },
       isCurve: true,
       curveKind: "polyline",
-      polylinePoints: [{ x: 0.25, y: 0.50 }],
+      polylinePoints: [{ x: 0.26, y: 0.5 }],
     },
   ],
 };

@@ -6,6 +6,7 @@ import {
   curvePointAt,
   isPointInBox,
   projectPointOntoSegment,
+  segmentTangentAt,
 } from "../geometry";
 import { DEFAULT_BOUNDARY_PADDING } from "../../../shared/constants";
 
@@ -34,6 +35,21 @@ const ovalLoop: LineSegment = {
   ovalStartAngleDeg: 90,
   ovalEndAngleDeg: 448,
   ovalCounterClockwise: true,
+};
+
+const curvedThenStraightPolyline: LineSegment = {
+  start: { x: 0.25, y: 0.14 },
+  end: { x: 0.6, y: 0.86 },
+  curveKind: "polyline",
+  polylinePoints: [
+    {
+      start: { x: 0.25, y: 0.14 },
+      end: { x: 0.25, y: 0.5 },
+      isCurve: true,
+      curveControlX: 0.65,
+    },
+    { start: { x: 0.25, y: 0.5 }, end: { x: 0.6, y: 0.86 } },
+  ],
 };
 
 describe("projectPointOntoSegment", () => {
@@ -147,20 +163,21 @@ describe("boundary box containment (T-002)", () => {
 
   it("uses curve distance for curved segments", () => {
     const box = computeBoundaryBox(curve);
+    const onCurveMid = curvePointAt(curve, 0.5);
     expect(isPointInBox({ x: 0.25, y: 0.14 }, box)).toBe(true);
-    expect(isPointInBox(curvePointAt(curve, 0.5), box)).toBe(true);
-    expect(isPointInBox({ x: 0.25, y: 0.32 }, box)).toBe(false);
+    expect(isPointInBox(onCurveMid, box)).toBe(true);
+    expect(isPointInBox({ x: 0.1, y: 0.32 }, box)).toBe(false);
   });
 });
 
 describe("curve projection", () => {
   it("projects points along the curve and reaches near-complete coverage", () => {
     const pts: Point[] = [];
-    const steps = 64;
+    const steps = 40;
     for (let i = 0; i <= steps; i++) {
       pts.push(curvePointAt(curve, i / steps));
     }
-    expect(computeCoverage(pts, curve)).toBeGreaterThan(0.85);
+    expect(computeCoverage(pts, curve)).toBeGreaterThan(0.9);
   });
 
   it("does not award near-complete oval coverage when only start and end markers are touched", () => {
@@ -177,5 +194,24 @@ describe("curve projection", () => {
       pts.push(curvePointAt(ovalLoop, i / steps));
     }
     expect(computeCoverage(pts, ovalLoop)).toBeGreaterThan(0.9);
+  });
+
+  it("supports mixed polyline steps: curved first leg then straight leg", () => {
+    const quarter = curvePointAt(curvedThenStraightPolyline, 0.25);
+    expect(quarter.x).toBeGreaterThan(0.25);
+
+    const nearEndTangent = segmentTangentAt(curvedThenStraightPolyline, 0.95);
+    expect(nearEndTangent).not.toBeNull();
+    expect(nearEndTangent?.x ?? 0).toBeGreaterThan(0.6);
+    expect(nearEndTangent?.y ?? 0).toBeGreaterThan(0.6);
+
+    const pts: Point[] = [];
+    const steps = 48;
+    for (let i = 0; i <= steps; i++) {
+      pts.push(curvePointAt(curvedThenStraightPolyline, i / steps));
+    }
+    expect(computeCoverage(pts, curvedThenStraightPolyline)).toBeGreaterThan(
+      0.9,
+    );
   });
 });

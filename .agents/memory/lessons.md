@@ -17,6 +17,14 @@ actively misleading — in that case, mark it "SUPERSEDED" rather than deleting 
 
 ## Lessons
 
+## 2026-09-18 — Keep hard-mode fixture tests aligned with authored letter data
+
+After moving corrected letters into `harderLetterSegments`, a few assertions in
+`src/data/harderLetterSegments/__tests__/letters.test.ts` still matched older expectations from
+task notes rather than the shipped fixture coordinates/segment counts. When fixture data changes,
+treat authored `.ts` fixtures as source-of-truth and update expectations accordingly; run the
+targeted fixture test file first to catch drift quickly.
+
 ## 2026-09-07 — Distance-based baseline for drag direction, not sample count
 
 `computeDragDirection` initially walked back `sampleWindow` samples and returned the first delta

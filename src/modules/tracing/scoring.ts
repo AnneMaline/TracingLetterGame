@@ -9,47 +9,15 @@ import {
   computeBoundaryBox,
   computeCoverage,
   computeDragDirection,
+  isCurvedSegment,
   isPointInBox,
-  projectPointOntoSegment,
+  projectPathProgressively,
   segmentDirection,
   segmentTangentAt,
+  shouldSuppressDeviationAtPolylineCorner,
 } from "./geometry";
 
 const BACKTRACK_TOLERANCE = 0.02;
-const POLYLINE_CORNER_TOLERANCE = 0.04;
-
-function getPolylineCornerParameters(segment: LineSegment): number[] {
-  if (segment.curveKind !== "polyline" || !segment.polylinePoints?.length) {
-    return [];
-  }
-
-  const points = [segment.start, ...segment.polylinePoints, segment.end];
-  const lengths: number[] = [];
-  let totalLength = 0;
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const length = Math.hypot(
-      points[i + 1].x - points[i].x,
-      points[i + 1].y - points[i].y,
-    );
-    lengths.push(length);
-    totalLength += length;
-  }
-
-  if (totalLength === 0) return [];
-
-  let walked = 0;
-  return lengths.slice(0, -1).map((length) => {
-    walked += length;
-    return walked / totalLength;
-  });
-}
-
-function isNearPolylineCorner(segment: LineSegment, t: number): boolean {
-  return getPolylineCornerParameters(segment).some(
-    (cornerT) => Math.abs(t - cornerT) <= POLYLINE_CORNER_TOLERANCE,
-  );
-}
 
 export type SegmentOutcome =
   | { kind: "in-progress"; coverage: number }
@@ -95,14 +63,22 @@ export function evaluatePathM2(
   }
 
   if (points.length >= 2) {
-    const prev = points[points.length - 2];
     const tail = points[points.length - 1];
-    const prevT = projectPointOntoSegment(prev, segment);
-    const tailT = projectPointOntoSegment(tail, segment);
+    // Progressive projection so prevT/tailT stay on the correct branch of self-overlapping
+    // polylines (hard-mode B's two bumps share the y=0.5 arm — a single-point nearest
+    // projection cannot tell which bump owns a shared-arm sample).
+    const ts = projectPathProgressively(points, segment);
+    const prevT = ts[ts.length - 2];
+    const tailT = ts[ts.length - 1];
+    const suppressDeviationCheck = shouldSuppressDeviationAtPolylineCorner(
+      segment,
+      prevT,
+      tailT,
+      tail,
+      baselineDistance,
+    );
 
-    const nearPolylineCorner = isNearPolylineCorner(segment, tailT);
-
-    if (tailT + BACKTRACK_TOLERANCE < prevT && !nearPolylineCorner) {
+    if (!suppressDeviationCheck && tailT + BACKTRACK_TOLERANCE < prevT) {
       return {
         kind: "deviation-reset",
         coverage: computeCoverage(points, segment),
@@ -110,14 +86,14 @@ export function evaluatePathM2(
       };
     }
 
-    const ideal = segment.isCurve
+    const ideal = isCurvedSegment(segment)
       ? segmentTangentAt(segment, tailT)
       : segmentDirection(segment);
     const drag = computeDragDirection(points, baselineDistance);
     if (
+      !suppressDeviationCheck &&
       ideal &&
       drag &&
-      !nearPolylineCorner &&
       angleBetweenDegrees(drag, ideal) > thresholdDegrees
     ) {
       return {

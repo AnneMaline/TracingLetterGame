@@ -1,6 +1,6 @@
 # Task 005 — Letter stroke-order corrections
 
-**Status:** Active
+**Status:** Completed (2026-09-18 — corrected fixtures implemented and validated in `harderLetterSegments`; spec-update pass applied — PRD v0.4.0, DEVSPEC v0.6.0, UISPEC v0.5.0, TESTSPEC v0.5.0)
 **Milestone:** Content authoring correction; supports PRD M1/M2 tracing quality and M3 letter menu quality
 
 ## What & why
@@ -13,15 +13,16 @@ stroke order that conflicts with the desired handwriting model.
 
 This task corrects the authored uppercase fixtures so the visual guide, start marker, end marker,
 trace feedback, completion scoring, and letter-selection flow all teach the intended stroke order.
-The expected source of truth remains `src/data/letterSegments/*.ts`; changes should be data-driven
-where possible and should not hard-code letter-specific behavior in the tracing components.
+After Task 006, the corrected fixture set is surfaced via `src/data/harderLetterSegments/*.ts`
+while `src/data/letterSegments/*.ts` remains the default baseline set. Changes remain data-driven
+and avoid letter-specific behavior in tracing components.
 
 ## What "done" looks like
 
-Traces to [docs/specs/PRD.md](../../specs/PRD.md) v0.3.0 §3 Goals and §8 Constraints,
-[docs/specs/DEVSPEC.md](../../specs/DEVSPEC.md) v0.5.0 §2 Data Schema and §3 Line Segment Rendering
+Traces to [docs/specs/PRD.md](../../specs/PRD.md) v0.4.0 §3 Goals and §8 Constraints,
+[docs/specs/DEVSPEC.md](../../specs/DEVSPEC.md) v0.6.0 §2 Data Schema and §3 Line Segment Rendering
 & Directional Guide / Segment Completion modules, [docs/specs/UISPEC.md](../../specs/UISPEC.md)
-v0.4.0 §2 Tracing screen, and [docs/specs/TESTSPEC.md](../../specs/TESTSPEC.md) v0.4.0 T-009,
+v0.5.0 §2 Tracing screen, and [docs/specs/TESTSPEC.md](../../specs/TESTSPEC.md) v0.5.0 T-009,
 T-013, T-020, and T-021:
 
 - The following letter fixtures are updated to match the intended stroke flow:
@@ -53,8 +54,9 @@ T-013, T-020, and T-021:
 - The implementation avoids letter-specific branching in rendering, scoring, or navigation. If a
   requested stroke cannot be represented correctly with the current schema, add a small generic
   schema/rendering/scoring extension and cover it with tests rather than special-casing a letter.
-- Existing menu/navigation behavior remains unchanged: selecting any corrected letter from the menu
-  opens the tracing screen at the first corrected stroke; top-right Next and top-left Menu still work.
+- Existing menu/navigation behavior remains unchanged for the active fixture set: selecting any
+  corrected letter from the menu in Hard mode opens the tracing screen at the first corrected stroke;
+  top-right Next and top-left Menu still work.
 - Tests are updated or added so the corrected stroke order is asserted directly for every affected
   letter, not only indirectly through generic fixture invariants.
 - `npm run typecheck` and `npm test` pass.
@@ -129,7 +131,4 @@ Feature: Correct uppercase stroke order
 
 ## Next step after this task
 
-Once implemented, tested, and approved: run the spec update task. Record any schema/path-model
-changes in DEVSPEC, any changed tracing expectations in UISPEC/TESTSPEC, bump affected spec
-versions, append Spec Change Log entries, update this task's `Status:` header to completed, and move
-it from `docs/tasks/active/` to `docs/tasks/done/`.
+Spec-update pass completed on 2026-09-18; task archived to `docs/tasks/done/`.

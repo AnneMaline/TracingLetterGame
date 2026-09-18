@@ -2,7 +2,7 @@ import { useCallback, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
 import { SegmentGuide } from "./SegmentGuide";
-import { curvePointAt } from "./geometry";
+import { curvePointAt, isCurvedSegment } from "./geometry";
 import type { SegmentTraceView } from "./useSegmentTrace";
 
 interface Props {
@@ -18,12 +18,7 @@ const CURVE_X = 0.75;
 const OVAL_PATH_STEPS = 96;
 
 export const curvePath = (segment: LineSegment) => {
-  if (
-    segment.curveKind === "bezier" ||
-    segment.curveKind === "oval" ||
-    segment.curveKind === "polyline" ||
-    segment.curveKind === "spline"
-  ) {
+  if (segment.curveKind === "oval" || segment.curveKind === "polyline") {
     const points: Point[] = [];
     for (let i = 0; i <= OVAL_PATH_STEPS; i++) {
       points.push(curvePointAt(segment, i / OVAL_PATH_STEPS));
@@ -153,7 +148,7 @@ export function TraceSurface({
     >
       {letter.segments.map((seg, i) => {
         if (!view.completedSegments[i]) return null;
-        if (letter.segments[i].isCurve) {
+        if (isCurvedSegment(letter.segments[i])) {
           return (
             <path
               d={curvePath(seg)}

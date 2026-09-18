@@ -1,6 +1,6 @@
 # Task 006 — Hard mode letter variants
 
-**Status:** Active
+**Status:** Completed (2026-09-18 — hard-mode fixture variants shipped and validated; spec-update pass applied — PRD v0.4.0, DEVSPEC v0.6.0, UISPEC v0.5.0, TESTSPEC v0.5.0)
 **Milestone:** Content/menu enhancement; supports PRD M3 letter menu and the task 005 stroke-order
 corrections
 
@@ -18,10 +18,10 @@ become an opt-in "Hard mode" that a caregiver or child can switch on from the le
 
 ## What "done" looks like
 
-Traces to [docs/specs/PRD.md](../../specs/PRD.md) v0.3.0 §3 Goals,
-[docs/specs/DEVSPEC.md](../../specs/DEVSPEC.md) v0.5.0 §2 Data Schema and §8 repository structure,
-[docs/specs/UISPEC.md](../../specs/UISPEC.md) v0.4.0 §2 Letter Selection screen, and
-[docs/specs/TESTSPEC.md](../../specs/TESTSPEC.md) v0.4.0 T-011 (Letter Selection screen):
+Traces to [docs/specs/PRD.md](../../specs/PRD.md) v0.4.0 §3 Goals,
+[docs/specs/DEVSPEC.md](../../specs/DEVSPEC.md) v0.6.0 §2 Data Schema and §8 repository structure,
+[docs/specs/UISPEC.md](../../specs/UISPEC.md) v0.5.0 §2 Letter Selection screen, and
+[docs/specs/TESTSPEC.md](../../specs/TESTSPEC.md) v0.5.0 T-011 (Letter Selection screen):
 
 - `src/data/letterSegments/` contains the original 26 MVP letter fixtures, unchanged from before
   task 005 (i.e. matching `main` prior to the task-005 stroke-order corrections).
@@ -106,4 +106,4 @@ Feature: Hard mode letter variants
 
 ## Spec Change Log
 
-(none yet — pending spec-update pass after this task is merged)
+- 2026-09-18 — Copilot — Archived as completed after spec-update pass; behavior now reflected in PRD v0.4.0, DEVSPEC v0.6.0, UISPEC v0.5.0, and TESTSPEC v0.5.0.

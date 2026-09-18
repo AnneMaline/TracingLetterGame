@@ -1,4 +1,9 @@
-import type { LineSegment, Point } from "../../types";
+import type {
+  LineSegment,
+  Point,
+  PolylinePoint,
+  PolylineSubSegment,
+} from "../../types";
 import {
   DEFAULT_BOUNDARY_PADDING,
   DRAG_DIRECTION_BASELINE,
@@ -37,18 +42,47 @@ type OvalCurveSegment = LineSegment & {
 
 type PolylineCurveSegment = LineSegment & {
   curveKind: "polyline";
-  polylinePoints: Point[];
+  polylinePoints: PolylinePoint[];
 };
 
-type SplineCurveSegment = LineSegment & {
-  curveKind: "spline";
-  splinePoints: Point[];
-};
+interface PolylinePathData {
+  segments: LineSegment[];
+  lengths: number[];
+  totalLength: number;
+}
 
-type BezierCurveSegment = LineSegment & {
-  curveKind: "bezier";
-  bezierSegments: NonNullable<LineSegment["bezierSegments"]>;
-};
+interface PolylineCornerData {
+  progresses: number[];
+  points: Point[];
+  totalLength: number;
+}
+
+export function isCurvedSegment(segment: LineSegment): boolean {
+  return (
+    segment.isCurve === true ||
+    segment.curveKind === "oval" ||
+    segment.curveKind === "polyline"
+  );
+}
+
+function isPointStep(step: PolylinePoint): step is Point {
+  return "x" in step && "y" in step;
+}
+
+function isSubSegmentStep(step: PolylinePoint): step is PolylineSubSegment {
+  return "start" in step && "end" in step;
+}
+
+function pointsMatch(a: Point, b: Point, epsilon = 1e-6): boolean {
+  return Math.abs(a.x - b.x) <= epsilon && Math.abs(a.y - b.y) <= epsilon;
+}
+
+function lerpPoint(a: Point, b: Point, t: number): Point {
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+  };
+}
 
 function isOvalCurve(segment: LineSegment): segment is OvalCurveSegment {
   return (
@@ -71,163 +105,223 @@ function isPolylineCurve(
   );
 }
 
-function isSplineCurve(segment: LineSegment): segment is SplineCurveSegment {
-  return (
-    segment.curveKind === "spline" &&
-    Array.isArray(segment.splinePoints) &&
-    segment.splinePoints.length >= 1
+function getPolylineSubSegments(segment: LineSegment): LineSegment[] {
+  if (!isPolylineCurve(segment))
+    return [{ start: segment.start, end: segment.end }];
+
+  const subSegments: LineSegment[] = [];
+  let cursor = segment.start;
+
+  for (const step of segment.polylinePoints) {
+    if (isPointStep(step)) {
+      if (!pointsMatch(cursor, step)) {
+        subSegments.push({ start: cursor, end: step });
+      }
+      cursor = step;
+      continue;
+    }
+
+    if (isSubSegmentStep(step)) {
+      if (!pointsMatch(cursor, step.start)) {
+        subSegments.push({ start: cursor, end: step.start });
+      }
+      subSegments.push({ ...step });
+      cursor = step.end;
+    }
+  }
+
+  if (!pointsMatch(cursor, segment.end)) {
+    subSegments.push({ start: cursor, end: segment.end });
+  }
+
+  if (subSegments.length === 0) {
+    return [{ start: segment.start, end: segment.end }];
+  }
+
+  return subSegments;
+}
+
+function segmentPathLength(segment: LineSegment): number {
+  if (!isCurvedSegment(segment))
+    return distanceBetween(segment.start, segment.end);
+
+  const curveSamples = sampleCurve(segment);
+  let length = 0;
+  for (let i = 1; i < curveSamples.length; i++) {
+    length += distanceBetween(curveSamples[i - 1], curveSamples[i]);
+  }
+  return length;
+}
+
+function getPolylinePathData(segment: LineSegment): PolylinePathData {
+  const segments = getPolylineSubSegments(segment);
+  const lengths: number[] = [];
+  let totalLength = 0;
+
+  for (const subSegment of segments) {
+    const len = segmentPathLength(subSegment);
+    lengths.push(len);
+    totalLength += len;
+  }
+
+  return { segments, lengths, totalLength };
+}
+
+function getPolylineCornerData(
+  segment: LineSegment,
+): PolylineCornerData | null {
+  if (!isPolylineCurve(segment)) return null;
+  const path = getPolylinePathData(segment);
+  if (path.totalLength <= 0 || path.lengths.length <= 1) return null;
+
+  const progresses: number[] = [];
+  const points: Point[] = [];
+  let walked = 0;
+  for (let i = 0; i < path.lengths.length - 1; i++) {
+    walked += path.lengths[i];
+    progresses.push(walked / path.totalLength);
+    points.push(path.segments[i].end);
+  }
+
+  return { progresses, points, totalLength: path.totalLength };
+}
+
+// Multiplier applied to the segment padding to produce the corner turning window.
+// Slightly larger than a single padding radius so children can "cut" or overshoot the
+// exact turn point by a small amount without triggering deviation resets.
+const POLYLINE_CORNER_RADIUS_FACTOR = 1.5;
+
+function subSegmentIndexAtT(path: PolylinePathData, t: number): number {
+  if (path.segments.length <= 1 || path.totalLength <= 0) return 0;
+  const target = Math.max(0, Math.min(1, t)) * path.totalLength;
+  let walked = 0;
+  for (let i = 0; i < path.lengths.length; i++) {
+    walked += path.lengths[i];
+    if (target <= walked) return i;
+  }
+  return path.segments.length - 1;
+}
+
+function distanceFromPointToSubSegment(
+  point: Point,
+  subSegment: LineSegment,
+): number {
+  if (isCurvedSegment(subSegment)) {
+    const samples = sampleCurve(subSegment);
+    return distanceToPolyline(point, samples);
+  }
+  const nearest = closestPointOnLineSegment(
+    point,
+    subSegment.start,
+    subSegment.end,
   );
+  return distanceBetween(point, nearest);
 }
 
-function isBezierCurve(segment: LineSegment): segment is BezierCurveSegment {
-  return (
-    segment.curveKind === "bezier" &&
-    Array.isArray(segment.bezierSegments) &&
-    segment.bezierSegments.length >= 1
-  );
+// Nearest distance from `tail` to any sub-segment other than the one it currently sits on.
+// Small values (<= overlap radius) mean the polyline has another branch running through the
+// same area — direction/backtrack checks are ambiguous here (e.g. hard-mode B's two bumps
+// sharing the horizontal arm at y=0.5) and should be relaxed.
+function distanceToOtherPolylineBranches(
+  segment: LineSegment,
+  tail: Point,
+  tailT: number,
+): number {
+  if (!isPolylineCurve(segment)) return Number.POSITIVE_INFINITY;
+  const path = getPolylinePathData(segment);
+  if (path.segments.length < 2) return Number.POSITIVE_INFINITY;
+  const currentSubIndex = subSegmentIndexAtT(path, tailT);
+
+  let minDist = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < path.segments.length; i++) {
+    if (i === currentSubIndex) continue;
+    const d = distanceFromPointToSubSegment(tail, path.segments[i]);
+    if (d < minDist) minDist = d;
+  }
+  return minDist;
 }
 
-function getPolylinePath(segment: LineSegment): Point[] {
-  if (!isPolylineCurve(segment)) return [segment.start, segment.end];
-  return [segment.start, ...segment.polylinePoints, segment.end];
-}
+export function shouldSuppressDeviationAtPolylineCorner(
+  segment: LineSegment,
+  prevT: number,
+  tailT: number,
+  tailPoint: Point,
+  baselineDistance: number,
+): boolean {
+  if (!isPolylineCurve(segment)) return false;
 
-function getSplinePath(segment: LineSegment): Point[] {
-  if (!isSplineCurve(segment)) return [segment.start, segment.end];
-  return [segment.start, ...segment.splinePoints, segment.end];
+  const padding = getSegmentPadding(segment);
+  const cornerRadius = padding * POLYLINE_CORNER_RADIUS_FACTOR;
+  const cornerWindowDistance = Math.max(baselineDistance, cornerRadius);
+  const cornerSpatialWindow = cornerRadius + baselineDistance;
+  const overlapRadius = padding;
+
+  // Self-overlap zones (e.g. hard-mode B's shared arm at y=0.5): if the tail is spatially
+  // near a non-current branch of the polyline, direction and backtrack checks are ambiguous.
+  if (
+    distanceToOtherPolylineBranches(segment, tailPoint, tailT) <= overlapRadius
+  ) {
+    return true;
+  }
+
+  const corners = getPolylineCornerData(segment);
+  if (!corners) return false;
+
+  for (let i = 0; i < corners.progresses.length; i++) {
+    const cornerT = corners.progresses[i];
+    const cornerPoint = corners.points[i];
+    const crossedCorner = prevT <= cornerT && tailT >= cornerT;
+    const distancePastCorner = (tailT - cornerT) * corners.totalLength;
+    const stillWithinDirectionWindow =
+      tailT >= cornerT && distancePastCorner <= baselineDistance;
+    const tailDistanceToCornerOnPath =
+      Math.abs(tailT - cornerT) * corners.totalLength;
+    const prevDistanceToCornerOnPath =
+      Math.abs(prevT - cornerT) * corners.totalLength;
+    const stillNearCornerOnPath =
+      Math.min(tailDistanceToCornerOnPath, prevDistanceToCornerOnPath) <=
+      cornerWindowDistance;
+    const stillWithinCornerBoundary =
+      distanceBetween(tailPoint, cornerPoint) <= cornerRadius;
+    const stillWithinCornerSpatialWindow =
+      distanceBetween(tailPoint, cornerPoint) <= cornerSpatialWindow;
+    if (
+      crossedCorner ||
+      stillWithinDirectionWindow ||
+      stillNearCornerOnPath ||
+      stillWithinCornerBoundary ||
+      stillWithinCornerSpatialWindow
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function polylinePointAt(segment: LineSegment, t: number): Point {
-  const points = getPolylinePath(segment);
-  if (points.length === 0) return segment.start;
-  if (points.length === 1) return points[0];
+  const path = getPolylinePathData(segment);
+  if (path.segments.length === 0) return segment.start;
 
   const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
-  const lengths: number[] = [];
-  let totalLength = 0;
+  if (path.totalLength === 0) return path.segments[0].start;
 
-  for (let i = 0; i < points.length - 1; i++) {
-    const len = distanceBetween(points[i], points[i + 1]);
-    lengths.push(len);
-    totalLength += len;
-  }
-
-  if (totalLength === 0) return points[0];
-
-  const targetLength = totalLength * clampedT;
+  const targetLength = path.totalLength * clampedT;
   let walked = 0;
-  for (let i = 0; i < lengths.length; i++) {
-    const segLength = lengths[i];
+  for (let i = 0; i < path.lengths.length; i++) {
+    const segLength = path.lengths[i];
     const nextWalked = walked + segLength;
-    if (targetLength <= nextWalked || i === lengths.length - 1) {
+    const subSegment = path.segments[i];
+    if (targetLength <= nextWalked || i === path.lengths.length - 1) {
       const localT = segLength === 0 ? 0 : (targetLength - walked) / segLength;
-      return {
-        x: points[i].x + (points[i + 1].x - points[i].x) * localT,
-        y: points[i].y + (points[i + 1].y - points[i].y) * localT,
-      };
+      return isCurvedSegment(subSegment)
+        ? curvePointAt(subSegment, localT)
+        : lerpPoint(subSegment.start, subSegment.end, localT);
     }
     walked = nextWalked;
   }
 
-  return points[points.length - 1];
-}
-
-function getControlPathLengths(points: readonly Point[]) {
-  const lengths: number[] = [];
-  let totalLength = 0;
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const len = distanceBetween(points[i], points[i + 1]);
-    lengths.push(len);
-    totalLength += len;
-  }
-
-  return { lengths, totalLength };
-}
-
-function cubicBezierPoint(
-  start: Point,
-  control1: Point,
-  control2: Point,
-  end: Point,
-  t: number,
-): Point {
-  const mt = 1 - t;
-  return {
-    x:
-      mt * mt * mt * start.x +
-      3 * mt * mt * t * control1.x +
-      3 * mt * t * t * control2.x +
-      t * t * t * end.x,
-    y:
-      mt * mt * mt * start.y +
-      3 * mt * mt * t * control1.y +
-      3 * mt * t * t * control2.y +
-      t * t * t * end.y,
-  };
-}
-
-function bezierPointAt(segment: LineSegment, t: number): Point {
-  if (!isBezierCurve(segment)) return segment.start;
-  const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
-  const scaledT = clampedT * segment.bezierSegments.length;
-  const index = Math.min(
-    segment.bezierSegments.length - 1,
-    Math.floor(scaledT),
-  );
-  const localT = scaledT - index;
-  const start =
-    index === 0 ? segment.start : segment.bezierSegments[index - 1].end;
-  const { control1, control2, end } = segment.bezierSegments[index];
-  return cubicBezierPoint(start, control1, control2, end, localT);
-}
-
-function splinePointAt(segment: LineSegment, t: number): Point {
-  const points = getSplinePath(segment);
-  if (points.length === 0) return segment.start;
-  if (points.length === 1) return points[0];
-
-  const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
-  const { lengths, totalLength } = getControlPathLengths(points);
-  if (totalLength === 0) return points[0];
-
-  const targetLength = totalLength * clampedT;
-  let walked = 0;
-  let segmentIndex = 0;
-  let localT = 0;
-
-  for (let i = 0; i < lengths.length; i++) {
-    const segLength = lengths[i];
-    const nextWalked = walked + segLength;
-    if (targetLength <= nextWalked || i === lengths.length - 1) {
-      segmentIndex = i;
-      localT = segLength === 0 ? 0 : (targetLength - walked) / segLength;
-      break;
-    }
-    walked = nextWalked;
-  }
-
-  const p0 = points[Math.max(0, segmentIndex - 1)];
-  const p1 = points[segmentIndex];
-  const p2 = points[Math.min(points.length - 1, segmentIndex + 1)];
-  const p3 = points[Math.min(points.length - 1, segmentIndex + 2)];
-  const tt = localT * localT;
-  const ttt = tt * localT;
-
-  return {
-    x:
-      0.5 *
-      (2 * p1.x +
-        (-p0.x + p2.x) * localT +
-        (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * tt +
-        (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * ttt),
-    y:
-      0.5 *
-      (2 * p1.y +
-        (-p0.y + p2.y) * localT +
-        (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * tt +
-        (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * ttt),
-  };
+  return path.segments[path.segments.length - 1].end;
 }
 
 function getOvalSweepDeltaDeg(segment: LineSegment): number {
@@ -346,8 +440,6 @@ function stadiumTangentAt(segment: LineSegment, t: number): UnitVector | null {
 
 export function curvePointAt(segment: LineSegment, t: number): Point {
   if (isOvalCurve(segment)) return ovalPointAt(segment, t);
-  if (isBezierCurve(segment)) return bezierPointAt(segment, t);
-  if (isSplineCurve(segment)) return splinePointAt(segment, t);
   if (isPolylineCurve(segment)) return polylinePointAt(segment, t);
   return stadiumPointAt(segment, t);
 }
@@ -389,14 +481,23 @@ function distanceToPolyline(point: Point, polyline: readonly Point[]): number {
   return minDistance;
 }
 
+// `hintT`: prior progress along the curve. On self-overlapping polylines (e.g. hard B's
+// two bumps sharing a horizontal arm at y=0.5) multiple branches project to the same
+// distance; without a hint the first-seen branch wins and later samples appear to jump
+// backward. When two candidates are within `PROJECT_TIE_EPSILON_SQ` of the minimum distance,
+// prefer the one whose t is closest to `hintT`; if still tied, prefer the larger (forward) t.
+const PROJECT_TIE_EPSILON_SQ = 1e-8;
+
 function projectPointOntoCurve(
   point: Point,
   segment: LineSegment,
   steps = CURVE_SAMPLE_STEPS,
+  hintT?: number,
 ): number {
   const samples = sampleCurve(segment, steps);
   let minDistSq = Number.POSITIVE_INFINITY;
   let bestT = 0;
+  let bestHintDelta = Number.POSITIVE_INFINITY;
   for (let i = 0; i < samples.length - 1; i++) {
     const a = samples[i];
     const b = samples[i + 1];
@@ -415,11 +516,25 @@ function projectPointOntoCurve(
     const ddx = point.x - projX;
     const ddy = point.y - projY;
     const distSq = ddx * ddx + ddy * ddy;
-    if (distSq < minDistSq) {
+    const t0 = i / steps;
+    const t1 = (i + 1) / steps;
+    const t = t0 + (t1 - t0) * localT;
+
+    if (distSq + PROJECT_TIE_EPSILON_SQ < minDistSq) {
       minDistSq = distSq;
-      const t0 = i / steps;
-      const t1 = (i + 1) / steps;
-      bestT = t0 + (t1 - t0) * localT;
+      bestT = t;
+      bestHintDelta = hintT === undefined ? 0 : Math.abs(t - hintT);
+      continue;
+    }
+    if (hintT === undefined) continue;
+    if (distSq > minDistSq + PROJECT_TIE_EPSILON_SQ) continue;
+    const hintDelta = Math.abs(t - hintT);
+    if (
+      hintDelta < bestHintDelta ||
+      (hintDelta === bestHintDelta && t > bestT)
+    ) {
+      bestT = t;
+      bestHintDelta = hintDelta;
     }
   }
   return bestT;
@@ -443,7 +558,7 @@ export function computeBoundaryBox(
   segment: LineSegment,
   padding: number = getSegmentPadding(segment),
 ): BoundaryBox {
-  if (segment.isCurve) {
+  if (isCurvedSegment(segment)) {
     const curveSamples = sampleCurve(segment);
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
@@ -506,9 +621,10 @@ export function isPointInBox(point: Point, box: BoundaryBox): boolean {
 export function projectPointOntoSegment(
   point: Point,
   segment: LineSegment,
+  hintT?: number,
 ): number {
-  if (segment.isCurve) {
-    return projectPointOntoCurve(point, segment);
+  if (isCurvedSegment(segment)) {
+    return projectPointOntoCurve(point, segment, CURVE_SAMPLE_STEPS, hintT);
   }
   const dx = segment.end.x - segment.start.x;
   const dy = segment.end.y - segment.start.y;
@@ -522,13 +638,29 @@ export function projectPointOntoSegment(
   return t;
 }
 
+// Progressive projection: each sample is projected with the previous progress as a hint.
+// Required for self-overlapping polylines where a standalone nearest-point projection
+// cannot tell which branch of the curve a point belongs to.
+export function projectPathProgressively(
+  points: readonly Point[],
+  segment: LineSegment,
+): number[] {
+  const ts: number[] = [];
+  if (points.length === 0) return ts;
+  ts.push(projectPointOntoSegment(points[0], segment));
+  for (let i = 1; i < points.length; i++) {
+    ts.push(projectPointOntoSegment(points[i], segment, ts[i - 1]));
+  }
+  return ts;
+}
+
 export function computeCoverage(
   points: readonly Point[],
   segment: LineSegment,
 ): number {
   if (points.length === 0 || isDegenerate(segment)) return 0;
 
-  if (segment.isCurve) {
+  if (isCurvedSegment(segment)) {
     // For curves, nearest-point projection can jump between seam-adjacent parameters
     // (e.g. oval start/end near the same location). Gate parameter gain by observed
     // pointer travel distance so tapping near both markers cannot fake full progress.
@@ -545,7 +677,7 @@ export function computeCoverage(
 
     for (let i = 1; i < points.length; i++) {
       const point = points[i];
-      const t = projectPointOntoSegment(point, segment);
+      const t = projectPointOntoSegment(point, segment, prevT);
       const rawDeltaT = t - prevT;
 
       if (rawDeltaT > 0) {
@@ -577,7 +709,7 @@ export function distanceBetween(a: Point, b: Point): number {
 }
 
 export function segmentDirection(segment: LineSegment): UnitVector | null {
-  if (segment.isCurve) return null;
+  if (isCurvedSegment(segment)) return null;
   const dx = segment.end.x - segment.start.x;
   const dy = segment.end.y - segment.start.y;
   const len = Math.hypot(dx, dy);
@@ -589,30 +721,26 @@ export function segmentTangentAt(
   segment: LineSegment,
   t: number,
 ): UnitVector | null {
-  if (!segment.isCurve) return segmentDirection(segment);
+  if (!isCurvedSegment(segment)) return segmentDirection(segment);
   if (isPolylineCurve(segment)) {
-    const points = getPolylinePath(segment);
-    if (points.length < 2) return null;
+    const path = getPolylinePathData(segment);
+    if (path.segments.length === 0 || path.totalLength === 0) return null;
 
     const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
-    const lengths: number[] = [];
-    let totalLength = 0;
-    for (let i = 0; i < points.length - 1; i++) {
-      const len = distanceBetween(points[i], points[i + 1]);
-      lengths.push(len);
-      totalLength += len;
-    }
-    if (totalLength === 0) return null;
-
-    const targetLength = totalLength * clampedT;
+    const targetLength = path.totalLength * clampedT;
     let walked = 0;
-    for (let i = 0; i < lengths.length; i++) {
-      const segLength = lengths[i];
-      if (segLength === 0) continue;
+    for (let i = 0; i < path.lengths.length; i++) {
+      const segLength = path.lengths[i];
+      const subSegment = path.segments[i];
       const nextWalked = walked + segLength;
-      if (targetLength <= nextWalked || i === lengths.length - 1) {
-        const dx = points[i + 1].x - points[i].x;
-        const dy = points[i + 1].y - points[i].y;
+      if (targetLength <= nextWalked || i === path.lengths.length - 1) {
+        const localT =
+          segLength === 0 ? 0 : (targetLength - walked) / segLength;
+        if (isCurvedSegment(subSegment)) {
+          return segmentTangentAt(subSegment, localT);
+        }
+        const dx = subSegment.end.x - subSegment.start.x;
+        const dy = subSegment.end.y - subSegment.start.y;
         const len = Math.hypot(dx, dy);
         if (len === 0) return null;
         return { x: dx / len, y: dy / len };
@@ -632,15 +760,6 @@ export function segmentTangentAt(
     const len = Math.hypot(tx, ty);
     if (len === 0) return null;
     return { x: tx / len, y: ty / len };
-  }
-  if (isSplineCurve(segment) || isBezierCurve(segment)) {
-    const before = curvePointAt(segment, Math.max(0, t - 0.01));
-    const after = curvePointAt(segment, Math.min(1, t + 0.01));
-    const dx = after.x - before.x;
-    const dy = after.y - before.y;
-    const len = Math.hypot(dx, dy);
-    if (len === 0) return null;
-    return { x: dx / len, y: dy / len };
   }
   return stadiumTangentAt(segment, t);
 }

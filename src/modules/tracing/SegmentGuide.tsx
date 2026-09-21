@@ -1,6 +1,6 @@
 import type { LineSegment } from "../../types";
 import { curvePath } from "./TraceSurface";
-import { curvePointAt, segmentTangentAt } from "./geometry";
+import { curvePointAt, isCurvedSegment, segmentTangentAt } from "./geometry";
 
 interface Props {
   segment: LineSegment;
@@ -8,7 +8,7 @@ interface Props {
 
 const calculateArrowPosition = ({
   segment,
-  t = segment.isCurve ? 0.2 : 0.5,
+  t = isCurvedSegment(segment) ? 0.2 : 0.5,
 }: {
   segment: LineSegment;
   t?: number;
@@ -25,7 +25,7 @@ const calculateArrowPosition = ({
   let ux = 0;
   let uy = 0;
 
-  if (segment.isCurve) {
+  if (isCurvedSegment(segment)) {
     const p = curvePointAt(segment, t);
     const tangent = segmentTangentAt(segment, t);
     arrowTipX = p.x;
@@ -42,10 +42,10 @@ const calculateArrowPosition = ({
   }
 
   // Return
-  const arrowBaseX = segment.isCurve
+  const arrowBaseX = isCurvedSegment(segment)
     ? arrowTipX - ux * arrowLengthCurve
     : start.x + dx * t - ux * arrowSize;
-  const arrowBaseY = segment.isCurve
+  const arrowBaseY = isCurvedSegment(segment)
     ? arrowTipY - uy * arrowLengthCurve
     : start.y + dy * t - uy * arrowSize;
   const perpX = -uy * arrowSize * 0.75;
@@ -59,7 +59,7 @@ export function SegmentGuide({ segment }: Props) {
 
   return (
     <g data-testid="segment-guide">
-      {segment.isCurve ? (
+      {isCurvedSegment(segment) ? (
         <path
           d={curvePath(segment)}
           fill="none"
@@ -102,7 +102,7 @@ export function SegmentGuide({ segment }: Props) {
         fill="#17324d"
         data-testid="segment-guide-arrow"
       />
-      {segment.isCurve && (
+      {isCurvedSegment(segment) && (
         <polygon
           points={calculateArrowPosition({ segment, t: 0.9 })}
           fill="#17324d"

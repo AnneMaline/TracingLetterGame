@@ -3,6 +3,15 @@ export interface Point {
   y: number;
 }
 
+export interface PolylineSubSegment {
+  start: Point;
+  end: Point;
+  isCurve?: boolean;
+  curveControlX?: number;
+}
+
+export type PolylinePoint = Point | PolylineSubSegment;
+
 export interface LineSegment {
   start: Point;
   end: Point;
@@ -10,7 +19,7 @@ export interface LineSegment {
   isCurve?: boolean;
   curveControlX?: number;
   curveKind?: "oval" | "polyline";
-  polylinePoints?: Point[];
+  polylinePoints?: PolylinePoint[];
   ovalCenter?: Point;
   ovalRadiusX?: number;
   ovalRadiusY?: number;

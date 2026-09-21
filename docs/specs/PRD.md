@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.3.0
-**Last Updated:** 2026-09-14
+**Version:** 0.4.0
+**Last Updated:** 2026-09-18
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -42,6 +42,8 @@ paradigm as a sub-app of the Curious Reader container.
 - Require meaningful completion of a segment (≥80% of its length, checked on finger-up) before advancing.
 - Celebrate completing all segments of a letter with an animation.
 - Let the child move between letters (MVP: Next/Previous; Great tier: a letter-selection screen reachable at any time).
+- Offer a session-only Hard mode toggle on the letter-selection screen so caregivers/children can switch between
+  baseline fixtures and harder continuous-stroke variants.
 - Keep the letter/segment data model data-driven so non-English scripts can be added without code changes later.
 
 ## 4. Non-Goals (MVP)
@@ -90,6 +92,10 @@ paradigm as a sub-app of the Curious Reader container.
 
 - Replace the legacy bottom Next/Previous controls with a letter-selection-first flow and a top-bar navigation model.
 - Add a letter-selection screen listing all in-scope letters as the default app entry point.
+- Add a top-centered Hard mode toggle on the letter-selection screen; Hard mode starts off on app load and remains
+  in-memory only for the current session.
+- Hard mode toggles which authored letter fixture set is launched from the menu (baseline vs. harder variants), while
+  letters already open in Tracing keep their current fixture set until the child returns to the menu.
 - Add a top-left Menu control that returns the child to the letter-selection screen from the tracing screen at any time.
 - Keep top-right Next navigation on the tracing screen to quickly advance letters with wraparound behavior.
 - Flow: app opens on letter selection → child picks a letter → tracing starts at segment 1 for that letter.
@@ -100,12 +106,12 @@ paradigm as a sub-app of the Curious Reader container.
 
 ## 7. Milestones
 
-| Milestone                      | Description                                                                                                                   | Target date |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation                                  | TBD         |
-| M2 — Better accuracy detection | Degree-of-deviation cancel-on-threshold, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete | TBD         |
-| M3 — Great navigation          | Letter-selection screen as app entry, top-bar Menu back-navigation, and top-bar Next wrap navigation                          | TBD         |
-| M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                                                              | TBD         |
+| Milestone                      | Description                                                                                                                                                | Target date |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation                                                               | TBD         |
+| M2 — Better accuracy detection | Degree-of-deviation cancel-on-threshold, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                              | TBD         |
+| M3 — Great navigation          | Letter-selection screen as app entry, top-bar Menu back-navigation, top-bar Next wrap navigation, and a session-only Hard mode toggle for fixture variants | TBD         |
+| M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                                                                                           | TBD         |
 
 ## 8. Constraints & Assumptions
 
@@ -136,6 +142,7 @@ paradigm as a sub-app of the Curious Reader container.
 | 2026-09-07 | M2 deviation past threshold **cancels** the segment (same effect as a boundary-box exit); the earlier pause-and-resume model was dropped after M2 dry-run                                                                       | Return-to-departure produced a visible straight-line snap that felt buggy; cancel is clearer and consistent with the box-exit rule                            |
 | 2026-09-07 | M2 deviation threshold = 45°, measured as the angle between the ideal vector and the chord over the last ~0.03 normalized units of pointer motion (tail-only check); direction is not re-checked at historical samples          | Sample-count windows are unstable across sampling rates; a distance-based chord averages jitter; tail-only avoids false cancels from one noisy earlier sample |
 | 2026-09-07 | M2 pointer-down must land within 0.08 normalized units of the segment's start marker; segment auto-completes when the pointer enters 0.035 normalized units of the end marker (with ≥80% coverage), without needing a finger-up | Enforces "start at the green dot" wording of DEVSPEC §3; makes overshooting the end marker safe instead of a failure mode                                     |
+| 2026-09-18 | M3 includes a session-only Hard mode toggle in Letter Selection that switches between baseline and harder letter fixtures; default is off on every app load                                                                     | Preserves the beginner-friendly baseline while exposing corrected continuous-stroke flow as an opt-in challenge without adding persistence scope              |
 
 ## 11. Appendix — Out of Scope
 
@@ -147,6 +154,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-18 — Copilot — Task 005/006 spec-update pass: added the shipped M3 Hard mode product behavior (session-only toggle, default off, menu-selected fixture-set swap) and bumped PRD to v0.4.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: clarified M3 navigation to match shipped behavior (letter-selection as app entry plus top-bar Menu and top-bar Next-with-wrap controls) and updated the M3 milestone description accordingly.
 - 2026-09-07 — Copilot — M2 spec-update pass: rewrote the M2 scope from "deviation pauses and resumes at the point of departure" to "deviation cancels the segment"; added start-region enforcement and end-region auto-complete to the M2 scope; resolved the deviation-threshold Open Question (45°) and added Resolved Decisions for the deviation semantics, drag-direction sampling method, and start/end region radii.
 - 2026-09-04 — Copilot — M1 spec-update pass: resolved the boundary-box shape/padding open question (rectangle with uniform `boundaryPadding`, MVP default 0.06 normalized units) and the celebration-animation asset open question (lightweight CSS-keyframe overlay, no external asset), following the M1 MVP core tracing loop implementation and dry-run.

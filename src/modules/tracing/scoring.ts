@@ -9,10 +9,12 @@ import {
   computeBoundaryBox,
   computeCoverage,
   computeDragDirection,
+  isCurvedSegment,
   isPointInBox,
-  projectPointOntoSegment,
+  projectPathProgressively,
   segmentDirection,
   segmentTangentAt,
+  shouldSuppressDeviationAtPolylineCorner,
 } from "./geometry";
 
 const BACKTRACK_TOLERANCE = 0.02;
@@ -61,12 +63,22 @@ export function evaluatePathM2(
   }
 
   if (points.length >= 2) {
-    const prev = points[points.length - 2];
     const tail = points[points.length - 1];
-    const prevT = projectPointOntoSegment(prev, segment);
-    const tailT = projectPointOntoSegment(tail, segment);
+    // Progressive projection so prevT/tailT stay on the correct branch of self-overlapping
+    // polylines (hard-mode B's two bumps share the y=0.5 arm — a single-point nearest
+    // projection cannot tell which bump owns a shared-arm sample).
+    const ts = projectPathProgressively(points, segment);
+    const prevT = ts[ts.length - 2];
+    const tailT = ts[ts.length - 1];
+    const suppressDeviationCheck = shouldSuppressDeviationAtPolylineCorner(
+      segment,
+      prevT,
+      tailT,
+      tail,
+      baselineDistance,
+    );
 
-    if (tailT + BACKTRACK_TOLERANCE < prevT) {
+    if (!suppressDeviationCheck && tailT + BACKTRACK_TOLERANCE < prevT) {
       return {
         kind: "deviation-reset",
         coverage: computeCoverage(points, segment),
@@ -74,11 +86,16 @@ export function evaluatePathM2(
       };
     }
 
-    const ideal = segment.isCurve
+    const ideal = isCurvedSegment(segment)
       ? segmentTangentAt(segment, tailT)
       : segmentDirection(segment);
     const drag = computeDragDirection(points, baselineDistance);
-    if (ideal && drag && angleBetweenDegrees(drag, ideal) > thresholdDegrees) {
+    if (
+      !suppressDeviationCheck &&
+      ideal &&
+      drag &&
+      angleBetweenDegrees(drag, ideal) > thresholdDegrees
+    ) {
       return {
         kind: "deviation-reset",
         coverage: computeCoverage(points, segment),

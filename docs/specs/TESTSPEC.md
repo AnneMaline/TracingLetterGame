@@ -1,10 +1,10 @@
 # TESTSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.5.0
-**Last Updated:** 2026-09-18
+**Version:** 0.6.0
+**Last Updated:** 2026-09-22
 **Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
-**Traces to:** PRD v0.4.0 · DEVSPEC v0.6.0 · UISPEC v0.5.0
+**Traces to:** PRD v0.5.0 · DEVSPEC v0.7.0 · UISPEC v0.6.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector
 > tracing, boundary box, 80% rule. See §8 Spec Change Log.
@@ -61,6 +61,8 @@
 | T-021 | integration | UISPEC Gherkin: Top-bar navigation (M3)               | Top-right Next button advances through every authored letter and wraps from Z to A           | Render Tracing with the full `letters` list; click top-right Next (`data-testid="next-letter"`) through all entries including wraparound | For each letter, current label updates and start/end/arrow markers render                                         |
 | T-022 | integration | UISPEC Gherkin: Hard mode fixture selection (M3)      | Letter Selection Hard mode toggle renders and reflects state                                 | Render app at launch, assert `data-testid="hard-mode-toggle"` + `aria-checked="false"`, toggle once                                      | Toggle reflects on-state (`aria-checked="true"`) and remains interactive                                          |
 | T-023 | integration | UISPEC Gherkin: Hard mode fixture selection (M3)      | Hard mode swaps fixture-set used for menu-launched letters                                   | Launch a corrected letter in baseline mode, return to menu, enable Hard mode, relaunch same letter                                       | Segment count/shape reflects harder fixture set after toggle; baseline fixture remains default before toggle      |
+| T-024 | integration | DEVSPEC §3 Letter Shadow Guide                        | Easy mode shows persistent shadow outline throughout tracing                                  | Render Tracing in Easy mode for any letter; assert shadow ghost outline visible on render and remains visible as child traces each segment and after completion | Shadow outline visible in `awaiting-start`, `tracing`, `segment-reset`, `segment-complete`, and `letter-complete` states |
+| T-025 | integration | DEVSPEC §3 Letter Shadow Guide + UISPEC Gherkin       | Hard mode shows shadow preview for 2 seconds on letter open, then hides it and enables tracing | Render Tracing in Hard mode; assert shadow alone is visible initially; assert pointer events blocked for 2 seconds; assert after timer fires, shadow disappears, segment guide appears, and tracing is enabled | Shadow renders for first ~2 seconds; no pointer input accepted during preview; guide + tracing enabled after preview ends |
 
 ## 4. Dry-Run Protocol
 
@@ -75,8 +77,14 @@ Before marking a milestone done, a human tester manually:
    box resets the segment); the start-region rule (a tap on the middle of the line does not start
    tracing); the end-region auto-complete rule (dragging into the end marker completes the segment
    without a finger-up); and the exit-after-80%-still-resets rule.
-6. For M3: tests the full navigate-via-selection-screen flow, top-left Menu return-to-selection mid-trace, top-right Next wrap navigation (including Z→A), and Hard mode toggle off/on with fixture-set swap verified on at least one corrected letter.
-7. For M4: installs the packaged container build and repeats steps 1–4 inside the Curious Reader
+6. For M3 (shadow feature): 
+   - Confirms Easy mode shows a persistent faint ghost outline of every letter while tracing.
+   - Confirms Hard mode shows the shadow alone for approximately 2 seconds on letter open.
+   - Confirms Hard mode pointer events are blocked during the shadow preview.
+   - Confirms after the preview ends, the segment guide appears and tracing begins normally.
+   - Tests on at least one corrected letter to verify hard-mode behavior.
+7. _(previous step 6)_ For M3: tests the full navigate-via-selection-screen flow, top-left Menu return-to-selection mid-trace, top-right Next wrap navigation (including Z→A), and Hard mode toggle off/on with fixture-set swap verified on at least one corrected letter.
+8. _(previous step 7)_ For M4: installs the packaged container build and repeats steps 1–4 inside the Curious Reader
    container itself.
 
 ## 5. Build-and-Test Sequence
@@ -103,6 +111,7 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 | Date       | Decision                                                                                                                                                                                     | Rationale                                                                                                           |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-22 | Letter Shadow Guide test coverage: T-024 (Easy mode persistent shadow visible in all tracing states), T-025 (Hard mode shadow preview 2-second blocking and hand-off to tracing); dry-run includes shadow visibility and preview-to-tracing transition on both Easy/Hard modes | Verifies shadow rendering and state machine flow per DEVSPEC §3 Letter Shadow Guide module and UISPEC shadow scenarios |
 | 2026-09-04 | Boundary-box fixtures use the DEVSPEC §14 default `boundaryPadding` = 0.06 (normalized units); exit-box fixtures place the departure point just past that halo                               | Aligns with the resolved DEVSPEC boundary-padding decision from the M1 dry-run so fixtures track live-code behavior |
 | 2026-09-07 | Deviate fixtures target `deviationThresholdDegrees` = 45 with drift chord ≥ `dragDirectionBaseline` = 0.03; T-007 asserts the `deviation-reset` outcome (cancel), not pause/resume           | Aligns with the resolved DEVSPEC v0.4.0 deviation semantics                                                         |
 | 2026-09-07 | Start-region and end-region cases (T-018, T-019) use `startRegionRadius` = 0.08 and `endRegionRadius` = 0.035 respectively                                                                   | Aligns with the resolved DEVSPEC v0.4.0 region radii                                                                |
@@ -113,6 +122,7 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide test cases T-024 (Easy-mode persistent shadow) and T-025 (Hard-mode 2-second preview blocking), updated dry-run protocol step 6 to include shadow visibility verification, added resolved decision for shadow coverage, and bumped `Traces to:` PRD v0.5.0 / DEVSPEC v0.7.0 / UISPEC v0.6.0.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: added dual-fixture test-data coverage, introduced M3 Hard mode cases (T-022/T-023), updated the M3 dry-run checklist, and bumped `Traces to:` PRD v0.4.0 / DEVSPEC v0.6.0 / UISPEC v0.5.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: updated M3 navigation coverage to the shipped top-bar model (T-012 now asserts top-left Menu behavior; T-021 now asserts top-right Next wrap behavior), refreshed dry-run step 6 for M3 flows, and bumped `Traces to:` to PRD v0.3.0 / DEVSPEC v0.5.0 / UISPEC v0.4.0.
 - 2026-09-11 — Copilot — Dead-code cleanup pass (paired with DEVSPEC v0.4.2): T-003/T-004/T-005 unit tests migrated from the removed M1 `evaluatePath` helper to the production `evaluatePathM2` (behavior unchanged — the M1 rules the tests exercise are a subset of M2). Bumped `Traces to:` DEVSPEC reference to v0.4.2. Flagged four pre-existing curve-related test failures introduced in the task-003 merge (`geometry.test.ts` "uses curve distance for curved segments" and "projects points along the curve and reaches near-complete coverage"; `deviation.test.ts` "Curve segments cancel zigzags and backtracking" both cases) — they assert a filled-stadium-region containment model that the shipped code does not implement (code uses a narrow corridor around the curve line, per DEVSPEC §3 boundary-box definition). Left the failing tests untouched pending a human decision on whether to correct the assertions or change the curve-boundary model.

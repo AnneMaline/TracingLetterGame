@@ -11,6 +11,8 @@ interface Props {
   onPointerDown: (p: Point) => void;
   onPointerMove: (p: Point) => void;
   onPointerUp: () => void;
+  showShadow?: boolean;
+  canTrace?: boolean;
 }
 
 const VIEWBOX_SIZE = 400;
@@ -55,6 +57,8 @@ export function TraceSurface({
   onPointerDown,
   onPointerMove,
   onPointerUp,
+  showShadow = true,
+  canTrace = true,
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const activePointerId = useRef<number | null>(null);
@@ -146,6 +150,34 @@ export function TraceSurface({
         height: "min(80vmin, 480px)",
       }}
     >
+      {showShadow && (
+        <g
+          stroke="#dfe6ef"
+          strokeWidth={0.022}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          opacity={0.9}
+          pointerEvents="none"
+        >
+          {letter.segments.map((seg, i) => {
+            if (isCurvedSegment(seg)) {
+              return <path key={`ghost-${i}`} d={curvePath(seg)} />;
+            }
+
+            return (
+              <line
+                key={`ghost-${i}`}
+                x1={seg.start.x}
+                y1={seg.start.y}
+                x2={seg.end.x}
+                y2={seg.end.y}
+              />
+            );
+          })}
+        </g>
+      )}
+
       {letter.segments.map((seg, i) => {
         if (!view.completedSegments[i]) return null;
         if (isCurvedSegment(letter.segments[i])) {
@@ -175,11 +207,11 @@ export function TraceSurface({
         );
       })}
 
-      {currentSegment && view.status !== "letter-complete" && (
+      {canTrace && currentSegment && view.status !== "letter-complete" && (
         <SegmentGuide segment={currentSegment} />
       )}
 
-      {feedbackPath && (
+      {canTrace && feedbackPath && (
         <path
           d={feedbackPath}
           fill="none"

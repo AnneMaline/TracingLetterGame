@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.5.0
-**Last Updated:** 2026-09-18
+**Version:** 0.6.0
+**Last Updated:** 2026-09-22
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.4.0 · DEVSPEC v0.6.0
+**Traces to:** PRD v0.5.0 · DEVSPEC v0.7.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -21,29 +21,33 @@
 ### Screen: Tracing
 
 - **Layout:** The current line segment is shown with a start marker, a direction indicator
-  (arrow along the start→end vector), and an end marker. The boundary box is **never rendered**
-  (it's an invisible accuracy check, per DEVSPEC Segment Completion module). MVP: bottom
+  (arrow along the start→end vector), and an end marker. A faint ghost outline of all letter segments
+  is always rendered as a background layer (letter shadow; see DEVSPEC Letter Shadow Guide module).
+  The boundary box is **never rendered** (it's an invisible accuracy check, per DEVSPEC Segment Completion module). MVP: bottom
   Next/Previous buttons. M3 (Great): bottom Next/Previous are removed and replaced by a top bar
   with a left "Menu" control and right "Next" control.
+- **Style notes:**
+  - **Easy mode:** Shadow ghost outline is visible throughout tracing and after letter completion.
+  - **Hard mode:** On letter open, shadow outline appears alone for exactly 2 seconds (segment guide and tracing feedback hidden); pointer events are blocked. After 2 seconds, shadow disappears, segment guide appears, and tracing is enabled.
 - **Components:** `SegmentGuide` (start/direction/end markers, references DEVSPEC Line Segment
-  Rendering module), `TraceSurface` (captures drag input, references DEVSPEC Segment Completion &
+  Rendering module), `TraceSurface` (captures drag input, renders letter shadow, references DEVSPEC Segment Completion &
   Boundary Box module), `NextPreviousControls` (MVP only), and `TracingHeader` with
   `menu-button`/`next-letter` actions (M3 only).
 - **States:**
-  - `awaiting-start` — segment guide shown, no drag in progress.
-  - `tracing` — child is actively dragging inside the boundary box; visual feedback follows the drag.
+  - `shadow-preview` (Hard mode only) — on letter open, shadow outline displayed alone for 2 seconds; segment guide hidden; pointer input blocked.
+  - `awaiting-start` — segment guide shown, no drag in progress, shadow outline visible (Easy mode always; Hard mode after preview ends).
+  - `tracing` — child is actively dragging inside the boundary box; visual feedback follows the drag; shadow outline remains visible.
   - `segment-reset` — boundary-box exit, angular deviation past the threshold (M2), or a
-    finger-up with <80% coverage; feedback stops, the child must restart the current segment.
+     finger-up with <80% coverage; feedback stops, the child must restart the current segment; shadow outline remains visible.
   - `segment-complete` — coverage ≥ 80% confirmed either on finger-up while in-box or on
-    pointer entry into the segment's end region (M2); brief transition to the next segment.
-  - `letter-complete` — all segments done; celebration animation plays.
+     pointer entry into the segment's end region (M2); brief transition to the next segment; shadow outline remains visible.
+  - `letter-complete` — all segments done; celebration animation plays; shadow outline remains visible until celebration ends.
 - **Visibility rules:** Bottom Next/Previous visible only in MVP (removed once M3 ships). M3 top-bar
   Menu and Next controls are visible in Tracing and reachable from every state above. The boundary
-  box itself is never visible in any state, in any milestone.
-- **Transitions:** `segment-complete` → next segment's `awaiting-start`, or `letter-complete` if
-  it was the last segment. `segment-reset` → `awaiting-start` for the same segment (progress on
-  that segment discarded; other completed segments unaffected). `letter-complete` → celebration
-  ends → remain on the completed letter with top-bar Menu/Next available.
+  box itself is never visible in any state, in any milestone. Shadow outline is always visible except during the Hard-mode preview (where it's the only visible element).
+- **Transitions:** `shadow-preview` (Hard only) --(2 seconds elapse)--> `awaiting-start` for the first segment.
+  `segment-complete` → next segment's `awaiting-start`, or `letter-complete` if it was the last segment. `segment-reset` → `awaiting-start` for the same segment (progress on that segment discarded; other completed segments unaffected). `letter-complete` → celebration ends → remain on the completed letter with top-bar Menu/Next available.
+
 
 ### Screen: Letter Selection (M3 — Great tier)
 
@@ -60,12 +64,17 @@
 ## 3. State Machine (Tracing screen, per segment)
 
 ```
+# Common flow (Easy mode + Hard mode after preview):
 awaiting-start --(pointer down inside the segment's start region)--> tracing
 awaiting-start --(pointer down inside the boundary box but outside the start region)--> awaiting-start (ignored)
 tracing --(pointer exits boundary box)--> segment-reset --(auto)--> awaiting-start (same segment)
 tracing --(pointer enters end region while coverage >= 80%)--> segment-complete --(auto)--> awaiting-start (next segment) | letter-complete
 tracing --(pointer up, coverage >= 80%)--> segment-complete --(auto)--> awaiting-start (next segment) | letter-complete
 tracing --(pointer up, coverage < 80%)--> segment-reset --(auto)--> awaiting-start (same segment)
+
+# Hard mode preview (on letter open):
+(letter opens in Hard mode) --(auto)--> shadow-preview (display ghost shadow only, block pointer input, 2-second timer)
+shadow-preview --(2 seconds elapsed)--> awaiting-start (show segment guide, enable pointer input; proceed as normal)
 
 # M2 (Better tier) additions:
 tracing --(drag direction deviates past threshold, still in-box)--> segment-reset
@@ -75,6 +84,23 @@ tracing --(pointer exits boundary box even after >=80% pre-finger-up coverage)--
 ## 4. Acceptance Criteria (Gherkin)
 
 ```gherkin
+Feature: Letter shadow guide (learning and difficulty modulation)
+  Scenario: Easy mode shows persistent shadow throughout tracing
+    Given the child is in Easy mode
+    When the child opens a letter to trace
+    Then a faint ghost outline of the complete letter is visible
+    And the shadow remains visible as the child traces each segment
+    And the shadow is still visible after the letter is completed
+
+  Scenario: Hard mode shows shadow preview before tracing begins
+    Given the child is in Hard mode
+    When the child opens a letter to trace
+    Then a faint ghost outline of the complete letter is displayed alone (no segment guide)
+    And the outline is visible for exactly 2 seconds
+    And pointer events are blocked during the preview (no tracing input accepted)
+    And after 2 seconds, the preview ends and the segment guide appears
+    And tracing is now enabled
+
 Feature: Segment tracing completion (MVP)
   Scenario: Completing a segment with sufficient coverage advances tracing
     Given the Tracing screen shows segment 1 of letter "E"
@@ -184,6 +210,7 @@ Feature: Letter completion celebration
 
 | Date       | Decision                                                                                                                                                                                                                                              | Rationale                                                                                                                                          |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-22 | Letter shadow rendered as a persistent low-opacity ghost outline layer in Easy mode, and as a 2-second preview on letter open in Hard mode (all pointer events blocked during preview)                                                               | Supports letter acquisition and visual memory in Easy mode; brief preview in Hard mode encourages active recall and increases difficulty per Stephanie Gottwald feedback |
 | 2026-09-03 | The boundary box is never rendered in the UI, in any milestone                                                                                                                                                                                        | Explicit functional requirement in the product brief — it's an accuracy check, not a visible guide                                                 |
 | 2026-09-04 | MVP Next/Previous controls wrap between the first and last in-scope letters                                                                                                                                                                           | Provides continuous navigation until M3 replaces the controls with letter selection                                                                |
 | 2026-09-04 | Celebration animation is a full-tracing-surface CSS-keyframe overlay (⭐ pop + ✨ spin, ~1.5 s, `pointer-events: none`), preceded by a short pause after the last segment completes so the finished letter stays visible before the celebration plays | Meets DEVSPEC legacy-hardware performance constraint; gives the child visual closure on the completed letter before the reward plays               |
@@ -196,6 +223,7 @@ Feature: Letter completion celebration
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide feature with Easy-mode persistent shadow and Hard-mode 2-second preview; updated Tracing screen states to include `shadow-preview` for Hard mode; updated state machine to show hard-mode preview flow; added Gherkin scenarios for shadow behavior; added resolved decision; bumped UISPEC to v0.6.0 and `Traces to:` PRD v0.5.0 / DEVSPEC v0.7.0.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: added the shipped Letter Selection Hard mode toggle UI/states/transitions and new M3 Gherkin coverage for fixture-set switching; bumped `Traces to:` PRD v0.4.0 / DEVSPEC v0.6.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: reconciled M3 navigation wording to the shipped top-bar model (`Menu` + `Next`), updated screen entry points/visibility rules/transitions (including post-celebration staying on the completed letter with top-bar controls available), and bumped `Traces to:` to PRD v0.3.0 / DEVSPEC v0.5.0.
 - 2026-09-11 — Copilot — Task 003 spec-update pass: bumped `Traces to:` DEVSPEC reference to v0.4.1 after uppercase A-Z fixture authoring decisions were recorded; no screen/state/Gherkin behavior changed in UISPEC.

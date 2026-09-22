@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.6.0
-**Last Updated:** 2026-09-18
+**Version:** 0.7.0
+**Last Updated:** 2026-09-22
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.4.0
+**Traces to:** PRD v0.5.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -186,6 +186,16 @@ resolved otherwise.
 - **Exit Criterion:** Completing every segment of a letter triggers the celebration animation
   exactly once per completion. The animation is smooth on legacy (2015-era) smartphones.
 
+#### Module: Letter Shadow Guide (Acquisition & Difficulty Aid)
+
+- **Goal:** Support letter acquisition and difficulty modulation by showing the child a complete letter outline: persistent in Easy mode (a learning aid for recognition), and as a brief preview in Hard mode (encouraging active recall and increasing difficulty).
+- **Tasks:**
+  1. Render a full-letter "ghost" outline by drawing all `LetterDefinition.segments` at low opacity (90%) and slightly thinner stroke (0.022 normalized units) in a light blue-grey color (#dfe6ef) as a background layer beneath the segment guide, completed traces, and live feedback.
+  2. **Easy mode:** Show the ghost outline at all times during tracing, from segment 1 through letter completion. The persistent shadow helps the child visually understand the target letter shape while they trace each individual segment.
+  3. **Hard mode:** Show the same ghost outline for exactly 2 seconds when the letter first opens (after selecting from the letter-selection screen), then fade it out. During the 2-second preview, block pointer input and hide the segment guide so only the ghost outline is visible. Once the preview expires, restore the segment guide and enable tracing.
+  4. Use the same `LineSegment` geometry data for the shadow in both modes — do not dynamically modify or redraw it based on tracing progress. The shadow is static and always represents the complete letter.
+- **Exit Criterion:** Shadow renders correctly for every letter in both modes. In Easy mode, shadow is visible throughout tracing and after completion. In Hard mode, shadow appears for exactly 2 seconds on letter open, pointer events are blocked during this preview, and tracing begins only after the shadow disappears. The shadow never obscures already-completed traces or the live feedback path.
+
 ---
 
 ## Part II — Non-Functional Requirements
@@ -333,6 +343,7 @@ npm test         # unit + integration tests
 
 | Date       | Decision                                                                                                                                                                                                                           | Rationale                                                                                                                                                                                                                                 |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-22 | Letter Shadow Guide module: Easy mode shows a persistent faint ghost outline of all letter segments while tracing (learning aid); Hard mode shows the same outline for 2 seconds on letter open, then hides it for the actual tracing (encourages recall and increases difficulty) | Research supports letter acquisition through visual reference followed by reproduction; persistent shadow aids recognition; brief preview in hard mode encourages active recall while raising difficulty per pedagogical feedback from Stephanie Gottwald |
 | 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder                               | Real product requirements now available                                                                                                                                                                                                   |
 | 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                                                   | Brief does not specify cross-session persistence; avoid building unrequested scope                                                                                                                                                        |
 | 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                                                     | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls                                                                                                                                     |
@@ -360,6 +371,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide module describing Easy-mode persistent shadow and Hard-mode 2-second preview behavior as a learning aid and difficulty modulation; updated Resolved Decisions; bumped DEVSPEC to v0.7.0 and `Traces to:` PRD v0.5.0.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: documented dual fixture datasets (`letterSegments` baseline + `harderLetterSegments` corrected), added M3 Hard mode toggle behavior in Letter Navigation, and bumped `Traces to:` PRD to v0.4.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: updated the Letter Navigation module to match shipped M3 behavior (letter-selection as app entry, top-bar Menu back-to-selection control from any tracing state, and top-bar Next wrap navigation) and bumped `Traces to:` PRD to v0.3.0.
 - 2026-09-11 — Copilot — Dead-code cleanup pass: removed unused `SegmentTraceState` and `LetterSessionState` interface declarations from `src/types.ts` (never imported) and clarified in §2 that they remain conceptual shapes realized as hook-local state; removed the unused `"cubic"` member from `LineSegment.curveKind` (only `"oval"` and `"polyline"` have code paths); removed the dead M1 `evaluatePath` helper from `src/modules/tracing/scoring.ts` (production has used `evaluatePathM2` since M2 shipped) and migrated its unit tests to `evaluatePathM2` — behavior unchanged. Bumped DEVSPEC to v0.4.2 (patch: no behavior change).

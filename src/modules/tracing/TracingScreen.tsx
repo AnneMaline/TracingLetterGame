@@ -7,12 +7,16 @@ interface Props {
   letters: LetterDefinition[];
   initialLetterIndex?: number;
   onBackToMenu?: () => void;
+  showShadow?: boolean;
+  isHardMode?: boolean;
 }
 
 export function TracingScreen({
   letters,
   initialLetterIndex = 0,
   onBackToMenu,
+  showShadow = true,
+  isHardMode = false,
 }: Props) {
   const [letterIndex, setLetterIndex] = useState(initialLetterIndex);
   const total = letters.length;
@@ -39,7 +43,12 @@ export function TracingScreen({
         onBackToMenu={onBackToMenu}
         onNext={goNext}
       />
-      <LetterTracer key={letter.id} letter={letter} />
+      <LetterTracer
+        key={letter.id}
+        letter={letter}
+        showShadow={showShadow}
+        isHardMode={isHardMode}
+      />
     </main>
   );
 }

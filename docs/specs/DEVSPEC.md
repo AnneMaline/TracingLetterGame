@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.7.0
-**Last Updated:** 2026-09-22
+**Version:** 0.8.0
+**Last Updated:** 2026-09-23
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.5.0
+**Traces to:** PRD v0.6.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -20,11 +20,12 @@ Single-page React app, buildable both as a standalone browser app (dev/test) and
 offline artifact for the Curious Reader container (see `docs/standalone-game-spec.md`). Each
 letter is authored as an ordered list of line-segment vectors (start/end coordinates); the child
 traces one segment at a time with continuous accuracy checking against an invisible boundary box.
-Five logical modules: (1) Letter Navigation, (2) Line Segment Rendering & Directional Guide,
+Seven logical modules: (1) Letter Navigation, (2) Line Segment Rendering & Directional Guide,
 (3) Segment Completion & Boundary Box, (4) Deviation Detection (Better tier), (5) Celebration
-Animation. Rendered with Tailwind; canvas or SVG-based (`<canvas>`/SVG + Pointer Events) tracing
-surface. Letter/segment data is authored as data files, not hard-coded per letter, so non-English
-scripts can be added later without code changes.
+Animation, (6) Letter Shadow Guide, (7) Tracing Helplines. Rendered with Tailwind; canvas or
+SVG-based (`<canvas>`/SVG + Pointer Events) tracing surface. Letter/segment data is authored as
+data files, not hard-coded per letter, so non-English scripts can be added later without code
+changes.
 
 ### 2. Data Schema
 
@@ -196,6 +197,26 @@ resolved otherwise.
   4. Use the same `LineSegment` geometry data for the shadow in both modes — do not dynamically modify or redraw it based on tracing progress. The shadow is static and always represents the complete letter.
 - **Exit Criterion:** Shadow renders correctly for every letter in both modes. In Easy mode, shadow is visible throughout tracing and after completion. In Hard mode, shadow appears for exactly 2 seconds on letter open, pointer events are blocked during this preview, and tracing begins only after the shadow disappears. The shadow never obscures already-completed traces or the live feedback path.
 
+#### Module: Tracing Helplines
+
+- **Goal:** Provide optional handwriting alignment guides during tracing without changing segment
+  scoring logic.
+- **Tasks:**
+  1. Add a Tracing-screen Helplines toggle that is visible and operable in both Easy and Hard
+     mode.
+  2. When Helplines are enabled, render three horizontal lines on the trace surface at normalized
+     y positions 0.12, 0.50, and 0.86.
+  3. Render the middle line (`y=0.50`) with a dashed stroke style so it is visually distinct from
+     the top and bottom lines.
+  4. Render all three lines nearly edge-to-edge with a small, consistent left/right inset from
+     the draw-box border.
+  5. Helplines are a visual aid only: they must not intercept pointer input and must not alter
+     boundary-box checks, deviation checks, segment-completion scoring, or hard-mode preview
+     timing.
+- **Exit Criterion:** In both Easy and Hard mode, the Helplines toggle can show/hide exactly three
+  horizontal guides at the specified y positions; the middle line is dashed; the guides span
+  nearly the full width with consistent inset; and existing tracing mechanics remain unchanged.
+
 ---
 
 ## Part II — Non-Functional Requirements
@@ -325,7 +346,7 @@ npm test         # unit + integration tests
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M1 — MVP core tracing loop     | Letter Navigation (Next/Previous) + Line Segment Rendering + Segment Completion & Boundary Box + Celebration Animation modules functional end-to-end for all in-scope letters |
 | M2 — Better accuracy detection | Deviation Detection module: cancel-on-threshold behavior, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                                |
-| M3 — Great navigation          | Letter Navigation module: letter-selection screen replaces Next/Previous, anytime back-navigation                                                                             |
+| M3 — Great navigation          | Letter Navigation module: letter-selection screen replaces Next/Previous, anytime back-navigation; Tracing Helplines module: in-session toggle + 3-line handwriting guides    |
 | M4 — Container integration     | Packaging conforms to standalone-game-spec.md; events conform to standalone-game-spec-data.md                                                                                 |
 
 ---
@@ -341,21 +362,22 @@ npm test         # unit + integration tests
 
 ### 14. Resolved Decisions
 
-| Date       | Decision                                                                                                                                                                                                                           | Rationale                                                                                                                                                                                                                                 |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date       | Decision                                                                                                                                                                                                                                                                           | Rationale                                                                                                                                                                                                                                                 |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-23 | Tracing Helplines module uses three horizontal guides at y=0.12, y=0.50 (dashed), and y=0.86; guides are toggleable in both Easy and Hard mode and do not affect tracing/scoring logic                                                                                             | Adds optional handwriting alignment support while preserving the existing segment-accuracy model and hard-mode preview behavior                                                                                                                           |
 | 2026-09-22 | Letter Shadow Guide module: Easy mode shows a persistent faint ghost outline of all letter segments while tracing (learning aid); Hard mode shows the same outline for 2 seconds on letter open, then hides it for the actual tracing (encourages recall and increases difficulty) | Research supports letter acquisition through visual reference followed by reproduction; persistent shadow aids recognition; brief preview in hard mode encourages active recall while raising difficulty per pedagogical feedback from Stephanie Gottwald |
-| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder                               | Real product requirements now available                                                                                                                                                                                                   |
-| 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                                                   | Brief does not specify cross-session persistence; avoid building unrequested scope                                                                                                                                                        |
-| 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                                                     | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls                                                                                                                                     |
-| 2026-09-04 | Default `boundaryPadding` = 0.06 (normalized units), tunable via `LineSegment.boundaryHalfWidth` per segment                                                                                                                       | Verified via M1 dry-run on target hardware; small enough to require deliberate tracing, wide enough for a child's motor variance                                                                                                          |
-| 2026-09-04 | Celebration animation implemented as a CSS-keyframe overlay (⭐ + ✨ emoji glyphs, ~1.5 s, `pointer-events: none`, no external asset), preceded by a short pause so the finished letter is visible before the celebration plays    | Meets the legacy-hardware performance constraint; no download or heavy canvas redraw cost; the pre-celebration pause gives the child visual closure on the finished letter                                                                |
-| 2026-09-07 | M2 Deviation Detection **cancels** the segment on threshold exceedance (same effect as a boundary-box exit); the earlier pause/resume-at-departure model was dropped after M2 dry-run                                              | Return-to-departure produced a visible straight-line snap that felt buggy for children; cancel-and-restart is clearer and consistent with the box-exit rule. Simplifies the state machine (no `tracing-paused`, no departure point)       |
-| 2026-09-07 | `deviationThresholdDegrees` = 45, `dragDirectionBaseline` = 0.03 (normalized units), and direction is checked only at the current tail (not at every historical sample)                                                            | Distance-based baseline is stable across pointer sampling rates and averages jitter; tail-only avoids false cancels from a single noisy historical sample                                                                                 |
-| 2026-09-07 | `startRegionRadius` = 0.08 (normalized units); `endRegionRadius` = 0.035 (normalized units, matches the visible end marker)                                                                                                        | Enforces the "start at the green dot" wording of §3 task 1; the tight end-region radius requires the child to actually reach the end marker to auto-complete, while overshooting past it now safely stops the trace instead of failing it |
-| 2026-09-11 | Uppercase A-Z `LetterDefinition` fixtures are authored/exported alphabetically and used as the baseline content set (`src/data/letterSegments/`)                                                                                   | Completes Task 003 content authoring so navigation and tracing dry-runs operate over a realistic letter set rather than the MVP-only A/L/T sample                                                                                         |
-| 2026-09-11 | Stroke-order convention for uppercase fixtures: prefer primary-school manuscript order, choosing top-to-bottom / left-to-right directions where a natural option exists; A/L/T were reviewed and retained as authored              | Keeps expected drag direction intuitive for children and consistent across letters                                                                                                                                                        |
-| 2026-09-11 | Curved uppercase letters are approximated with short polylines (typically 3-4 segments) with gentle turns chosen to stay comfortably below the M2 45-degree deviation threshold; no per-segment `boundaryHalfWidth` overrides used | Balances trace smoothness with maintainable fixture complexity while avoiding overlap-tuning churn unless a concrete collision issue appears                                                                                              |
-| 2026-09-18 | Corrected uppercase stroke-order/grouping fixtures are maintained in a second authored dataset (`src/data/harderLetterSegments/`) and selected by M3 Hard mode from Letter Selection; toggle defaults off per session              | Preserves original MVP-friendly letter flow as default while exposing a stricter continuous-stroke model without letter-specific tracing logic                                                                                            |
+| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder                                                                               | Real product requirements now available                                                                                                                                                                                                                   |
+| 2026-09-03 | No persistence layer built for MVP; `LetterSessionState` is in-memory only pending the persistence Open Question                                                                                                                                                                   | Brief does not specify cross-session persistence; avoid building unrequested scope                                                                                                                                                                        |
+| 2026-09-04 | MVP Next/Previous navigation wraps: Previous from the first letter loads the last letter, and Next from the last letter loads the first letter                                                                                                                                     | Keeps navigation continuous for children until the M3 letter-selection screen replaces these controls                                                                                                                                                     |
+| 2026-09-04 | Default `boundaryPadding` = 0.06 (normalized units), tunable via `LineSegment.boundaryHalfWidth` per segment                                                                                                                                                                       | Verified via M1 dry-run on target hardware; small enough to require deliberate tracing, wide enough for a child's motor variance                                                                                                                          |
+| 2026-09-04 | Celebration animation implemented as a CSS-keyframe overlay (⭐ + ✨ emoji glyphs, ~1.5 s, `pointer-events: none`, no external asset), preceded by a short pause so the finished letter is visible before the celebration plays                                                    | Meets the legacy-hardware performance constraint; no download or heavy canvas redraw cost; the pre-celebration pause gives the child visual closure on the finished letter                                                                                |
+| 2026-09-07 | M2 Deviation Detection **cancels** the segment on threshold exceedance (same effect as a boundary-box exit); the earlier pause/resume-at-departure model was dropped after M2 dry-run                                                                                              | Return-to-departure produced a visible straight-line snap that felt buggy for children; cancel-and-restart is clearer and consistent with the box-exit rule. Simplifies the state machine (no `tracing-paused`, no departure point)                       |
+| 2026-09-07 | `deviationThresholdDegrees` = 45, `dragDirectionBaseline` = 0.03 (normalized units), and direction is checked only at the current tail (not at every historical sample)                                                                                                            | Distance-based baseline is stable across pointer sampling rates and averages jitter; tail-only avoids false cancels from a single noisy historical sample                                                                                                 |
+| 2026-09-07 | `startRegionRadius` = 0.08 (normalized units); `endRegionRadius` = 0.035 (normalized units, matches the visible end marker)                                                                                                                                                        | Enforces the "start at the green dot" wording of §3 task 1; the tight end-region radius requires the child to actually reach the end marker to auto-complete, while overshooting past it now safely stops the trace instead of failing it                 |
+| 2026-09-11 | Uppercase A-Z `LetterDefinition` fixtures are authored/exported alphabetically and used as the baseline content set (`src/data/letterSegments/`)                                                                                                                                   | Completes Task 003 content authoring so navigation and tracing dry-runs operate over a realistic letter set rather than the MVP-only A/L/T sample                                                                                                         |
+| 2026-09-11 | Stroke-order convention for uppercase fixtures: prefer primary-school manuscript order, choosing top-to-bottom / left-to-right directions where a natural option exists; A/L/T were reviewed and retained as authored                                                              | Keeps expected drag direction intuitive for children and consistent across letters                                                                                                                                                                        |
+| 2026-09-11 | Curved uppercase letters are approximated with short polylines (typically 3-4 segments) with gentle turns chosen to stay comfortably below the M2 45-degree deviation threshold; no per-segment `boundaryHalfWidth` overrides used                                                 | Balances trace smoothness with maintainable fixture complexity while avoiding overlap-tuning churn unless a concrete collision issue appears                                                                                                              |
+| 2026-09-18 | Corrected uppercase stroke-order/grouping fixtures are maintained in a second authored dataset (`src/data/harderLetterSegments/`) and selected by M3 Hard mode from Letter Selection; toggle defaults off per session                                                              | Preserves original MVP-friendly letter flow as default while exposing a stricter continuous-stroke model without letter-specific tracing logic                                                                                                            |
 
 ### 15. Out of Scope
 
@@ -371,6 +393,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-23 — Copilot — Task 008 spec-update pass: added the Tracing Helplines module (toggle in Easy/Hard mode; horizontal guides at y=0.12/0.50/0.86 with dashed middle line), updated M3 deliverables, updated Resolved Decisions, and bumped DEVSPEC to v0.8.0 with `Traces to:` PRD v0.6.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide module describing Easy-mode persistent shadow and Hard-mode 2-second preview behavior as a learning aid and difficulty modulation; updated Resolved Decisions; bumped DEVSPEC to v0.7.0 and `Traces to:` PRD v0.5.0.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: documented dual fixture datasets (`letterSegments` baseline + `harderLetterSegments` corrected), added M3 Hard mode toggle behavior in Letter Navigation, and bumped `Traces to:` PRD to v0.4.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: updated the Letter Navigation module to match shipped M3 behavior (letter-selection as app entry, top-bar Menu back-to-selection control from any tracing state, and top-bar Next wrap navigation) and bumped `Traces to:` PRD to v0.3.0.

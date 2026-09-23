@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.4.0
-**Last Updated:** 2026-09-18
+**Version:** 0.6.0
+**Last Updated:** 2026-09-23
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -44,6 +44,8 @@ paradigm as a sub-app of the Curious Reader container.
 - Let the child move between letters (MVP: Next/Previous; Great tier: a letter-selection screen reachable at any time).
 - Offer a session-only Hard mode toggle on the letter-selection screen so caregivers/children can switch between
   baseline fixtures and harder continuous-stroke variants.
+- Add a Tracing-screen Helplines toggle (available in both Easy and Hard mode) that shows/hides three horizontal
+  handwriting guide lines at normalized y positions 0.12, 0.50, and 0.86 (middle line dashed) to support alignment.
 - Keep the letter/segment data model data-driven so non-English scripts can be added without code changes later.
 
 ## 4. Non-Goals (MVP)
@@ -99,6 +101,8 @@ paradigm as a sub-app of the Curious Reader container.
 - Add a top-left Menu control that returns the child to the letter-selection screen from the tracing screen at any time.
 - Keep top-right Next navigation on the tracing screen to quickly advance letters with wraparound behavior.
 - Flow: app opens on letter selection → child picks a letter → tracing starts at segment 1 for that letter.
+- Add a Tracing-screen Helplines toggle that is visible in both Easy and Hard mode and controls the visibility of
+  three horizontal guide lines (top y=0.12, dashed middle y=0.50, bottom y=0.86) spanning almost the full draw-box width.
 
 ### Container integration (M4, Curious Learning convention)
 
@@ -133,18 +137,19 @@ paradigm as a sub-app of the Curious Reader container.
 
 ## 10. Appendix — Resolved Decisions
 
-| Date       | Decision                                                                                                                                                                                                                        | Rationale                                                                                                                                                     |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-22 | Shadow as a learning aid: Easy mode shows a persistent faint ghost outline of the complete letter while tracing; Hard mode shows the same shadow for 2 seconds on letter open, then it disappears for the tracing attempt                | Research supports letter acquisition through visual reference followed by active reproduction; persistent shadow aids recognition in easy mode; brief preview in hard mode encourages recall while increasing difficulty |
-| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, tiered MVP/Better/Great scope), replacing the earlier placeholder whole-path-tolerance + mastery/stars concept             | Real product requirements now available; earlier draft was a placeholder pending this information                                                             |
+| Date       | Decision                                                                                                                                                                                                                  | Rationale                                                                                                                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-23 | Tracing includes a Helplines toggle in both Easy and Hard mode; when enabled, the tracing surface shows three horizontal guide lines at y=0.12, y=0.50 (dashed), and y=0.86, spanning nearly the full draw-box width      | Provides optional handwriting alignment support without forcing extra guidance on every learner; keeps support level adjustable during tracing sessions                                                                  |
+| 2026-09-22 | Shadow as a learning aid: Easy mode shows a persistent faint ghost outline of the complete letter while tracing; Hard mode shows the same shadow for 2 seconds on letter open, then it disappears for the tracing attempt | Research supports letter acquisition through visual reference followed by active reproduction; persistent shadow aids recognition in easy mode; brief preview in hard mode encourages recall while increasing difficulty |
+| 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, tiered MVP/Better/Great scope), replacing the earlier placeholder whole-path-tolerance + mastery/stars concept       | Real product requirements now available; earlier draft was a placeholder pending this information                                                                                                                        |
 
-| 2026-09-04 | MVP Next/Previous navigation wraps between the first and last in-scope letters                                                                                                                                                  | Keeps navigation continuous until M3 introduces letter selection                                                                                              |
-| 2026-09-04 | Boundary-box shape is a rectangle around each segment with padding equal on all sides and both ends, tuned via a single `boundaryPadding` constant (MVP default: 0.06 normalized units, verified in M1 dry-run)                 | Simplest shape that matches child motor variance; single constant keeps calibration tractable                                                                 |
-| 2026-09-04 | Celebration animation is a lightweight CSS-keyframe overlay (star + sparkle emoji glyphs, ~1.5 s, no external asset)                                                                                                            | Meets the legacy-hardware performance constraint with no download cost or heavy canvas redraws                                                                |
-| 2026-09-07 | M2 deviation past threshold **cancels** the segment (same effect as a boundary-box exit); the earlier pause-and-resume model was dropped after M2 dry-run                                                                       | Return-to-departure produced a visible straight-line snap that felt buggy; cancel is clearer and consistent with the box-exit rule                            |
-| 2026-09-07 | M2 deviation threshold = 45°, measured as the angle between the ideal vector and the chord over the last ~0.03 normalized units of pointer motion (tail-only check); direction is not re-checked at historical samples          | Sample-count windows are unstable across sampling rates; a distance-based chord averages jitter; tail-only avoids false cancels from one noisy earlier sample |
-| 2026-09-07 | M2 pointer-down must land within 0.08 normalized units of the segment's start marker; segment auto-completes when the pointer enters 0.035 normalized units of the end marker (with ≥80% coverage), without needing a finger-up | Enforces "start at the green dot" wording of DEVSPEC §3; makes overshooting the end marker safe instead of a failure mode                                     |
-| 2026-09-18 | M3 includes a session-only Hard mode toggle in Letter Selection that switches between baseline and harder letter fixtures; default is off on every app load                                                                     | Preserves the beginner-friendly baseline while exposing corrected continuous-stroke flow as an opt-in challenge without adding persistence scope              |
+| 2026-09-04 | MVP Next/Previous navigation wraps between the first and last in-scope letters | Keeps navigation continuous until M3 introduces letter selection |
+| 2026-09-04 | Boundary-box shape is a rectangle around each segment with padding equal on all sides and both ends, tuned via a single `boundaryPadding` constant (MVP default: 0.06 normalized units, verified in M1 dry-run) | Simplest shape that matches child motor variance; single constant keeps calibration tractable |
+| 2026-09-04 | Celebration animation is a lightweight CSS-keyframe overlay (star + sparkle emoji glyphs, ~1.5 s, no external asset) | Meets the legacy-hardware performance constraint with no download cost or heavy canvas redraws |
+| 2026-09-07 | M2 deviation past threshold **cancels** the segment (same effect as a boundary-box exit); the earlier pause-and-resume model was dropped after M2 dry-run | Return-to-departure produced a visible straight-line snap that felt buggy; cancel is clearer and consistent with the box-exit rule |
+| 2026-09-07 | M2 deviation threshold = 45°, measured as the angle between the ideal vector and the chord over the last ~0.03 normalized units of pointer motion (tail-only check); direction is not re-checked at historical samples | Sample-count windows are unstable across sampling rates; a distance-based chord averages jitter; tail-only avoids false cancels from one noisy earlier sample |
+| 2026-09-07 | M2 pointer-down must land within 0.08 normalized units of the segment's start marker; segment auto-completes when the pointer enters 0.035 normalized units of the end marker (with ≥80% coverage), without needing a finger-up | Enforces "start at the green dot" wording of DEVSPEC §3; makes overshooting the end marker safe instead of a failure mode |
+| 2026-09-18 | M3 includes a session-only Hard mode toggle in Letter Selection that switches between baseline and harder letter fixtures; default is off on every app load | Preserves the beginner-friendly baseline while exposing corrected continuous-stroke flow as an opt-in challenge without adding persistence scope |
 
 ## 11. Appendix — Out of Scope
 
@@ -156,6 +161,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing-screen Helplines product behavior (toggle visible in Easy/Hard mode and three horizontal guide lines at y=0.12/0.50/0.86 with dashed middle line), updated M3 scope wording, and bumped PRD to v0.6.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: refined difficulty model per Stephanie Gottwald feedback; Easy mode now shows persistent letter shadow as a learning aid, Hard mode shows 2-second shadow preview before tracing begins to encourage letter recall; bumped PRD to v0.5.0 and updated Resolved Decisions.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: added the shipped M3 Hard mode product behavior (session-only toggle, default off, menu-selected fixture-set swap) and bumped PRD to v0.4.0.
 - 2026-09-14 — Copilot — Task 004 spec-update pass: clarified M3 navigation to match shipped behavior (letter-selection as app entry plus top-bar Menu and top-bar Next-with-wrap controls) and updated the M3 milestone description accordingly.

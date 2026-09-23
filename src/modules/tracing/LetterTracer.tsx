@@ -15,7 +15,7 @@ export function LetterTracer({
   letter,
   showShadow = true,
   isHardMode = false,
-  showHelplines = true,
+  showHelplines = false,
 }: Props) {
   const trace = useSegmentTrace(letter);
   const { view } = trace;

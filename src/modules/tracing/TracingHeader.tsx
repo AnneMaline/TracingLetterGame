@@ -12,7 +12,7 @@ export function TracingHeader({
   displayLabel,
   onBackToMenu,
   onNext,
-  showHelplines = true,
+  showHelplines = false,
   onToggleHelplines,
 }: Props) {
   return (

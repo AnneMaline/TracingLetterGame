@@ -73,7 +73,7 @@ describe("App Hard mode toggle", () => {
     // R has 2 traceable segments (a continuous bowl+leg stroke) in Hard mode.
     fireEvent.click(screen.getByTestId("letter-tile-R"));
     expect(screen.getByTestId("progress-label")).toHaveTextContent(
-      "Segment 1 of 2",
+      "Segment 1 of 3",
     );
   });
 

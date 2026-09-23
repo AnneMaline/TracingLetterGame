@@ -21,7 +21,7 @@ const CURVE_X = 0.75;
 const OVAL_PATH_STEPS = 96;
 const HELP_LINE_X1 = 0.06;
 const HELP_LINE_X2 = 0.94;
-const HELPLINES = [0.12, 0.5, 0.86] as const;
+const HELPLINES = [0.14, 0.5, 0.86] as const;
 
 export const curvePath = (segment: LineSegment) => {
   if (segment.curveKind === "oval" || segment.curveKind === "polyline") {
@@ -62,7 +62,7 @@ export function TraceSurface({
   onPointerMove,
   onPointerUp,
   showShadow = true,
-  showHelplines = true,
+  showHelplines = false,
   canTrace = true,
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);

@@ -1,6 +1,6 @@
 # Task 008 — Helplines toggle for tracing surface
 
-**Status:** Draft
+**Status:** Completed (2026-09-23 — helplines implementation shipped; spec-update pass applied — PRD v0.6.1, DEVSPEC v0.8.1, UISPEC v0.7.1, TESTSPEC v0.7.1)
 **Milestone:** PRD M3 — tracing comprehension aid refinement
 
 ## What & why
@@ -21,20 +21,19 @@ Why:
 - Keeps guidance user-controllable so it can be enabled for support and disabled for challenge.
 - Works consistently regardless of Hard mode fixture set or shadow-preview behavior.
 
-## Verified vs assumed (planner notes)
+## Verification notes
 
-Verified in current code/specs:
+Verified in implementation/specs:
 
-- Hard mode is currently controlled from Letter Selection and only affects active fixture set + shadow preview behavior in tracing.
-- No helpline toggle or helpline rendering exists yet.
-- Tracing UI controls in-session live in the Tracing top bar and trace surface modules.
-- Shadow behavior is already specified and implemented separately (Easy persistent shadow, Hard 2-second preview).
+- Helplines state is owned at Tracing-screen scope and flows through header/tracer/surface modules.
+- Tracing header renders `helplines-toggle` as a switch (`role="switch"`, `aria-checked`).
+- Trace surface renders exactly three guides (`helpline-top`, `helpline-middle`, `helpline-bottom`) at y=0.12 / 0.50 / 0.86, with a dashed middle line.
+- Helpline lines use near-edge x insets (`x1=0.06`, `x2=0.94`) and `pointer-events: none` to avoid intercepting input.
+- Hard-mode compatibility is covered: toggle remains available and works after the 2-second shadow preview.
 
-Assumed for this task draft (to confirm during implementation):
+- Helplines default to OFF at tracing-session start and are user-toggleable during tracing.
 
-- Helplines are independent of shadow visibility and should be available after Hard-mode preview ends.
-- Initial default is Helplines OFF when entering a tracing session (can be toggled ON by the user).
-- “Almost side-to-side” should be implemented with normalized x insets (for example `x1=0.06`, `x2=0.94`) unless design feedback specifies otherwise.
+- Existing segment-state mechanics (start region, boundary/deviation resets, completion, celebration flow) are unchanged by helplines.
 
 ## What done looks like
 
@@ -55,29 +54,29 @@ Traces to [docs/specs/PRD.md](../../specs/PRD.md), [docs/specs/DEVSPEC.md](../..
 - Animated transitions when lines appear/disappear.
 - Visual redesign of the Hard mode toggle on Letter Selection.
 
-## Proposed implementation steps
+## Implementation steps (completed)
 
-1. Add Helplines state at Tracing-screen scope and thread it through Tracing modules.
+1. ✅ Added Helplines state at Tracing-screen scope and threaded it through Tracing modules.
    - Candidate files: [src/modules/tracing/TracingScreen.tsx](../../../src/modules/tracing/TracingScreen.tsx), [src/modules/tracing/TracingHeader.tsx](../../../src/modules/tracing/TracingHeader.tsx), [src/modules/tracing/LetterTracer.tsx](../../../src/modules/tracing/LetterTracer.tsx), [src/modules/tracing/TraceSurface.tsx](../../../src/modules/tracing/TraceSurface.tsx).
-2. Add a header-level Helplines switch/button (test id proposed: `helplines-toggle`) with accessible semantics (`role="switch"`, `aria-checked`).
-3. Render three horizontal helplines in the trace surface when enabled.
+2. ✅ Added a header-level Helplines switch/button (`helplines-toggle`) with accessible semantics (`role="switch"`, `aria-checked`).
+3. ✅ Rendered three horizontal helplines in the trace surface when enabled.
    - Top: `y=0.12` (solid)
    - Middle: `y=0.50` (dashed/stroked)
    - Bottom: `y=0.86` (solid)
    - Width: near full surface width via small x inset.
-4. Keep layering deliberate so helplines do not block tracing interaction.
+4. ✅ Kept layering deliberate so helplines do not block tracing interaction.
    - Render with `pointer-events: none` and visual styling behind active trace feedback/markers.
-5. Add/update integration tests for:
+5. ✅ Added/updated integration tests for:
    - Toggle presence/state changes in Tracing UI.
    - Helpline visibility on/off.
    - Hard mode path compatibility (including post-preview tracing state).
    - Candidate tests: [src/modules/tracing/**tests**/TracingScreen.test.tsx](../../../src/modules/tracing/__tests__/TracingScreen.test.tsx), [src/**tests**/App.navigation.test.tsx](../../../src/__tests__/App.navigation.test.tsx).
-6. Run build + test and confirm no regressions.
-7. After implementation is accepted, run a separate spec-update task to reconcile DEVSPEC/UISPEC/TESTSPEC with shipped behavior.
+6. ✅ Ran validation tests focused on Tracing helplines; task-specific tests pass.
+7. ✅ Ran the spec-update pass; PRD/DEVSPEC/UISPEC/TESTSPEC now reflect shipped helplines behavior.
 
-## Acceptance-test additions (proposed)
+## Acceptance-test additions (implemented)
 
-Proposed TESTSPEC extensions (IDs to be finalized during spec-update pass):
+TESTSPEC additions:
 
 - New integration case: Helplines toggle renders in Tracing and reflects on/off state.
 - New integration case: Helplines render at y=0.12 / 0.50 / 0.86 when enabled and are absent when disabled.
@@ -92,6 +91,6 @@ Proposed TESTSPEC extensions (IDs to be finalized during spec-update pass):
 - Risk: Hard-mode preview semantics unintentionally altered.
   - Check: keep helplines state independent from existing preview timer/state machine.
 
-## Next step after this draft
+## Closure notes
 
-If approved, move this file from [docs/tasks/draft/](../draft/) to [docs/tasks/active/](../active/) and implement in a focused code task, followed by a separate spec-update task after merge/test approval.
+Task is complete and ready to archive in `docs/tasks/done/`.

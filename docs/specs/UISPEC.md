@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.7.0
+**Version:** 0.7.1
 **Last Updated:** 2026-09-23
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.6.0 · DEVSPEC v0.8.0
+**Traces to:** PRD v0.6.1 · DEVSPEC v0.8.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -37,7 +37,7 @@
   Boundary Box module), `NextPreviousControls` (MVP only), and `TracingHeader` with
   `menu-button`/`next-letter` actions plus `helplines-toggle` (`role="switch"`) in M3.
 - **States:**
-  - `helplines-on` / `helplines-off` — visual-aid sub-state that can be changed without resetting tracing progress.
+  - `helplines-on` / `helplines-off` — visual-aid sub-state that can be changed without resetting tracing progress. Every tracing session starts in `helplines-off`.
   - `shadow-preview` (Hard mode only) — on letter open, shadow outline displayed alone for 2 seconds; segment guide hidden; pointer input blocked.
   - `awaiting-start` — segment guide shown, no drag in progress, shadow outline visible (Easy mode always; Hard mode after preview ends).
   - `tracing` — child is actively dragging inside the boundary box; visual feedback follows the drag; shadow outline remains visible.
@@ -106,6 +106,11 @@ Feature: Letter shadow guide (learning and difficulty modulation)
     And tracing is now enabled
 
 Feature: Tracing helplines
+  Scenario: Helplines default to off on every tracing session
+    Given the child opens a letter to trace in Easy or Hard mode
+    Then the Helplines toggle is in the off state
+    And no horizontal guide lines are visible on the tracing surface
+
   Scenario: Helplines can be toggled in Easy mode
     Given the child is tracing in Easy mode
     When Helplines is toggled on
@@ -230,6 +235,7 @@ Feature: Letter completion celebration
 
 | Date       | Decision                                                                                                                                                                                                                                              | Rationale                                                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-23 | Helplines toggle starts in the off state on every tracing session (Easy and Hard); the child/caregiver opts in per session                                                                                                                            | Keeps the tracing surface uncluttered by default while leaving handwriting alignment support one tap away                                                                |
 | 2026-09-23 | Tracing UI includes a Helplines switch (`role="switch"`, `data-testid="helplines-toggle"`) visible in both Easy and Hard mode; enabled state renders top/middle/bottom horizontal guides at y=0.12/0.50/0.86, with dashed middle guide                | Provides optional handwriting alignment cues while preserving existing tracing flow and hard-mode semantics                                                              |
 | 2026-09-22 | Letter shadow rendered as a persistent low-opacity ghost outline layer in Easy mode, and as a 2-second preview on letter open in Hard mode (all pointer events blocked during preview)                                                                | Supports letter acquisition and visual memory in Easy mode; brief preview in Hard mode encourages active recall and increases difficulty per Stephanie Gottwald feedback |
 | 2026-09-03 | The boundary box is never rendered in the UI, in any milestone                                                                                                                                                                                        | Explicit functional requirement in the product brief — it's an accuracy check, not a visible guide                                                                       |
@@ -244,6 +250,7 @@ Feature: Letter completion celebration
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-23 — Copilot — Task 008 follow-up: set the Helplines toggle initial state to off in the Tracing screen details, `helplines-on/off` state description, Gherkin scenarios, and Resolved Decisions; bumped UISPEC to v0.7.1 and `Traces to:` PRD v0.6.1 / DEVSPEC v0.8.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing Helplines UI behavior (toggle in Easy/Hard mode, guide-line geometry at y=0.12/0.50/0.86 with dashed middle line), expanded Tracing states/transitions, added Gherkin scenarios, and bumped UISPEC to v0.7.0 with `Traces to:` PRD v0.6.0 / DEVSPEC v0.8.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide feature with Easy-mode persistent shadow and Hard-mode 2-second preview; updated Tracing screen states to include `shadow-preview` for Hard mode; updated state machine to show hard-mode preview flow; added Gherkin scenarios for shadow behavior; added resolved decision; bumped UISPEC to v0.6.0 and `Traces to:` PRD v0.5.0 / DEVSPEC v0.7.0.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: added the shipped Letter Selection Hard mode toggle UI/states/transitions and new M3 Gherkin coverage for fixture-set switching; bumped `Traces to:` PRD v0.4.0 / DEVSPEC v0.6.0.

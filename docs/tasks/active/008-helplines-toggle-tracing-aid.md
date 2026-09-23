@@ -33,7 +33,7 @@ Verified in current code/specs:
 Assumed for this task draft (to confirm during implementation):
 
 - Helplines are independent of shadow visibility and should be available after Hard-mode preview ends.
-- Initial default is Helplines ON when entering a tracing session (can be toggled OFF by the user).
+- Initial default is Helplines OFF when entering a tracing session (can be toggled ON by the user).
 - “Almost side-to-side” should be implemented with normalized x insets (for example `x1=0.06`, `x2=0.94`) unless design feedback specifies otherwise.
 
 ## What done looks like

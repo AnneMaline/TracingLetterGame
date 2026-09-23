@@ -55,13 +55,21 @@ describe("Tracing screen renders start/direction/end markers (T-009)", () => {
 describe("Top-bar navigation: Next and Menu (T-010, T-012)", () => {
   it("advances forward through every letter and wraps to first via next-letter", () => {
     render(<TracingScreen letters={[A, B, C]} />);
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter A",
+    );
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter B");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter B",
+    );
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter C");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter C",
+    );
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter A",
+    );
   });
 
   it("calls onBackToMenu when menu button is clicked (T-012)", () => {
@@ -69,6 +77,57 @@ describe("Top-bar navigation: Next and Menu (T-010, T-012)", () => {
     render(<TracingScreen letters={[A, B, C]} onBackToMenu={onBack} />);
     fireEvent.click(screen.getByTestId("menu-button"));
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Helplines toggle", () => {
+  it("is off by default and shows or hides all guide lines when toggled", () => {
+    render(<TracingScreen letters={[A]} />);
+
+    const toggle = screen.getByTestId("helplines-toggle");
+    expect(toggle).toHaveAttribute("role", "switch");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByTestId("helpline-top")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("helpline-middle")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("helpline-bottom")).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByTestId("helpline-top")).toHaveAttribute("y1", "0.12");
+    expect(screen.getByTestId("helpline-middle")).toHaveAttribute("y1", "0.5");
+    expect(screen.getByTestId("helpline-bottom")).toHaveAttribute("y1", "0.86");
+    expect(screen.getByTestId("helpline-top")).toHaveAttribute("x1", "0.06");
+    expect(screen.getByTestId("helpline-top")).toHaveAttribute("x2", "0.94");
+    expect(screen.getByTestId("helpline-middle")).toHaveAttribute(
+      "stroke-dasharray",
+      "0.02 0.02",
+    );
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByTestId("helpline-top")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("helpline-middle")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("helpline-bottom")).not.toBeInTheDocument();
+  });
+
+  it("stays available in hard mode before and after the preview timeout", async () => {
+    vi.useFakeTimers();
+    render(<TracingScreen letters={[A]} isHardMode={true} />);
+
+    const toggle = screen.getByTestId("helplines-toggle");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByTestId("helpline-top")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("segment-guide-start")).not.toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    expect(screen.getByTestId("segment-guide-start")).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByTestId("helpline-top")).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });
 

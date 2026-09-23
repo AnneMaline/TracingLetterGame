@@ -1,10 +1,10 @@
 # TESTSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.7.0
+**Version:** 0.7.1
 **Last Updated:** 2026-09-23
 **Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
-**Traces to:** PRD v0.6.0 · DEVSPEC v0.8.0 · UISPEC v0.7.0
+**Traces to:** PRD v0.6.1 · DEVSPEC v0.8.1 · UISPEC v0.7.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector
 > tracing, boundary box, 80% rule. See §8 Spec Change Log.
@@ -63,7 +63,7 @@
 | T-023 | integration | UISPEC Gherkin: Hard mode fixture selection (M3)      | Hard mode swaps fixture-set used for menu-launched letters                                     | Launch a corrected letter in baseline mode, return to menu, enable Hard mode, relaunch same letter                                                                                                             | Segment count/shape reflects harder fixture set after toggle; baseline fixture remains default before toggle              |
 | T-024 | integration | DEVSPEC §3 Letter Shadow Guide                        | Easy mode shows persistent shadow outline throughout tracing                                   | Render Tracing in Easy mode for any letter; assert shadow ghost outline visible on render and remains visible as child traces each segment and after completion                                                | Shadow outline visible in `awaiting-start`, `tracing`, `segment-reset`, `segment-complete`, and `letter-complete` states  |
 | T-025 | integration | DEVSPEC §3 Letter Shadow Guide + UISPEC Gherkin       | Hard mode shows shadow preview for 2 seconds on letter open, then hides it and enables tracing | Render Tracing in Hard mode; assert shadow alone is visible initially; assert pointer events blocked for 2 seconds; assert after timer fires, shadow disappears, segment guide appears, and tracing is enabled | Shadow renders for first ~2 seconds; no pointer input accepted during preview; guide + tracing enabled after preview ends |
-| T-026 | integration | DEVSPEC §3 Tracing Helplines + UISPEC Gherkin         | Helplines toggle renders in Tracing and reflects on/off state in Easy mode                     | Render Tracing in Easy mode; assert `data-testid="helplines-toggle"` + `aria-checked`; toggle on and off                                                                                                       | Toggle is visible and interactive; `aria-checked` reflects current helpline state                                         |
+| T-026 | integration | DEVSPEC §3 Tracing Helplines + UISPEC Gherkin         | Helplines toggle defaults to off and reflects on/off state when toggled in Easy mode           | Render Tracing in Easy mode; assert `data-testid="helplines-toggle"` starts at `aria-checked="false"` with no helpline elements rendered; toggle on, then off                                                | Toggle starts off; toggling reflects `aria-checked` and shows/hides all three helpline elements                          |
 | T-027 | integration | DEVSPEC §3 Tracing Helplines + UISPEC Gherkin         | Helplines geometry and style match the spec when enabled                                       | Enable Helplines; assert three horizontal guides are rendered at y=0.12, y=0.50, y=0.86; assert middle guide uses dashed stroke style                                                                          | Exactly three guides render at specified y positions; middle guide is dashed; guides span nearly full width with inset    |
 | T-028 | integration | DEVSPEC §3 Tracing Helplines + UISPEC Gherkin         | Helplines behavior is available in Hard mode without changing trace mechanics                  | Render Tracing in Hard mode; wait for shadow-preview hand-off; toggle Helplines on/off and attempt scripted trace                                                                                              | Helplines can be toggled in Hard mode; trace state machine and completion behavior remain unchanged                       |
 
@@ -89,7 +89,7 @@ Before marking a milestone done, a human tester manually:
 7. _(previous step 6)_ For M3: tests the full navigate-via-selection-screen flow, top-left Menu return-to-selection mid-trace, top-right Next wrap navigation (including Z→A), and Hard mode toggle off/on with fixture-set swap verified on at least one corrected letter.
 8. For Task 008 (Helplines):
 
-- Confirms a Helplines toggle is visible on the Tracing screen in both Easy and Hard mode.
+- Confirms a Helplines toggle is visible on the Tracing screen in both Easy and Hard mode and starts in the off state on every letter open.
 - Confirms enabling Helplines shows exactly three horizontal guides at y=0.12, y=0.50 (dashed), and y=0.86.
 - Confirms guides span almost side-to-side with small left/right insets.
 - Confirms disabling Helplines hides all three guides.
@@ -122,6 +122,7 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 | Date       | Decision                                                                                                                                                                                                                                                                       | Rationale                                                                                                              |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-23 | T-026 asserts the Helplines toggle starts in the off state on every tracing session render, matching the shipped default                                                                                                                                                       | Guards against regressing the default-off decision recorded in PRD v0.6.1 / DEVSPEC v0.8.1 / UISPEC v0.7.1              |
 | 2026-09-23 | Added Tracing Helplines coverage via T-026/T-027/T-028 for toggle state, 3-line geometry/styling, and Hard-mode compatibility                                                                                                                                                  | Ensures Helplines behavior is testable end to end without regressing existing shadow/tracing state-machine logic       |
 | 2026-09-22 | Letter Shadow Guide test coverage: T-024 (Easy mode persistent shadow visible in all tracing states), T-025 (Hard mode shadow preview 2-second blocking and hand-off to tracing); dry-run includes shadow visibility and preview-to-tracing transition on both Easy/Hard modes | Verifies shadow rendering and state machine flow per DEVSPEC §3 Letter Shadow Guide module and UISPEC shadow scenarios |
 | 2026-09-04 | Boundary-box fixtures use the DEVSPEC §14 default `boundaryPadding` = 0.06 (normalized units); exit-box fixtures place the departure point just past that halo                                                                                                                 | Aligns with the resolved DEVSPEC boundary-padding decision from the M1 dry-run so fixtures track live-code behavior    |
@@ -134,6 +135,7 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-23 — Copilot — Task 008 follow-up: updated T-026 to assert Helplines default-off and extended the dry-run helpline check to include starting state; bumped TESTSPEC to v0.7.1 and `Traces to:` PRD v0.6.1 / DEVSPEC v0.8.1 / UISPEC v0.7.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing Helplines coverage (T-026/T-027/T-028), extended the dry-run protocol with Helplines checks, added a resolved decision for helpline test coverage, and bumped `Traces to:` PRD v0.6.0 / DEVSPEC v0.8.0 / UISPEC v0.7.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide test cases T-024 (Easy-mode persistent shadow) and T-025 (Hard-mode 2-second preview blocking), updated dry-run protocol step 6 to include shadow visibility verification, added resolved decision for shadow coverage, and bumped `Traces to:` PRD v0.5.0 / DEVSPEC v0.7.0 / UISPEC v0.6.0.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: added dual-fixture test-data coverage, introduced M3 Hard mode cases (T-022/T-023), updated the M3 dry-run checklist, and bumped `Traces to:` PRD v0.4.0 / DEVSPEC v0.6.0 / UISPEC v0.5.0.

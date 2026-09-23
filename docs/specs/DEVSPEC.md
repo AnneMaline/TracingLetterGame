@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.8.0
+**Version:** 0.8.1
 **Last Updated:** 2026-09-23
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.6.0
+**Traces to:** PRD v0.6.1
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -213,9 +213,13 @@ resolved otherwise.
   5. Helplines are a visual aid only: they must not intercept pointer input and must not alter
      boundary-box checks, deviation checks, segment-completion scoring, or hard-mode preview
      timing.
+  6. Default the Helplines toggle to **off** at the start of every tracing session (both Easy and
+     Hard mode). The child/caregiver may turn Helplines on at any time; the choice is not
+     persisted across sessions or letters.
 - **Exit Criterion:** In both Easy and Hard mode, the Helplines toggle can show/hide exactly three
   horizontal guides at the specified y positions; the middle line is dashed; the guides span
-  nearly the full width with consistent inset; and existing tracing mechanics remain unchanged.
+  nearly the full width with consistent inset; the toggle starts in the off state on every letter
+  open; and existing tracing mechanics remain unchanged.
 
 ---
 
@@ -364,6 +368,7 @@ npm test         # unit + integration tests
 
 | Date       | Decision                                                                                                                                                                                                                                                                           | Rationale                                                                                                                                                                                                                                                 |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-23 | Helplines toggle defaults to **off** on every tracing session (Easy and Hard); the child/caregiver opts in per session and the choice is not persisted                                                                                                                             | Keeps the tracing surface uncluttered by default while leaving handwriting alignment support one tap away for learners who want it                                                                                                                        |
 | 2026-09-23 | Tracing Helplines module uses three horizontal guides at y=0.12, y=0.50 (dashed), and y=0.86; guides are toggleable in both Easy and Hard mode and do not affect tracing/scoring logic                                                                                             | Adds optional handwriting alignment support while preserving the existing segment-accuracy model and hard-mode preview behavior                                                                                                                           |
 | 2026-09-22 | Letter Shadow Guide module: Easy mode shows a persistent faint ghost outline of all letter segments while tracing (learning aid); Hard mode shows the same outline for 2 seconds on letter open, then hides it for the actual tracing (encourages recall and increases difficulty) | Research supports letter acquisition through visual reference followed by reproduction; persistent shadow aids recognition; brief preview in hard mode encourages active recall while raising difficulty per pedagogical feedback from Stephanie Gottwald |
 | 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, MVP/Better/Great tiers), replacing the earlier whole-path-tolerance + mastery/stars placeholder                                                                               | Real product requirements now available                                                                                                                                                                                                                   |
@@ -393,6 +398,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-23 — Copilot — Task 008 follow-up: set the Helplines toggle default to off on every tracing session in the Tracing Helplines module and Resolved Decisions; bumped DEVSPEC to v0.8.1 and `Traces to:` PRD v0.6.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added the Tracing Helplines module (toggle in Easy/Hard mode; horizontal guides at y=0.12/0.50/0.86 with dashed middle line), updated M3 deliverables, updated Resolved Decisions, and bumped DEVSPEC to v0.8.0 with `Traces to:` PRD v0.6.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide module describing Easy-mode persistent shadow and Hard-mode 2-second preview behavior as a learning aid and difficulty modulation; updated Resolved Decisions; bumped DEVSPEC to v0.7.0 and `Traces to:` PRD v0.5.0.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: documented dual fixture datasets (`letterSegments` baseline + `harderLetterSegments` corrected), added M3 Hard mode toggle behavior in Letter Navigation, and bumped `Traces to:` PRD to v0.4.0.

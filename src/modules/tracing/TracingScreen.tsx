@@ -19,6 +19,7 @@ export function TracingScreen({
   isHardMode = false,
 }: Props) {
   const [letterIndex, setLetterIndex] = useState(initialLetterIndex);
+  const [showHelplines, setShowHelplines] = useState(false);
   const total = letters.length;
   const letter = letters[letterIndex];
 
@@ -42,12 +43,15 @@ export function TracingScreen({
         displayLabel={letter.displayLabel}
         onBackToMenu={onBackToMenu}
         onNext={goNext}
+        showHelplines={showHelplines}
+        onToggleHelplines={() => setShowHelplines((v) => !v)}
       />
       <LetterTracer
         key={letter.id}
         letter={letter}
         showShadow={showShadow}
         isHardMode={isHardMode}
+        showHelplines={showHelplines}
       />
     </main>
   );

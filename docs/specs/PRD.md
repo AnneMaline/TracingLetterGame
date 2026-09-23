@@ -1,7 +1,7 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.6.0
+**Version:** 0.6.1
 **Last Updated:** 2026-09-23
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
@@ -139,6 +139,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 | Date       | Decision                                                                                                                                                                                                                  | Rationale                                                                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-23 | Helplines default to OFF when a tracing session begins; the child/caregiver can toggle them on at any time during tracing                                                                                                 | Keeps the default tracing surface uncluttered while leaving handwriting alignment support one tap away for learners who want it                                                                                          |
 | 2026-09-23 | Tracing includes a Helplines toggle in both Easy and Hard mode; when enabled, the tracing surface shows three horizontal guide lines at y=0.12, y=0.50 (dashed), and y=0.86, spanning nearly the full draw-box width      | Provides optional handwriting alignment support without forcing extra guidance on every learner; keeps support level adjustable during tracing sessions                                                                  |
 | 2026-09-22 | Shadow as a learning aid: Easy mode shows a persistent faint ghost outline of the complete letter while tracing; Hard mode shows the same shadow for 2 seconds on letter open, then it disappears for the tracing attempt | Research supports letter acquisition through visual reference followed by active reproduction; persistent shadow aids recognition in easy mode; brief preview in hard mode encourages recall while increasing difficulty |
 | 2026-09-03 | Adopted the official product brief's segment/vector tracing model (boundary box, 80% finger-up rule, tiered MVP/Better/Great scope), replacing the earlier placeholder whole-path-tolerance + mastery/stars concept       | Real product requirements now available; earlier draft was a placeholder pending this information                                                                                                                        |
@@ -161,6 +162,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-09-23 — Copilot — Task 008 follow-up: changed the Helplines initial default from ON to OFF (child/caregiver opts in during the session) and bumped PRD to v0.6.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing-screen Helplines product behavior (toggle visible in Easy/Hard mode and three horizontal guide lines at y=0.12/0.50/0.86 with dashed middle line), updated M3 scope wording, and bumped PRD to v0.6.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: refined difficulty model per Stephanie Gottwald feedback; Easy mode now shows persistent letter shadow as a learning aid, Hard mode shows 2-second shadow preview before tracing begins to encourage letter recall; bumped PRD to v0.5.0 and updated Resolved Decisions.
 - 2026-09-18 — Copilot — Task 005/006 spec-update pass: added the shipped M3 Hard mode product behavior (session-only toggle, default off, menu-selected fixture-set swap) and bumped PRD to v0.4.0.

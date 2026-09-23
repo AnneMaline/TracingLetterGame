@@ -1,8 +1,8 @@
 import type {
   LineSegment,
+  LineValues,
   Point,
   PolylinePoint,
-  PolylineSubSegment,
 } from "../../types";
 import {
   DEFAULT_BOUNDARY_PADDING,
@@ -69,7 +69,7 @@ function isPointStep(step: PolylinePoint): step is Point {
   return "x" in step && "y" in step;
 }
 
-function isSubSegmentStep(step: PolylinePoint): step is PolylineSubSegment {
+function isSubSegmentStep(step: PolylinePoint): step is LineValues {
   return "start" in step && "end" in step;
 }
 
@@ -125,7 +125,13 @@ function getPolylineSubSegments(segment: LineSegment): LineSegment[] {
       if (!pointsMatch(cursor, step.start)) {
         subSegments.push({ start: cursor, end: step.start });
       }
-      subSegments.push({ ...step });
+      // PolylinePoint (LineValues) has no curveKind field; infer it so sub-step
+      // ovals render/trace as ovals instead of falling through to stadium curves.
+      const subSegment: LineSegment = { ...step };
+      if (subSegment.curveKind === undefined && subSegment.ovalCenter) {
+        subSegment.curveKind = "oval";
+      }
+      subSegments.push(subSegment);
       cursor = step.end;
     }
   }

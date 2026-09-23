@@ -16,11 +16,15 @@ describe("App full navigation flow (M3 Letter selection + Tracing navigation)", 
 
     // 3. TracingScreen opens for letter "C"
     expect(screen.getByTestId("tracing-screen")).toBeInTheDocument();
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter C");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter C",
+    );
 
     // 4. Click Next -> advances to letter "D"
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter D");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter D",
+    );
 
     // 5. Click Menu -> returns to letter selection screen
     fireEvent.click(screen.getByTestId("menu-button"));
@@ -30,11 +34,15 @@ describe("App full navigation flow (M3 Letter selection + Tracing navigation)", 
     // 6. Click letter "Z" -> opens Tracing for "Z"
     fireEvent.click(screen.getByTestId("letter-tile-Z"));
     expect(screen.getByTestId("tracing-screen")).toBeInTheDocument();
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter Z");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter Z",
+    );
 
     // 7. Click Next on "Z" -> wraps to "A"
     fireEvent.click(screen.getByTestId("next-letter"));
-    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent("Letter A");
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter A",
+    );
   });
 });
 
@@ -51,7 +59,9 @@ describe("App Hard mode toggle", () => {
 
     // R has 3 traceable segments in the standard fixture set.
     fireEvent.click(screen.getByTestId("letter-tile-R"));
-    expect(screen.getByTestId("progress-label")).toHaveTextContent("Segment 1 of 3");
+    expect(screen.getByTestId("progress-label")).toHaveTextContent(
+      "Segment 1 of 3",
+    );
 
     fireEvent.click(screen.getByTestId("menu-button"));
     fireEvent.click(screen.getByTestId("hard-mode-toggle"));
@@ -62,6 +72,23 @@ describe("App Hard mode toggle", () => {
 
     // R has 2 traceable segments (a continuous bowl+leg stroke) in Hard mode.
     fireEvent.click(screen.getByTestId("letter-tile-R"));
-    expect(screen.getByTestId("progress-label")).toHaveTextContent("Segment 1 of 2");
+    expect(screen.getByTestId("progress-label")).toHaveTextContent(
+      "Segment 1 of 2",
+    );
+  });
+
+  it("shows helplines toggle during hard-mode tracing and allows turning lines on", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByTestId("hard-mode-toggle"));
+    fireEvent.click(screen.getByTestId("letter-tile-A"));
+
+    const toggle = screen.getByTestId("helplines-toggle");
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByTestId("helpline-top")).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByTestId("helpline-top")).toBeInTheDocument();
   });
 });

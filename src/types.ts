@@ -3,29 +3,26 @@ export interface Point {
   y: number;
 }
 
-export interface PolylineSubSegment {
+export interface LineValues {
   start: Point;
   end: Point;
   isCurve?: boolean;
   curveControlX?: number;
-}
-
-export type PolylinePoint = Point | PolylineSubSegment;
-
-export interface LineSegment {
-  start: Point;
-  end: Point;
-  boundaryHalfWidth?: number;
-  isCurve?: boolean;
-  curveControlX?: number;
-  curveKind?: "oval" | "polyline";
-  polylinePoints?: PolylinePoint[];
   ovalCenter?: Point;
   ovalRadiusX?: number;
   ovalRadiusY?: number;
   ovalStartAngleDeg?: number;
   ovalEndAngleDeg?: number;
   ovalCounterClockwise?: boolean;
+}
+
+export type PolylinePoint = Point | LineValues;
+
+export interface LineSegment extends LineValues {
+  boundaryHalfWidth?: number;
+  isCurve?: boolean;
+  curveKind?: "oval" | "polyline";
+  polylinePoints?: PolylinePoint[];
 }
 
 export interface LetterDefinition {

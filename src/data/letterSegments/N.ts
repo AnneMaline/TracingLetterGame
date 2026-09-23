@@ -4,9 +4,9 @@ const letterN: LetterDefinition = {
   id: "N",
   displayLabel: "N",
   segments: [
-    { start: { x: 0.25, y: 0.14 }, end: { x: 0.25, y: 0.86 } },
-    { start: { x: 0.25, y: 0.14 }, end: { x: 0.75, y: 0.86 } },
-    { start: { x: 0.75, y: 0.86 }, end: { x: 0.75, y: 0.14 } },
+    { start: { x: 0.25, y: 0.15 }, end: { x: 0.25, y: 0.85 } },
+    { start: { x: 0.75, y: 0.15 }, end: { x: 0.75, y: 0.85 } },
+    { start: { x: 0.25, y: 0.15 }, end: { x: 0.75, y: 0.85 } },
   ],
 };
 

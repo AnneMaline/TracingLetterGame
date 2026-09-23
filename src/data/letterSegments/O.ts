@@ -10,7 +10,7 @@ const letterO: LetterDefinition = {
       isCurve: true,
       curveKind: "oval",
       ovalCenter: { x: 0.5, y: 0.5 },
-      ovalRadiusX: 0.255,
+      ovalRadiusX: 0.35,
       ovalRadiusY: 0.35,
       ovalStartAngleDeg: 90,
       ovalEndAngleDeg: 448,

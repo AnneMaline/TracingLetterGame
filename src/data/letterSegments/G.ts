@@ -5,18 +5,18 @@ const letterG: LetterDefinition = {
   displayLabel: "G",
   segments: [
     {
-      start: { x: 0.7, y: 0.26 },
-      end: { x: 0.76, y: 0.53 },
+      start: { x: 0.76, y: 0.29 },
+      end: { x: 0.82, y: 0.51 },
       isCurve: true,
       curveKind: "oval",
       ovalCenter: { x: 0.5, y: 0.5 },
-      ovalRadiusX: 0.26,
-      ovalRadiusY: 0.34,
-      ovalStartAngleDeg: 45,
-      ovalEndAngleDeg: 355,
+      ovalRadiusX: 0.32,
+      ovalRadiusY: 0.35,
+      ovalStartAngleDeg: 37,
+      ovalEndAngleDeg: 357,
       ovalCounterClockwise: true,
     },
-    { start: { x: 0.76, y: 0.53 }, end: { x: 0.55, y: 0.53 } },
+    { start: { x: 0.82, y: 0.51 }, end: { x: 0.55, y: 0.51 } },
   ],
 };
 

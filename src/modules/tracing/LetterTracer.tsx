@@ -8,12 +8,14 @@ interface Props {
   letter: LetterDefinition;
   showShadow?: boolean;
   isHardMode?: boolean;
+  showHelplines?: boolean;
 }
 
 export function LetterTracer({
   letter,
   showShadow = true,
   isHardMode = false,
+  showHelplines = false,
 }: Props) {
   const trace = useSegmentTrace(letter);
   const { view } = trace;
@@ -80,6 +82,7 @@ export function LetterTracer({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           showShadow={shadowVisible}
+          showHelplines={showHelplines}
           canTrace={canTrace}
         />
         <Celebration

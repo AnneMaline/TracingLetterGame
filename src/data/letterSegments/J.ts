@@ -5,8 +5,8 @@ const letterJ: LetterDefinition = {
   displayLabel: "J",
   segments: [
     {
-      start: { x: 0.62, y: 0.14 },
-      end: { x: 0.3, y: 0.65 },
+      start: { x: 0.62, y: 0.15 },
+      end: { x: 0.25, y: 0.675 },
       isCurve: true,
       curveKind: "polyline",
       polylinePoints: [
@@ -14,17 +14,19 @@ const letterJ: LetterDefinition = {
         { x: 0.62, y: 0.38 },
         { x: 0.62, y: 0.5 },
         { x: 0.62, y: 0.62 },
-        { x: 0.61, y: 0.68 },
-        { x: 0.59, y: 0.73 },
-        { x: 0.55, y: 0.77 },
-        { x: 0.5, y: 0.8 },
-        { x: 0.45, y: 0.81 },
-        { x: 0.4, y: 0.8 },
-        { x: 0.35, y: 0.77 },
-        { x: 0.32, y: 0.73 },
+        {
+          start: { x: 0.62, y: 0.675 },
+          end: { x: 0.25, y: 0.675 },
+          ovalCenter: { x: 0.435, y: 0.675 },
+          ovalRadiusX: 0.185,
+          ovalRadiusY: 0.175,
+          ovalStartAngleDeg: 0,
+          ovalEndAngleDeg: 180,
+          ovalCounterClockwise: false,
+          isCurve: true,
+        },
       ],
     },
-    { start: { x: 0.5, y: 0.14 }, end: { x: 0.75, y: 0.14 } },
   ],
 };
 

@@ -7,6 +7,7 @@ export interface LineValues {
   start: Point;
   end: Point;
   isCurve?: boolean;
+  curveKind?: "oval" | "polyline";
   curveControlX?: number;
   ovalCenter?: Point;
   ovalRadiusX?: number;

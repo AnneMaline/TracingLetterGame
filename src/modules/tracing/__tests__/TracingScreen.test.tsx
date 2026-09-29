@@ -19,6 +19,11 @@ const C: LetterDefinition = {
   displayLabel: "C",
   segments: [{ start: { x: 0.3, y: 0.1 }, end: { x: 0.7, y: 0.1 } }],
 };
+const aLowercase: LetterDefinition = {
+  id: "a",
+  displayLabel: "a",
+  segments: [{ start: { x: 0.3, y: 0.8 }, end: { x: 0.7, y: 0.8 } }],
+};
 
 function mockRect(el: SVGSVGElement) {
   vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
@@ -93,7 +98,7 @@ describe("Helplines toggle", () => {
 
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByTestId("helpline-top")).toHaveAttribute("y1", "0.12");
+    expect(screen.getByTestId("helpline-top")).toHaveAttribute("y1", "0.14");
     expect(screen.getByTestId("helpline-middle")).toHaveAttribute("y1", "0.5");
     expect(screen.getByTestId("helpline-bottom")).toHaveAttribute("y1", "0.86");
     expect(screen.getByTestId("helpline-top")).toHaveAttribute("x1", "0.06");
@@ -108,6 +113,33 @@ describe("Helplines toggle", () => {
     expect(screen.queryByTestId("helpline-top")).not.toBeInTheDocument();
     expect(screen.queryByTestId("helpline-middle")).not.toBeInTheDocument();
     expect(screen.queryByTestId("helpline-bottom")).not.toBeInTheDocument();
+  });
+
+  it("shows a lowercase-only dotted descender helpline below the bottom line", () => {
+    render(<TracingScreen letters={[aLowercase]} />);
+
+    const toggle = screen.getByTestId("helplines-toggle");
+    fireEvent.click(toggle);
+
+    expect(screen.getByTestId("helpline-bottom")).toHaveAttribute("y1", "0.86");
+    expect(screen.getByTestId("helpline-lowercase-descender")).toHaveAttribute(
+      "y1",
+      "1.22",
+    );
+    expect(screen.getByTestId("helpline-lowercase-descender")).toHaveAttribute(
+      "stroke-dasharray",
+      "0.02 0.02",
+    );
+  });
+
+  it("does not show the lowercase descender helpline for uppercase letters", () => {
+    render(<TracingScreen letters={[A]} />);
+
+    fireEvent.click(screen.getByTestId("helplines-toggle"));
+
+    expect(
+      screen.queryByTestId("helpline-lowercase-descender"),
+    ).not.toBeInTheDocument();
   });
 
   it("stays available in hard mode before and after the preview timeout", async () => {

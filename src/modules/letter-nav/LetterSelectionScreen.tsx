@@ -4,6 +4,8 @@ import { LetterTile } from "./LetterTile";
 
 interface Props {
   letters: LetterDefinition[];
+  selectedCase: "uppercase" | "lowercase";
+  onToggleCase: () => void;
   isHardMode: boolean;
   onToggleHardMode: () => void;
   onSelectLetter: (index: number) => void;
@@ -11,6 +13,8 @@ interface Props {
 
 export function LetterSelectionScreen({
   letters,
+  selectedCase,
+  onToggleCase,
   isHardMode,
   onToggleHardMode,
   onSelectLetter,
@@ -30,12 +34,61 @@ export function LetterSelectionScreen({
     >
       <div
         style={{
-          position: "relative",
           width: "100%",
           display: "flex",
           justifyContent: "center",
+          flexWrap: "wrap",
+          gap: "0.75rem",
         }}
       >
+        <button
+          type="button"
+          data-testid="case-toggle"
+          role="switch"
+          aria-checked={selectedCase === "lowercase"}
+          onClick={onToggleCase}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            border: "none",
+            borderRadius: "999px",
+            padding: "0.4rem 0.9rem",
+            background: selectedCase === "lowercase" ? "#17324d" : "#e2e8f0",
+            color: selectedCase === "lowercase" ? "#ffffff" : "#334155",
+            fontWeight: 700,
+            fontSize: "0.9rem",
+            cursor: "pointer",
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              display: "inline-block",
+              width: "2rem",
+              height: "1.1rem",
+              borderRadius: "999px",
+              background: selectedCase === "lowercase" ? "#4ade80" : "#94a3b8",
+              position: "relative",
+              transition: "background 0.15s ease",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: "0.15rem",
+                left: selectedCase === "lowercase" ? "1.05rem" : "0.15rem",
+                width: "0.8rem",
+                height: "0.8rem",
+                borderRadius: "50%",
+                background: "#ffffff",
+                transition: "left 0.15s ease",
+              }}
+            />
+          </span>
+          {selectedCase === "uppercase" ? "Uppercase" : "Lowercase"}
+        </button>
+
         <button
           type="button"
           data-testid="hard-mode-toggle"

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
+import { DEFAULT_BOUNDARY_PADDING } from "../../shared/constants";
 import { SegmentGuide } from "./SegmentGuide";
 import { curvePointAt, isCurvedSegment } from "./geometry";
 import type { SegmentTraceView } from "./useSegmentTrace";
@@ -22,6 +23,18 @@ const OVAL_PATH_STEPS = 96;
 const HELP_LINE_X1 = 0.06;
 const HELP_LINE_X2 = 0.94;
 const HELPLINES = [0.14, 0.5, 0.86] as const;
+const HELPLINE_SPACING = HELPLINES[1] - HELPLINES[0];
+const LOWERCASE_DESCENDER_HELPLINE = HELPLINES[2] + HELPLINE_SPACING;
+const LOWERCASE_EXTRA_DESCENDER_ROOM = 0.3 + DEFAULT_BOUNDARY_PADDING;
+
+function isLowercaseLetter(letter: LetterDefinition): boolean {
+  return /^[a-z]$/.test(letter.id);
+}
+
+function getViewBoxHeight(isLowercase: boolean): number {
+  if (!isLowercase) return 1;
+  return 1 + LOWERCASE_EXTRA_DESCENDER_ROOM;
+}
 
 export const curvePath = (segment: LineSegment) => {
   if (segment.curveKind === "oval" || segment.curveKind === "polyline") {
@@ -67,6 +80,8 @@ export function TraceSurface({
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const activePointerId = useRef<number | null>(null);
+  const isLowercase = isLowercaseLetter(letter);
+  const viewBoxHeight = getViewBoxHeight(isLowercase);
 
   const toNormalized = useCallback(
     (clientX: number, clientY: number): Point | null => {
@@ -74,12 +89,23 @@ export function TraceSurface({
       if (!svg) return null;
       const rect = svg.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return null;
+
+      // Match preserveAspectRatio="xMidYMid meet" with a dynamic viewBox height.
+      const viewBoxWidth = 1;
+      const scale = Math.min(
+        rect.width / viewBoxWidth,
+        rect.height / viewBoxHeight,
+      );
+      const renderedWidth = viewBoxWidth * scale;
+      const renderedHeight = viewBoxHeight * scale;
+      const offsetX = (rect.width - renderedWidth) / 2;
+      const offsetY = (rect.height - renderedHeight) / 2;
       return {
-        x: (clientX - rect.left) / rect.width,
-        y: (clientY - rect.top) / rect.height,
+        x: (clientX - rect.left - offsetX) / scale,
+        y: (clientY - rect.top - offsetY) / scale,
       };
     },
-    [],
+    [viewBoxHeight],
   );
 
   const handlePointerDown = useCallback(
@@ -126,7 +152,7 @@ export function TraceSurface({
   return (
     <svg
       ref={svgRef}
-      viewBox={`0 0 1 1`}
+      viewBox={`0 0 1 ${viewBoxHeight}`}
       preserveAspectRatio="xMidYMid meet"
       width={VIEWBOX_SIZE}
       height={VIEWBOX_SIZE}
@@ -180,6 +206,16 @@ export function TraceSurface({
               }
             />
           ))}
+          {isLowercase && (
+            <line
+              x1={HELP_LINE_X1}
+              y1={LOWERCASE_DESCENDER_HELPLINE}
+              x2={HELP_LINE_X2}
+              y2={LOWERCASE_DESCENDER_HELPLINE}
+              strokeDasharray="0.02 0.02"
+              data-testid="helpline-lowercase-descender"
+            />
+          )}
         </g>
       )}
 

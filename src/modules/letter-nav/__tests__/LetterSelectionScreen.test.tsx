@@ -4,9 +4,21 @@ import type { LetterDefinition } from "../../../types";
 import { LetterSelectionScreen } from "../LetterSelectionScreen";
 
 const sampleLetters: LetterDefinition[] = [
-  { id: "A", displayLabel: "A", segments: [{ start: { x: 0.2, y: 0.5 }, end: { x: 0.8, y: 0.5 } }] },
-  { id: "B", displayLabel: "B", segments: [{ start: { x: 0.2, y: 0.1 }, end: { x: 0.2, y: 0.9 } }] },
-  { id: "C", displayLabel: "C", segments: [{ start: { x: 0.3, y: 0.1 }, end: { x: 0.7, y: 0.1 } }] },
+  {
+    id: "A",
+    displayLabel: "A",
+    segments: [{ start: { x: 0.2, y: 0.5 }, end: { x: 0.8, y: 0.5 } }],
+  },
+  {
+    id: "B",
+    displayLabel: "B",
+    segments: [{ start: { x: 0.2, y: 0.1 }, end: { x: 0.2, y: 0.9 } }],
+  },
+  {
+    id: "C",
+    displayLabel: "C",
+    segments: [{ start: { x: 0.3, y: 0.1 }, end: { x: 0.7, y: 0.1 } }],
+  },
 ];
 
 describe("LetterSelectionScreen (T-011)", () => {
@@ -16,6 +28,8 @@ describe("LetterSelectionScreen (T-011)", () => {
     render(
       <LetterSelectionScreen
         letters={sampleLetters}
+        selectedCase="uppercase"
+        onToggleCase={vi.fn()}
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
@@ -34,6 +48,8 @@ describe("LetterSelectionScreen (T-011)", () => {
     render(
       <LetterSelectionScreen
         letters={sampleLetters}
+        selectedCase="uppercase"
+        onToggleCase={vi.fn()}
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
@@ -51,6 +67,8 @@ describe("LetterSelectionScreen (T-011)", () => {
     render(
       <LetterSelectionScreen
         letters={sampleLetters}
+        selectedCase="uppercase"
+        onToggleCase={vi.fn()}
         isHardMode={true}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
@@ -67,6 +85,8 @@ describe("LetterSelectionScreen (T-011)", () => {
     render(
       <LetterSelectionScreen
         letters={sampleLetters}
+        selectedCase="uppercase"
+        onToggleCase={vi.fn()}
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
@@ -75,5 +95,43 @@ describe("LetterSelectionScreen (T-011)", () => {
 
     fireEvent.click(screen.getByTestId("hard-mode-toggle"));
     expect(onToggleHardMode).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a case toggle reflecting uppercase/lowercase state", () => {
+    const onSelect = vi.fn();
+    const onToggleHardMode = vi.fn();
+    render(
+      <LetterSelectionScreen
+        letters={sampleLetters}
+        selectedCase="lowercase"
+        onToggleCase={vi.fn()}
+        isHardMode={false}
+        onToggleHardMode={onToggleHardMode}
+        onSelectLetter={onSelect}
+      />,
+    );
+
+    const toggle = screen.getByTestId("case-toggle");
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(toggle).toHaveTextContent("Lowercase");
+  });
+
+  it("calls onToggleCase when the case toggle is clicked", () => {
+    const onSelect = vi.fn();
+    const onToggleHardMode = vi.fn();
+    const onToggleCase = vi.fn();
+    render(
+      <LetterSelectionScreen
+        letters={sampleLetters}
+        selectedCase="uppercase"
+        onToggleCase={onToggleCase}
+        isHardMode={false}
+        onToggleHardMode={onToggleHardMode}
+        onSelectLetter={onSelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("case-toggle"));
+    expect(onToggleCase).toHaveBeenCalledTimes(1);
   });
 });

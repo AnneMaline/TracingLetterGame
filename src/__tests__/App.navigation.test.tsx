@@ -92,3 +92,82 @@ describe("App Hard mode toggle", () => {
     expect(screen.getByTestId("helpline-top")).toBeInTheDocument();
   });
 });
+
+describe("App case toggle", () => {
+  it("defaults to uppercase and can switch to lowercase letters", () => {
+    render(<App />);
+
+    const caseToggle = screen.getByTestId("case-toggle");
+    expect(caseToggle).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByTestId("letter-tile-A")).toBeInTheDocument();
+    expect(screen.queryByTestId("letter-tile-a")).not.toBeInTheDocument();
+
+    fireEvent.click(caseToggle);
+
+    expect(caseToggle).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByTestId("letter-tile-a")).toBeInTheDocument();
+    expect(screen.queryByTestId("letter-tile-A")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("letter-tile-c"));
+    expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+      "Letter c",
+    );
+  });
+
+  it("supports all hard-mode and case combinations", () => {
+    const combinations = [
+      {
+        useHardMode: false,
+        useLowercase: false,
+        tileId: "letter-tile-A",
+        expectedLabel: "Letter A",
+      },
+      {
+        useHardMode: false,
+        useLowercase: true,
+        tileId: "letter-tile-a",
+        expectedLabel: "Letter a",
+      },
+      {
+        useHardMode: true,
+        useLowercase: false,
+        tileId: "letter-tile-A",
+        expectedLabel: "Letter A",
+      },
+      {
+        useHardMode: true,
+        useLowercase: true,
+        tileId: "letter-tile-a",
+        expectedLabel: "Letter a",
+      },
+    ];
+
+    for (const combination of combinations) {
+      const { unmount } = render(<App />);
+
+      if (combination.useHardMode) {
+        fireEvent.click(screen.getByTestId("hard-mode-toggle"));
+      }
+
+      if (combination.useLowercase) {
+        fireEvent.click(screen.getByTestId("case-toggle"));
+      }
+
+      fireEvent.click(screen.getByTestId(combination.tileId));
+      expect(screen.getByTestId("tracing-screen")).toBeInTheDocument();
+      expect(screen.getByTestId("current-letter-indicator")).toHaveTextContent(
+        combination.expectedLabel,
+      );
+
+      fireEvent.click(screen.getByTestId("menu-button"));
+      if (combination.useHardMode) {
+        expect(screen.getByTestId("hard-mode-toggle")).toHaveAttribute(
+          "aria-checked",
+          "true",
+        );
+      }
+
+      unmount();
+    }
+  });
+});

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { letters } from "..";
-import { segmentLength } from "../../../modules/tracing/geometry";
+import { segmentLength } from "../../../../../modules/tracing/geometry";
 
 const CANVAS_MIN = 0;
 const CANVAS_MAX = 1;

@@ -1,8 +1,8 @@
-import type { LetterDefinition } from "../../types";
+import type { LetterDefinition } from "../../../../types";
 
-const letterR: LetterDefinition = {
-  id: "R",
-  displayLabel: "R",
+const letterP: LetterDefinition = {
+  id: "P",
+  displayLabel: "P",
   segments: [
     { start: { x: 0.25, y: 0.15 }, end: { x: 0.25, y: 0.85 } },
     {
@@ -11,8 +11,7 @@ const letterR: LetterDefinition = {
       isCurve: true,
       curveControlX: 0.65,
     },
-    { start: { x: 0.35, y: 0.5 }, end: { x: 0.6, y: 0.85 } },
   ],
 };
 
-export default letterR;
+export default letterP;

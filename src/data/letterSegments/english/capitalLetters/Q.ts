@@ -1,8 +1,8 @@
-import type { LetterDefinition } from "../../types";
+import type { LetterDefinition } from "../../../../types";
 
-const letterO: LetterDefinition = {
-  id: "O",
-  displayLabel: "O",
+const letterQ: LetterDefinition = {
+  id: "Q",
+  displayLabel: "Q",
   segments: [
     {
       start: { x: 0.5, y: 0.15 },
@@ -16,7 +16,8 @@ const letterO: LetterDefinition = {
       ovalEndAngleDeg: 448,
       ovalCounterClockwise: true,
     },
+    { start: { x: 0.6, y: 0.7 }, end: { x: 0.75, y: 0.85 } },
   ],
 };
 
-export default letterO;
+export default letterQ;

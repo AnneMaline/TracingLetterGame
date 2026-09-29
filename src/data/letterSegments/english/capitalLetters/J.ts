@@ -1,4 +1,4 @@
-import type { LetterDefinition } from "../../types";
+import type { LetterDefinition } from "../../../../types";
 
 const letterJ: LetterDefinition = {
   id: "J",

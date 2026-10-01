@@ -7,7 +7,7 @@ import {
   START_REGION_RADIUS,
 } from "../../shared/constants";
 import { computeBoundaryBox, distanceBetween, isPointInBox } from "./geometry";
-import { evaluatePathM2 } from "./scoring";
+import { evaluateSegmentPath } from "./scoring";
 
 export type SegmentStatus =
   | "awaiting-start"
@@ -116,7 +116,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
       if (status !== "tracing") return;
 
       const next = [...points, p];
-      const outcome = evaluatePathM2(next, currentSegment, false);
+      const outcome = evaluateSegmentPath(next, currentSegment, false);
       if (outcome.kind === "exit-box" || outcome.kind === "deviation-reset") {
         setCoverage(outcome.coverage);
         setWithin(false);
@@ -153,7 +153,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     if (!currentSegment) return;
     if (status !== "tracing") return;
 
-    const outcome = evaluatePathM2(points, currentSegment, true);
+    const outcome = evaluateSegmentPath(points, currentSegment, true);
     setCoverage(outcome.coverage);
     if (outcome.kind === "complete") {
       completeSegment();

@@ -266,3 +266,27 @@ No failing tests remained to adjudicate (see Phase 0).
   celebration delays, Hard-mode preview duration, helpline positions/inset.
 - Duplicated Letter Selection switches consolidated into `src/shared/ToggleSwitch.tsx`;
   helplines rendering extracted to `tracing/Helplines.tsx`.
+
+### Phase 3 - Geometry and scoring rewrite
+
+- `geometry.ts` (828 lines) replaced by `tracing/geometry/`: `vector.ts`, `oval.ts`, `stadium.ts`,
+  `curves.ts`, `boundary.ts`, `projection.ts`, `corners.ts`, `svgPath.ts`, and an `index.ts`
+  barrel. The largest is 202 lines, and every tracing file is under the 350-line budget.
+- Strangler step: before retiring it, the old module was kept next to the new one as
+  `geometry.legacy.ts`. A temporary equivalence test compared the two on every authored segment
+  with 40 random probes each: point, tangent, box, containment, projection, progressive
+  projection, corner suppression, straight-line coverage and SVG path. All results were
+  identical. The golden-master snapshot did not change.
+- Canonical coverage pipeline and curve-model decision recorded in
+  [ADR 0001](../../adr/0001-curve-models-and-coverage.md). Two intended behavior fixes, each
+  covered by a new test: wiggling on a curve no longer farms coverage, and a full-circle oval
+  with `start === end` is traceable.
+- Stadium SVG path math was duplicated in `TraceSurface.tsx` (`CURVE_X` copy). It now comes
+  from `stadium.ts`. `curveSvgPath` and `SegmentShape.tsx` replace three copies of the
+  curve-vs-line rendering branch.
+- `evaluatePathM2`/`SegmentOutcomeM2` renamed to `evaluateSegmentPath`/`SegmentOutcome` (one
+  union type). Each evaluation now projects the path once instead of twice.
+- Per-segment `WeakMap` caches for samples, polyline tables and SVG paths cut the
+  characterization workload (52 letters × ~10 evaluations per segment) from 842 ms to 60 ms.
+  This matters on the 2015-era target hardware.
+- No failing tests to reconcile (see Phase 0).

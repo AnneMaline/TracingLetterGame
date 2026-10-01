@@ -3,8 +3,12 @@ import {
   END_REGION_RADIUS,
   START_MARKER_RADIUS,
 } from "../../shared/constants";
-import { curvePath } from "./TraceSurface";
-import { curvePointAt, isCurvedSegment, segmentTangentAt } from "./geometry";
+import {
+  curvePointAt,
+  curveSvgPath,
+  isCurvedSegment,
+  segmentTangentAt,
+} from "./geometry";
 
 interface Props {
   segment: LineSegment;
@@ -65,7 +69,7 @@ export function SegmentGuide({ segment }: Props) {
     <g data-testid="segment-guide">
       {isCurvedSegment(segment) ? (
         <path
-          d={curvePath(segment)}
+          d={curveSvgPath(segment)}
           fill="none"
           stroke="#c0d3e7"
           strokeWidth={0.02}

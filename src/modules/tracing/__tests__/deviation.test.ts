@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LineSegment, Point } from "../../../types";
-import { evaluatePathM2 } from "../scoring";
+import { evaluateSegmentPath } from "../scoring";
 import {
   angleBetweenDegrees,
   computeDragDirection,
@@ -136,7 +136,7 @@ describe("Deviation past threshold cancels the trace (T-007)", () => {
       { x: 0.505, y: 0.55 },
     ];
     const pts = [...inBoxAlong, ...drift];
-    const out = evaluatePathM2(pts, horizontal, false);
+    const out = evaluateSegmentPath(pts, horizontal, false);
     expect(out.kind).toBe("deviation-reset");
     if (out.kind === "deviation-reset") {
       expect(out.coverage).toBeGreaterThan(0.4);
@@ -146,7 +146,7 @@ describe("Deviation past threshold cancels the trace (T-007)", () => {
   });
 
   it("does not cancel when the entire trace stays aligned with the ideal vector", () => {
-    const out = evaluatePathM2(pathAlong(horizontal, 0.6), horizontal, false);
+    const out = evaluateSegmentPath(pathAlong(horizontal, 0.6), horizontal, false);
     expect(out.kind).toBe("in-progress");
   });
 });
@@ -157,7 +157,7 @@ describe("Boundary-box exit after >=80% pre-finger-up coverage still resets (T-0
     const inBoxAlong = pathAlong(horizontal, 0.9, 30);
     const exitPoint: Point = { x: 0.7, y: 0.9 };
     const pts = [...inBoxAlong, exitPoint];
-    const out = evaluatePathM2(pts, horizontal, false);
+    const out = evaluateSegmentPath(pts, horizontal, false);
     expect(out.kind).toBe("exit-box");
     if (out.kind === "exit-box") {
       expect(out.exitIndex).toBe(inBoxAlong.length);
@@ -169,7 +169,7 @@ describe("Boundary-box exit after >=80% pre-finger-up coverage still resets (T-0
     const inBoxAlong = pathAlong(horizontal, 0.9, 30);
     const exitPoint: Point = { x: 0.7, y: 0.9 };
     const pts = [...inBoxAlong, exitPoint];
-    const out = evaluatePathM2(pts, horizontal, true);
+    const out = evaluateSegmentPath(pts, horizontal, true);
     expect(out.kind).toBe("exit-box");
   });
 });
@@ -188,7 +188,7 @@ describe("Natural curves under the threshold do not cancel (regression)", () => 
       const y = 0.5 + 0.03 * Math.sin(Math.PI * t);
       arc.push({ x, y });
     }
-    const out = evaluatePathM2(arc, horizontal, true);
+    const out = evaluateSegmentPath(arc, horizontal, true);
     expect(out.kind).toBe("complete");
   });
 
@@ -205,7 +205,7 @@ describe("Natural curves under the threshold do not cancel (regression)", () => 
       { x: 0.7, y: 0.5 },
       { x: 0.8, y: 0.5 },
     ];
-    const out = evaluatePathM2(jittery, horizontal, true);
+    const out = evaluateSegmentPath(jittery, horizontal, true);
     expect(out.kind).toBe("complete");
   });
 });
@@ -218,7 +218,7 @@ describe("Curve segments cancel zigzags and backtracking", () => {
       { x: 0.45, y: 0.14 },
       { x: 0.45, y: 0.19 },
     ];
-    const out = evaluatePathM2(pts, curveTopB, false);
+    const out = evaluateSegmentPath(pts, curveTopB, false);
     expect(out.kind).toBe("deviation-reset");
   });
 
@@ -230,7 +230,7 @@ describe("Curve segments cancel zigzags and backtracking", () => {
       { x: 0.55, y: 0.14 },
       { x: 0.45, y: 0.14 },
     ];
-    const out = evaluatePathM2(pts, curveTopB, false);
+    const out = evaluateSegmentPath(pts, curveTopB, false);
     expect(out.kind).toBe("deviation-reset");
   });
 
@@ -239,7 +239,7 @@ describe("Curve segments cancel zigzags and backtracking", () => {
     for (let i = 0; i <= 36; i++) {
       pts.push(curvePointAt(curveThenLineSharpCorner, i / 60));
     }
-    const out = evaluatePathM2(pts, curveThenLineSharpCorner, false);
+    const out = evaluateSegmentPath(pts, curveThenLineSharpCorner, false);
     expect(out.kind).toBe("in-progress");
   });
 
@@ -250,7 +250,7 @@ describe("Curve segments cancel zigzags and backtracking", () => {
     }
     const last = pts[pts.length - 1];
     pts.push({ x: last.x + 0.08, y: last.y - 0.02 });
-    const out = evaluatePathM2(pts, curveThenLineSharpCorner, false);
+    const out = evaluateSegmentPath(pts, curveThenLineSharpCorner, false);
     expect(out.kind).toBe("in-progress");
   });
 
@@ -261,7 +261,7 @@ describe("Curve segments cancel zigzags and backtracking", () => {
       { x: 0.2, y: 0.74 },
       { x: 0.24, y: 0.76 },
     ];
-    const out = evaluatePathM2(pts, rightAnglePolyline, false);
+    const out = evaluateSegmentPath(pts, rightAnglePolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 
@@ -273,7 +273,7 @@ describe("Curve segments cancel zigzags and backtracking", () => {
     pts.push({ x: 0.245, y: 0.79 });
     pts.push({ x: 0.27, y: 0.84 });
 
-    const out = evaluatePathM2(pts, wPolyline, false);
+    const out = evaluateSegmentPath(pts, wPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 });
@@ -310,7 +310,7 @@ describe("Self-overlapping polyline curves (two-bump B shape)", () => {
     for (let i = 0; i <= 60; i++) {
       pts.push(curvePointAt(twoBumpPolyline, (i / 60) * 0.7));
     }
-    const out = evaluatePathM2(pts, twoBumpPolyline, false);
+    const out = evaluateSegmentPath(pts, twoBumpPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 
@@ -319,7 +319,7 @@ describe("Self-overlapping polyline curves (two-bump B shape)", () => {
     for (let i = 0; i <= 80; i++) {
       pts.push(curvePointAt(twoBumpPolyline, i / 80));
     }
-    const out = evaluatePathM2(pts, twoBumpPolyline, true);
+    const out = evaluateSegmentPath(pts, twoBumpPolyline, true);
     expect(out.kind).toBe("complete");
   });
 
@@ -334,7 +334,7 @@ describe("Self-overlapping polyline curves (two-bump B shape)", () => {
     pts.push({ x: 0.25, y: 0.6 });
     pts.push({ x: 0.25, y: 0.7 });
     pts.push({ x: 0.25, y: 0.8 });
-    const out = evaluatePathM2(pts, twoBumpPolyline, false);
+    const out = evaluateSegmentPath(pts, twoBumpPolyline, false);
     expect(out.kind === "exit-box" || out.kind === "deviation-reset").toBe(
       true,
     );
@@ -351,7 +351,7 @@ describe("Self-overlapping polyline curves (two-bump B shape)", () => {
     pts.push({ x: 0.28, y: 0.5 });
     pts.push({ x: 0.32, y: 0.5 });
     pts.push({ x: 0.36, y: 0.5 });
-    const out = evaluatePathM2(pts, twoBumpPolyline, false);
+    const out = evaluateSegmentPath(pts, twoBumpPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 
@@ -368,7 +368,7 @@ describe("Self-overlapping polyline curves (two-bump B shape)", () => {
     pts.push({ x: 0.36, y: 0.49 });
     pts.push({ x: 0.4, y: 0.5 });
     pts.push({ x: 0.45, y: 0.5 });
-    const out = evaluatePathM2(pts, twoBumpPolyline, false);
+    const out = evaluateSegmentPath(pts, twoBumpPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 });
@@ -385,7 +385,7 @@ describe("W polyline corner cutting (regression)", () => {
     pts.push({ x: 0.28, y: 0.82 });
     pts.push({ x: 0.34, y: 0.76 });
     pts.push({ x: 0.4, y: 0.62 });
-    const out = evaluatePathM2(pts, wPolyline, false);
+    const out = evaluateSegmentPath(pts, wPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 });

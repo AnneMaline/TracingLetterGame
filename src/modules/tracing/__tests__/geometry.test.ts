@@ -196,6 +196,28 @@ describe("curve projection", () => {
     expect(computeCoverage(pts, ovalLoop)).toBeGreaterThan(0.9);
   });
 
+  it("does not earn coverage twice when a curve trace wiggles back and forth", () => {
+    const pts: Point[] = [];
+    for (let i = 0; i <= 10; i++) pts.push(curvePointAt(curve, i / 40));
+    const once = computeCoverage(pts, curve);
+    for (let k = 0; k < 30; k++) {
+      pts.push(curvePointAt(curve, 0.24));
+      pts.push(curvePointAt(curve, 0.25));
+    }
+    expect(computeCoverage(pts, curve)).toBeCloseTo(once, 6);
+  });
+
+  it("measures coverage on a full-circle oval whose start and end coincide", () => {
+    const circle: LineSegment = {
+      ...ovalLoop,
+      end: ovalLoop.start,
+      ovalEndAngleDeg: 450,
+    };
+    const pts: Point[] = [];
+    for (let i = 0; i <= 64; i++) pts.push(curvePointAt(circle, i / 64));
+    expect(computeCoverage(pts, circle)).toBeGreaterThan(0.9);
+  });
+
   it("supports mixed polyline steps: curved first leg then straight leg", () => {
     const quarter = curvePointAt(curvedThenStraightPolyline, 0.25);
     expect(quarter.x).toBeGreaterThan(0.25);

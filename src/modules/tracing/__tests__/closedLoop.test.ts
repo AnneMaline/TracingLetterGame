@@ -8,7 +8,7 @@ import {
   isClosedLoopSegment,
   projectPathProgressively,
 } from "../geometry";
-import { evaluatePathM2 } from "../scoring";
+import { evaluateSegmentPath } from "../scoring";
 import { useSegmentTrace } from "../useSegmentTrace";
 
 const letterO = uppercaseLetters.find((l) => l.id === "O")!;
@@ -74,7 +74,7 @@ describe("Closed-loop segments (O, o)", () => {
       const pts: Point[] = [];
       for (let k = 0; k <= 93; k++) pts.push(curvePointAt(seg, k / STEPS));
       pts.push(curvePointAt(seg, 0.02));
-      const out = evaluatePathM2(pts, seg, false);
+      const out = evaluateSegmentPath(pts, seg, false);
       expect(out.kind).toBe("complete");
     });
 
@@ -88,7 +88,7 @@ describe("Closed-loop segments (O, o)", () => {
 
     it(`${letter.id}: touching only the start/end markers does not complete`, () => {
       const seg = letter.segments[0];
-      const out = evaluatePathM2([seg.start, seg.end, seg.start], seg, true);
+      const out = evaluateSegmentPath([seg.start, seg.end, seg.start], seg, true);
       expect(out.kind).toBe("reset");
     });
   }

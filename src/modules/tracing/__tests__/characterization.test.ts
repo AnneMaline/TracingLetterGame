@@ -9,7 +9,7 @@ import {
   isCurvedSegment,
   isPointInBox,
 } from "../geometry";
-import { evaluatePathM2 } from "../scoring";
+import { evaluateSegmentPath } from "../scoring";
 
 // Golden-master guard for the geometry/scoring rewrite (task 010): every authored tracable
 // segment must be completable by tracing its ideal path, and the coverage/containment numbers
@@ -43,10 +43,10 @@ function idealPath(segment: LineSegment): Point[] {
 // Mirrors useSegmentTrace: evaluate while dragging, then once more on finger-up.
 function simulateDrag(points: Point[], segment: LineSegment) {
   for (let n = 2; n <= points.length; n += PREFIX_STRIDE) {
-    const outcome = evaluatePathM2(points.slice(0, n), segment, false);
+    const outcome = evaluateSegmentPath(points.slice(0, n), segment, false);
     if (outcome.kind !== "in-progress") return { kind: outcome.kind, at: n };
   }
-  return { kind: evaluatePathM2(points, segment, true).kind, at: points.length };
+  return { kind: evaluateSegmentPath(points, segment, true).kind, at: points.length };
 }
 
 const round = (value: number) => Math.round(value * 1e4) / 1e4;

@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
-import { DEFAULT_BOUNDARY_PADDING } from "../../shared/constants";
+import { LOWERCASE_CANVAS_HEIGHT } from "../../shared/constants";
 import { SegmentGuide } from "./SegmentGuide";
 import { curvePointAt, isCurvedSegment } from "./geometry";
 import type { SegmentTraceView } from "./useSegmentTrace";
@@ -25,15 +25,13 @@ const HELP_LINE_X2 = 0.94;
 const HELPLINES = [0.14, 0.5, 0.86] as const;
 const HELPLINE_SPACING = HELPLINES[1] - HELPLINES[0];
 const LOWERCASE_DESCENDER_HELPLINE = HELPLINES[2] + HELPLINE_SPACING;
-const LOWERCASE_EXTRA_DESCENDER_ROOM = 0.3 + DEFAULT_BOUNDARY_PADDING;
 
 function isLowercaseLetter(letter: LetterDefinition): boolean {
   return /^[a-z]$/.test(letter.id);
 }
 
 function getViewBoxHeight(isLowercase: boolean): number {
-  if (!isLowercase) return 1;
-  return 1 + LOWERCASE_EXTRA_DESCENDER_ROOM;
+  return isLowercase ? LOWERCASE_CANVAS_HEIGHT : 1;
 }
 
 export const curvePath = (segment: LineSegment) => {

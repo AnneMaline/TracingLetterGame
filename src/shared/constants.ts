@@ -1,5 +1,9 @@
 export const DEFAULT_BOUNDARY_PADDING = 0.06;
 
+// Lowercase canvas is taller than 1 to leave room for descenders (g, j, p, q, y):
+// 0.3 descender room + DEFAULT_BOUNDARY_PADDING, as a literal to avoid float drift in the viewBox.
+export const LOWERCASE_CANVAS_HEIGHT = 1.36;
+
 export const MIN_SEGMENT_COVERAGE = 0.8;
 
 // Normalized radius around the segment start point that counts as a valid pointer-down zone.

@@ -17,6 +17,13 @@ actively misleading — in that case, mark it "SUPERSEDED" rather than deleting 
 
 ## Lessons
 
+## 2026-10-01 — Lowercase canvas height: use a literal, not float arithmetic
+
+`1 + (0.3 + DEFAULT_BOUNDARY_PADDING)` renders as `viewBox="0 0 1 1.3599999999999999"`, so string
+assertions on the viewBox fail. `LOWERCASE_CANVAS_HEIGHT = 1.36` lives in `src/shared/constants.ts`;
+fixture bounds tests import it. Full-circle ovals (e.g. i/j dots) have `start === end` by design, so
+skip the chord-length degeneracy check for them and assert closure + non-zero radii instead.
+
 ## 2026-09-18 — Keep hard-mode fixture tests aligned with authored letter data
 
 After moving corrected letters into `harderLetterSegments`, a few assertions in

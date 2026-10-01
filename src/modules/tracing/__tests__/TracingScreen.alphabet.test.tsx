@@ -38,7 +38,7 @@ describe("TracingScreen smoke test — every letter renders (task 003)", () => {
     );
     expect(screen.getByTestId("trace-surface")).toHaveAttribute(
       "viewBox",
-      "0 0 1 1.56",
+      "0 0 1 1.36",
     );
 
     const nextButton = screen.getByTestId("next-letter");

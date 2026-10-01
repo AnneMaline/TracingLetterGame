@@ -37,6 +37,7 @@ const letterJ: LetterDefinition = {
       ovalStartAngleDeg: 0,
       ovalEndAngleDeg: 360,
       ovalCounterClockwise: true,
+      isTracable: false,
     },
   ],
 };

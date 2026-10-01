@@ -7,7 +7,7 @@ const letterI: LetterDefinition = {
     { start: { x: 0.5, y: 0.5 }, end: { x: 0.5, y: 0.86 } },
     {
       start: { x: 0.5, y: 0.34 },
-      end: { x: 0.501, y: 0.341 },
+      end: { x: 0.5, y: 0.34 },
       isCurve: true,
       curveKind: "oval",
       ovalCenter: { x: 0.5, y: 0.38 },
@@ -16,6 +16,7 @@ const letterI: LetterDefinition = {
       ovalStartAngleDeg: 0,
       ovalEndAngleDeg: 360,
       ovalCounterClockwise: true,
+      isTracable: false,
     },
   ],
 };

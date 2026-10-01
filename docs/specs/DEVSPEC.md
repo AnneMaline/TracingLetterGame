@@ -1,8 +1,8 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.8.1
-**Last Updated:** 2026-09-23
+**Version:** 0.9.0
+**Last Updated:** 2026-10-01
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** PRD v0.6.1
 
@@ -33,15 +33,18 @@ changes.
 interface Point {
   x: number;
   y: number;
-} // normalized 0-1 coordinate space, per letter's own bounding box
+} // normalized coordinate space: x in 0-1; y in 0-1 for uppercase, 0-1.36 for lowercase (descender room)
 
 interface LineSegment {
   start: Point;
   end: Point;
   boundaryHalfWidth?: number; // normalized units; overrides the default `boundaryPadding` for this segment (see §14 Resolved Decisions)
+  isTracable?: boolean; // default true; false = pre-filled decoration (e.g. the dot on i/j), never traced or counted
 }
 // Segment order is the array index within LetterDefinition.segments (traced in array order) —
 // there is no separate `order` field, so index and trace order can never drift apart.
+// Full-circle oval segments (sweep a non-zero multiple of 360°) must have identical `start` and
+// `end` and non-zero radii; every other segment must have a non-zero start→end length.
 
 interface LetterDefinition {
   id: string; // e.g. "A" (or a non-English glyph identifier)
@@ -58,7 +61,7 @@ interface SegmentTraceState {
 interface LetterSessionState {
   letterIndex: number; // position in the ordered letter list (MVP/Better nav)
   currentSegmentIndex: number; // single source of truth for which segment is active; SegmentTraceState does not duplicate this
-  completedSegments: boolean[]; // one entry per segment in the current letter's `segments` array
+  completedSegments: boolean[]; // one entry per segment in the current letter's `segments` array; non-tracable entries start true
 }
 
 interface AppNavigationState {
@@ -146,11 +149,20 @@ resolved otherwise.
   5. On pointer-up (finger up) without having reached the end region, compute
      `progressAlongVector`. If ≥ 80%, mark the segment complete and advance. If < 80%, force
      the child to restart that segment from the beginning.
+  6. **Non-tracable segments** (`isTracable: false`): marked complete when the letter loads and
+     rendered as already traced. `currentSegmentIndex` starts at, and advances to, the next
+     tracable segment only; when no tracable segment remains the letter is complete.
+  7. **Segment progress position:** the reported "segment _n_ of _N_" counts only tracable
+     segments — _N_ is the number of tracable segments and _n_ is the 1-based rank of
+     `currentSegmentIndex` among them (clamped to _N_). Example: lowercase `i` (stroke + dot) is
+     "1 of 1" throughout.
 - **Exit Criterion:** A scripted trace that exits the boundary box stops feedback and resets the
   segment. A scripted trace covering ≥80% of the vector that stays in-box is marked complete
   either on pointer-up or on entry into the end region. A scripted trace covering <80% resets
   on pointer-up. A pointer-down that lands inside the boundary box but outside the start region
-  is ignored. Verified for at least one segment per in-scope letter.
+  is ignored. A letter containing non-tracable segments completes after only its tracable
+  segments are traced, and its progress position never counts the non-tracable ones. Verified
+  for at least one segment per in-scope letter.
 
 #### Module: Deviation Detection (Better tier, M2)
 
@@ -242,12 +254,12 @@ resolved otherwise.
 
 ### 5. Error Handling
 
-| Scenario                                                     | Handling                                                                          |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| Pointer/touch events unsupported                             | Show a static "unsupported browser" message instead of a blank tracing surface.   |
-| Malformed `LetterDefinition` data (e.g. zero-length segment) | Skip the malformed segment, log a console warning; do not crash the tracing loop. |
-| Segment reset (boundary-box exit or <80% completion)         | Must not corrupt already-completed segments' state in `LetterSessionState`.       |
-| Container event channel unavailable (standalone mode)        | Skip event emission silently; local tracing still works.                          |
+| Scenario                                                     | Handling                                                                                                                                            |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pointer/touch events unsupported                             | Show a static "unsupported browser" message instead of a blank tracing surface.                                                                     |
+| Malformed `LetterDefinition` data (e.g. zero-length segment) | Skip the malformed segment, log a console warning; do not crash the tracing loop. A full-circle oval with identical `start`/`end` is not malformed. |
+| Segment reset (boundary-box exit or <80% completion)         | Must not corrupt already-completed segments' state in `LetterSessionState`.                                                                         |
+| Container event channel unavailable (standalone mode)        | Skip event emission silently; local tracing still works.                                                                                            |
 
 ### 6. Constraints
 
@@ -368,6 +380,8 @@ npm test         # unit + integration tests
 
 | Date       | Decision                                                                                                                                                                                                                                                                           | Rationale                                                                                                                                                                                                                                                 |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-01 | Segment progress position ("segment _n_ of _N_") counts only tracable segments; non-tracable segments are pre-completed and skipped                                                                                                                                                | A pre-filled dot is not something the child traces, so counting it made `i` read "1 of 2" until the letter was already complete                                                                                                                           |
+| 2026-10-01 | Lowercase canvas height is 1.36 (1 + 0.3 descender room + `boundaryPadding`); lowercase endpoints may use y in 0-1.36. Full-circle ovals author identical `start`/`end`                                                                                                            | Descenders (g, j, p, q, y) intentionally dip below the uppercase baseline box; a closed circle's start and end are the same point by definition                                                                                                           |
 | 2026-09-23 | Helplines toggle defaults to **off** on every tracing session (Easy and Hard); the child/caregiver opts in per session and the choice is not persisted                                                                                                                             | Keeps the tracing surface uncluttered by default while leaving handwriting alignment support one tap away for learners who want it                                                                                                                        |
 | 2026-09-23 | Tracing Helplines module uses three horizontal guides at y=0.12, y=0.50 (dashed), and y=0.86; guides are toggleable in both Easy and Hard mode and do not affect tracing/scoring logic                                                                                             | Adds optional handwriting alignment support while preserving the existing segment-accuracy model and hard-mode preview behavior                                                                                                                           |
 | 2026-09-22 | Letter Shadow Guide module: Easy mode shows a persistent faint ghost outline of all letter segments while tracing (learning aid); Hard mode shows the same outline for 2 seconds on letter open, then hides it for the actual tracing (encourages recall and increases difficulty) | Research supports letter acquisition through visual reference followed by reproduction; persistent shadow aids recognition; brief preview in hard mode encourages active recall while raising difficulty per pedagogical feedback from Stephanie Gottwald |
@@ -398,6 +412,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-01 — Copilot — Non-tracable segment + lowercase canvas spec-update pass: added `LineSegment.isTracable` and the full-circle `start === end` authoring rule to the Data Schema, widened the `Point` coordinate note to the 1.36-high lowercase canvas, added Segment Completion tasks 6–7 (non-tracable segments pre-completed/skipped; progress position counts tracable segments only) and the matching exit criterion, clarified §5 malformed-data handling for closed circles, added two Resolved Decisions, and bumped DEVSPEC to v0.9.0.
 - 2026-09-23 — Copilot — Task 008 follow-up: set the Helplines toggle default to off on every tracing session in the Tracing Helplines module and Resolved Decisions; bumped DEVSPEC to v0.8.1 and `Traces to:` PRD v0.6.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added the Tracing Helplines module (toggle in Easy/Hard mode; horizontal guides at y=0.12/0.50/0.86 with dashed middle line), updated M3 deliverables, updated Resolved Decisions, and bumped DEVSPEC to v0.8.0 with `Traces to:` PRD v0.6.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide module describing Easy-mode persistent shadow and Hard-mode 2-second preview behavior as a learning aid and difficulty modulation; updated Resolved Decisions; bumped DEVSPEC to v0.7.0 and `Traces to:` PRD v0.5.0.

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { LetterDefinition } from "../../types";
+import type { LetterDefinition, LineSegment } from "../../types";
 import { Celebration } from "../celebration/Celebration";
 import { TraceSurface } from "./TraceSurface";
 import { useSegmentTrace } from "./useSegmentTrace";
@@ -19,6 +19,11 @@ export function LetterTracer({
 }: Props) {
   const trace = useSegmentTrace(letter);
   const { view } = trace;
+  const isTracable = (s: LineSegment) => s.isTracable !== false;
+  const tracableTotal = letter.segments.filter(isTracable).length;
+  const tracableIndex = letter.segments
+    .slice(0, view.currentSegmentIndex + 1)
+    .filter(isTracable).length;
   const [shadowPreviewVisible, setShadowPreviewVisible] = useState(isHardMode);
 
   useEffect(() => {
@@ -71,8 +76,7 @@ export function LetterTracer({
   return (
     <>
       <p style={{ margin: 0, color: "#4a5b6f" }} data-testid="progress-label">
-        Segment {Math.min(view.currentSegmentIndex + 1, letter.segments.length)}{" "}
-        of {letter.segments.length}
+        Segment {Math.min(tracableIndex, tracableTotal)} of {tracableTotal}
       </p>
       <div style={{ position: "relative" }} data-testid="tracer-viewport">
         <TraceSurface

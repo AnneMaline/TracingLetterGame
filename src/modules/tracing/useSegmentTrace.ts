@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import type { LetterDefinition, Point } from "../../types";
+import type { LetterDefinition, LineSegment, Point } from "../../types";
 import {
   END_REGION_RADIUS,
   MIN_SEGMENT_COVERAGE,
@@ -32,10 +32,22 @@ export interface SegmentTraceApi {
   reset: () => void;
 }
 
+function nextTracableIndex(segments: LineSegment[], from: number): number {
+  let i = from;
+  while (i < segments.length && segments[i].isTracable === false) i++;
+  return i;
+}
+
+function initialCompleted(segments: LineSegment[]): boolean[] {
+  return segments.map((s) => s.isTracable === false);
+}
+
 export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
-  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(() =>
+    nextTracableIndex(letter.segments, 0),
+  );
   const [completedSegments, setCompletedSegments] = useState<boolean[]>(() =>
-    letter.segments.map(() => false),
+    initialCompleted(letter.segments),
   );
   const [status, setStatus] = useState<SegmentStatus>("awaiting-start");
   const [points, setPoints] = useState<Point[]>([]);
@@ -49,7 +61,8 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
   );
 
   const advanceOrComplete = useCallback(
-    (nextIndex: number) => {
+    (candidateIndex: number) => {
+      const nextIndex = nextTracableIndex(letter.segments, candidateIndex);
       if (nextIndex >= letter.segments.length) {
         setStatus("letter-complete");
       } else {
@@ -60,7 +73,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
       setCoverage(0);
       setWithin(false);
     },
-    [letter.segments.length],
+    [letter.segments],
   );
 
   const resetSegment = useCallback(() => {
@@ -141,8 +154,8 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
   }, [completeSegment, currentSegment, points, resetSegment, status]);
 
   const reset = useCallback(() => {
-    setCurrentSegmentIndex(0);
-    setCompletedSegments(letter.segments.map(() => false));
+    setCurrentSegmentIndex(nextTracableIndex(letter.segments, 0));
+    setCompletedSegments(initialCompleted(letter.segments));
     setStatus("awaiting-start");
     setPoints([]);
     setCoverage(0);

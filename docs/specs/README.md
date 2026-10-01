@@ -1,7 +1,7 @@
 # TracingGame — Spec Index
 
 **Status:** Draft
-**Last Updated:** 2026-09-23
+**Last Updated:** 2026-10-01
 
 This is the entry point for the living spec chain for TracingGame. Read this file, then read only
 the specs relevant to your task.
@@ -11,9 +11,9 @@ the specs relevant to your task.
 | Spec                                                               | Version | Covers                                                                  | Traces to                                   |
 | ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------- | ------------------------------------------- |
 | [PRD.md](./PRD.md)                                                 | v0.6.1  | What TracingGame does and why; personas, goals, non-goals, KPIs         | (root — none)                               |
-| [DEVSPEC.md](./DEVSPEC.md)                                         | v0.8.1  | Architecture, data schema, module behavior, non-functional requirements | PRD v0.6.1                                  |
-| [UISPEC.md](./UISPEC.md)                                           | v0.7.1  | Screens, states, visibility rules, Gherkin acceptance criteria          | PRD v0.6.1, DEVSPEC v0.8.1                  |
-| [TESTSPEC.md](./TESTSPEC.md)                                       | v0.7.1  | Test inventory proving DEVSPEC/UISPEC requirements                      | PRD v0.6.1, DEVSPEC v0.8.1, UISPEC v0.7.1   |
+| [DEVSPEC.md](./DEVSPEC.md)                                         | v0.9.0  | Architecture, data schema, module behavior, non-functional requirements | PRD v0.6.1                                  |
+| [UISPEC.md](./UISPEC.md)                                           | v0.7.2  | Screens, states, visibility rules, Gherkin acceptance criteria          | PRD v0.6.1, DEVSPEC v0.9.0                  |
+| [TESTSPEC.md](./TESTSPEC.md)                                       | v0.8.0  | Test inventory proving DEVSPEC/UISPEC requirements                      | PRD v0.6.1, DEVSPEC v0.9.0, UISPEC v0.7.2   |
 | [../standalone-game-spec.md](../standalone-game-spec.md)           | v0.2.2  | Curious Reader container packaging/manifest/runtime contract            | DEVSPEC v0.6.0                              |
 | [../standalone-game-spec-data.md](../standalone-game-spec-data.md) | v0.2.2  | Curious Reader container data/event contract                            | DEVSPEC v0.6.0, standalone-game-spec v0.2.2 |
 

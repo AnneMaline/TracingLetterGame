@@ -260,6 +260,77 @@ describe("Happy-path full letter trace (T-014)", () => {
   });
 });
 
+describe("Non-tracable segments are pre-filled and skipped", () => {
+  it("renders isTracable:false segments as completed and completes the letter without tracing them", async () => {
+    vi.useFakeTimers();
+    const withDot: LetterDefinition = {
+      id: "I",
+      displayLabel: "I",
+      segments: [
+        { start: { x: 0.5, y: 0.5 }, end: { x: 0.5, y: 0.86 } },
+        {
+          start: { x: 0.5, y: 0.34 },
+          end: { x: 0.5, y: 0.36 },
+          isTracable: false,
+        },
+      ],
+    };
+    render(<TracingScreen letters={[withDot]} />);
+    const surface = screen.getByTestId(
+      "trace-surface",
+    ) as unknown as SVGSVGElement;
+    mockRect(surface);
+
+    expect(screen.getByTestId("completed-segment-1")).toBeInTheDocument();
+    expect(surface.getAttribute("data-segment-index")).toBe("0");
+    expect(screen.getByTestId("progress-label")).toHaveTextContent(
+      "Segment 1 of 1",
+    );
+
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.5, 0.5) });
+    for (let t = 0; t <= 1; t += 0.1) {
+      fireEvent.pointerMove(surface, {
+        pointerId: 1,
+        ...toClient(0.5, 0.5 + 0.36 * t),
+      });
+    }
+    fireEvent.pointerUp(surface, { pointerId: 1, ...toClient(0.5, 0.86) });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(surface.getAttribute("data-segment-status")).toBe("letter-complete");
+    expect(screen.getByTestId("progress-label")).toHaveTextContent(
+      "Segment 1 of 1",
+    );
+    vi.useRealTimers();
+  });
+
+  it("excludes a leading non-tracable segment from the segment counter", () => {
+    const dotFirst: LetterDefinition = {
+      id: "X",
+      displayLabel: "X",
+      segments: [
+        {
+          start: { x: 0.5, y: 0.2 },
+          end: { x: 0.5, y: 0.22 },
+          isTracable: false,
+        },
+        { start: { x: 0.3, y: 0.5 }, end: { x: 0.3, y: 0.86 } },
+        { start: { x: 0.7, y: 0.5 }, end: { x: 0.7, y: 0.86 } },
+      ],
+    };
+    render(<TracingScreen letters={[dotFirst]} />);
+
+    expect(
+      screen.getByTestId("trace-surface").getAttribute("data-segment-index"),
+    ).toBe("1");
+    expect(screen.getByTestId("progress-label")).toHaveTextContent(
+      "Segment 1 of 2",
+    );
+  });
+});
+
 // bonus: exit-box mid-drag resets the segment (state machine correctness)
 describe("Boundary-box exit resets the current segment", () => {
   it("stops feedback and returns to awaiting-start (via segment-reset)", () => {

@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.7.1
-**Last Updated:** 2026-09-23
+**Version:** 0.7.2
+**Last Updated:** 2026-10-01
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.6.1 · DEVSPEC v0.8.1
+**Traces to:** PRD v0.6.1 · DEVSPEC v0.9.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -250,6 +250,7 @@ Feature: Letter completion celebration
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-01 — Copilot — Bumped `Traces to:` DEVSPEC to v0.9.0 (non-tracable segment counting and lowercase canvas height); no UI content changed; UISPEC v0.7.2.
 - 2026-09-23 — Copilot — Task 008 follow-up: set the Helplines toggle initial state to off in the Tracing screen details, `helplines-on/off` state description, Gherkin scenarios, and Resolved Decisions; bumped UISPEC to v0.7.1 and `Traces to:` PRD v0.6.1 / DEVSPEC v0.8.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing Helplines UI behavior (toggle in Easy/Hard mode, guide-line geometry at y=0.12/0.50/0.86 with dashed middle line), expanded Tracing states/transitions, added Gherkin scenarios, and bumped UISPEC to v0.7.0 with `Traces to:` PRD v0.6.0 / DEVSPEC v0.8.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: added Letter Shadow Guide feature with Easy-mode persistent shadow and Hard-mode 2-second preview; updated Tracing screen states to include `shadow-preview` for Hard mode; updated state machine to show hard-mode preview flow; added Gherkin scenarios for shadow behavior; added resolved decision; bumped UISPEC to v0.6.0 and `Traces to:` PRD v0.5.0 / DEVSPEC v0.7.0.

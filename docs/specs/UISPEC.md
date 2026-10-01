@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.7.2
+**Version:** 0.8.0
 **Last Updated:** 2026-10-01
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.6.1 · DEVSPEC v0.9.0
+**Traces to:** PRD v0.7.0 · DEVSPEC v0.10.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -55,13 +55,13 @@
 
 ### Screen: Letter Selection (M3 — Great tier)
 
-- **Layout:** Top-middle Hard mode toggle above the title, plus a grid/list of every in-scope letter.
-- **Components:** Hard mode toggle (`role="switch"`, `data-testid="hard-mode-toggle"`) and
+- **Layout:** Top-middle case toggle and Hard mode toggle above the title, plus a grid/list of every in-scope letter.
+- **Components:** Case toggle (`role="switch"`, `data-testid="case-toggle"`), Hard mode toggle (`role="switch"`, `data-testid="hard-mode-toggle"`), and
   `LetterTile` (references DEVSPEC Letter Navigation module).
-- **States:** `loading`, `ready` + `hard-mode-off` / `hard-mode-on` sub-state.
+- **States:** `loading`, `ready` + `case-uppercase` / `case-lowercase` and `hard-mode-off` / `hard-mode-on` sub-states.
 - **Visibility rules:** Only exists once M3 ships; before that, Next/Previous on the Tracing
   screen serve this purpose instead.
-- **Transitions:** Toggle Hard mode on/off while on Letter Selection (updates which fixture set
+- **Transitions:** Toggle case on/off while on Letter Selection (updates which case set opens when a tile is selected). Toggle Hard mode on/off while on Letter Selection (updates which fixture set
   opens when a tile is selected). Tap a letter tile → Tracing screen, `awaiting-start` for that
   letter's first segment.
 
@@ -209,6 +209,23 @@ Feature: Hard mode fixture selection (M3)
     Then selecting a corrected letter opens that letter from the harder fixture set
     And letters already open in Tracing are not hot-swapped until returning to Letter Selection
 
+Feature: Case selection (M3)
+  Scenario: Case toggle defaults to uppercase on app load
+    Given the app has just loaded
+    Then the Letter Selection screen shows the case toggle in the uppercase state
+
+  Scenario: Switching to lowercase updates visible letter choices and launch behavior
+    Given the child is on the Letter Selection screen
+    When the child toggles case to lowercase
+    Then letter tiles show lowercase labels a-z
+    And selecting a lowercase letter opens Tracing for that lowercase letter
+
+  Scenario: Hard mode and case selection compose independently
+    Given the child is on the Letter Selection screen
+    When the child toggles Hard mode and case in any order
+    Then each toggle reflects its own state independently
+    And selecting a letter uses the currently selected case set and fixture-set mode
+
 Feature: Letter completion celebration
   Scenario: Completing all segments plays a celebration
     Given the child has completed every segment of letter "E"
@@ -235,6 +252,7 @@ Feature: Letter completion celebration
 
 | Date       | Decision                                                                                                                                                                                                                                              | Rationale                                                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-01 | Letter Selection UI includes a case switch (`role="switch"`, `data-testid="case-toggle"`) that defaults to uppercase and toggles the menu between uppercase and lowercase letter labels/launch behavior                                               | Matches shipped Task 009 UI and keeps case selection discoverable alongside existing Hard mode controls                                                                  |
 | 2026-09-23 | Helplines toggle starts in the off state on every tracing session (Easy and Hard); the child/caregiver opts in per session                                                                                                                            | Keeps the tracing surface uncluttered by default while leaving handwriting alignment support one tap away                                                                |
 | 2026-09-23 | Tracing UI includes a Helplines switch (`role="switch"`, `data-testid="helplines-toggle"`) visible in both Easy and Hard mode; enabled state renders top/middle/bottom horizontal guides at y=0.12/0.50/0.86, with dashed middle guide                | Provides optional handwriting alignment cues while preserving existing tracing flow and hard-mode semantics                                                              |
 | 2026-09-22 | Letter shadow rendered as a persistent low-opacity ghost outline layer in Easy mode, and as a 2-second preview on letter open in Hard mode (all pointer events blocked during preview)                                                                | Supports letter acquisition and visual memory in Easy mode; brief preview in Hard mode encourages active recall and increases difficulty per Stephanie Gottwald feedback |
@@ -250,6 +268,7 @@ Feature: Letter completion celebration
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-01 — Copilot — Task 009 spec-update pass: added Letter Selection case-toggle UI (layout/components/states/transitions), added M3 case-selection Gherkin scenarios (default uppercase, lowercase launch behavior, and independence from Hard mode), added a resolved decision, and bumped UISPEC to v0.8.0 with `Traces to:` PRD v0.7.0 / DEVSPEC v0.10.0.
 - 2026-10-01 — Copilot — Bumped `Traces to:` DEVSPEC to v0.9.0 (non-tracable segment counting and lowercase canvas height); no UI content changed; UISPEC v0.7.2.
 - 2026-09-23 — Copilot — Task 008 follow-up: set the Helplines toggle initial state to off in the Tracing screen details, `helplines-on/off` state description, Gherkin scenarios, and Resolved Decisions; bumped UISPEC to v0.7.1 and `Traces to:` PRD v0.6.1 / DEVSPEC v0.8.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing Helplines UI behavior (toggle in Easy/Hard mode, guide-line geometry at y=0.12/0.50/0.86 with dashed middle line), expanded Tracing states/transitions, added Gherkin scenarios, and bumped UISPEC to v0.7.0 with `Traces to:` PRD v0.6.0 / DEVSPEC v0.8.0.

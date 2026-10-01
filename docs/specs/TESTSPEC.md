@@ -1,10 +1,10 @@
 # TESTSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.8.0
+**Version:** 0.9.0
 **Last Updated:** 2026-10-01
 **Author(s):** Copilot (drafted with user) — _should be reassigned to a different author than the DEVSPEC/UISPEC author before implementation, per SDAD convention_
-**Traces to:** PRD v0.6.1 · DEVSPEC v0.9.0 · UISPEC v0.7.2
+**Traces to:** PRD v0.7.0 · DEVSPEC v0.10.0 · UISPEC v0.8.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector
 > tracing, boundary box, 80% rule. See §8 Spec Change Log.
@@ -21,8 +21,9 @@
 
 ## 2. Fixtures & Test Data
 
-- `src/data/letterSegments/*.ts` — authored `LetterDefinition` fixtures for in-scope letters
-  (currently uppercase A-Z), exported by `src/data/letterSegments/index.ts`.
+- `src/data/letterSegments/*.ts` — authored `LetterDefinition` fixtures for in-scope letters,
+  including uppercase A-Z and lowercase a-z under `english/capitalLetters` and
+  `english/lowercaseLetters`.
 - `src/data/harderLetterSegments/*.ts` — harder/corrected uppercase fixtures exported by
   `src/data/harderLetterSegments/index.ts`.
 - Synthetic trace paths are represented inline in unit/integration tests (same approach used in
@@ -71,6 +72,9 @@
 | T-028 | integration | DEVSPEC §3 Tracing Helplines + UISPEC Gherkin         | Helplines behavior is available in Hard mode without changing trace mechanics                  | Render Tracing in Hard mode; wait for shadow-preview hand-off; toggle Helplines on/off and attempt scripted trace                                                                                              | Helplines can be toggled in Hard mode; trace state machine and completion behavior remain unchanged                                                      |
 | T-029 | integration | DEVSPEC §3 Segment Completion (tasks 6–7)             | Non-tracable segments are pre-filled, skipped, and excluded from the segment progress label    | Render Tracing for (a) a stroke + trailing `isTracable: false` dot and (b) a leading `isTracable: false` segment + two strokes; read `data-testid="progress-label"`; trace (a) to completion                   | (a) Dot renders completed; label reads "Segment 1 of 1" before and after `letter-complete`. (b) Active index skips the dot; label reads "Segment 1 of 2" |
 | T-030 | unit        | DEVSPEC §2 Data Schema                                | Lowercase fixtures respect the lowercase canvas and closed-circle rule                         | Iterate lowercase `letters`; assert endpoints within x 0-1 / y 0-1.36; skip zero-length check for full-circle ovals and instead assert `start === end` with non-zero radii; render lowercase Tracing           | All 26 letters pass (incl. g/j/p/q/y descenders and the i/j dots); lowercase trace surface viewBox is `0 0 1 1.36`                                       |
+| T-031 | integration | UISPEC Gherkin: Case selection (M3)                   | Case toggle defaults to uppercase and can switch visible menu tiles to lowercase               | Render app at launch; assert `data-testid="case-toggle"` has `aria-checked="false"` and uppercase tiles are visible; toggle case on                                                                            | Toggle reflects lowercase state (`aria-checked="true"`); lowercase tiles are visible and uppercase tiles are hidden                                      |
+| T-032 | integration | UISPEC Gherkin: Case selection (M3)                   | Selecting a lowercase tile launches lowercase tracing                                          | Enable lowercase case mode from Letter Selection; select a lowercase tile (for example `letter-tile-c`)                                                                                                        | Tracing opens with lowercase indicator (for example `Letter c`) and lowercase segment set                                                                |
+| T-033 | integration | UISPEC Gherkin: Case selection + Hard mode (M3)       | Hard mode and case selection compose independently across all four combinations                | For each combination (Easy/Uppercase, Easy/Lowercase, Hard/Uppercase, Hard/Lowercase), set toggles from Letter Selection and launch a tile                                                                     | Tracing opens for the expected letter case while Hard mode toggle state remains independent and correctly reflected                                      |
 
 ## 4. Dry-Run Protocol
 
@@ -92,7 +96,14 @@ Before marking a milestone done, a human tester manually:
    - Confirms after the preview ends, the segment guide appears and tracing begins normally.
    - Tests on at least one corrected letter to verify hard-mode behavior.
 7. _(previous step 6)_ For M3: tests the full navigate-via-selection-screen flow, top-left Menu return-to-selection mid-trace, top-right Next wrap navigation (including Z→A), and Hard mode toggle off/on with fixture-set swap verified on at least one corrected letter.
-8. For Task 008 (Helplines):
+8. For Task 009 (Lowercase + case toggle):
+
+- Confirms Letter Selection case toggle starts on Uppercase and can be switched to Lowercase.
+- Confirms lowercase tiles (a-z) are visible in lowercase mode and launch lowercase tracing.
+- Confirms switching back to Uppercase restores uppercase tiles (A-Z).
+- Confirms all four combinations (Easy/Uppercase, Easy/Lowercase, Hard/Uppercase, Hard/Lowercase) launch expected tracing behavior.
+
+9. For Task 008 (Helplines):
 
 - Confirms a Helplines toggle is visible on the Tracing screen in both Easy and Hard mode and starts in the off state on every letter open.
 - Confirms enabling Helplines shows exactly three horizontal guides at y=0.12, y=0.50 (dashed), and y=0.86.
@@ -100,8 +111,8 @@ Before marking a milestone done, a human tester manually:
 - Confirms disabling Helplines hides all three guides.
 - Confirms helpline toggling does not change completion/reset behavior.
 
-9. _(previous step 8)_ For M4: installs the packaged container build and repeats steps 1–4 inside the Curious Reader
-   container itself.
+10. _(previous step 9)_ For M4: installs the packaged container build and repeats steps 1–4 inside the Curious Reader
+    container itself.
 
 ## 5. Build-and-Test Sequence
 
@@ -127,6 +138,7 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 | Date       | Decision                                                                                                                                                                                                                                                                       | Rationale                                                                                                              |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-01 | Added dedicated case-toggle coverage (T-031/T-032/T-033) plus a manual dry-run checklist for uppercase/lowercase switching and Hard mode composition across all four combinations                                                                                              | Ensures the shipped Task 009 M3 case-selection behavior remains regression-resistant and independently verifiable      |
 | 2026-09-23 | T-026 asserts the Helplines toggle starts in the off state on every tracing session render, matching the shipped default                                                                                                                                                       | Guards against regressing the default-off decision recorded in PRD v0.6.1 / DEVSPEC v0.8.1 / UISPEC v0.7.1             |
 | 2026-09-23 | Added Tracing Helplines coverage via T-026/T-027/T-028 for toggle state, 3-line geometry/styling, and Hard-mode compatibility                                                                                                                                                  | Ensures Helplines behavior is testable end to end without regressing existing shadow/tracing state-machine logic       |
 | 2026-09-22 | Letter Shadow Guide test coverage: T-024 (Easy mode persistent shadow visible in all tracing states), T-025 (Hard mode shadow preview 2-second blocking and hand-off to tracing); dry-run includes shadow visibility and preview-to-tracing transition on both Easy/Hard modes | Verifies shadow rendering and state machine flow per DEVSPEC §3 Letter Shadow Guide module and UISPEC shadow scenarios |
@@ -140,6 +152,7 @@ _(none open for TESTSPEC — the deviation-threshold Open Question was resolved 
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-01 — Copilot — Task 009 spec-update pass: updated fixture scope wording to include uppercase/lowercase authored sets, added case-toggle test coverage (T-031/T-032/T-033), extended dry-run protocol for case-switch behavior and Hard-mode/case composition, added a resolved decision, and bumped TESTSPEC to v0.9.0 with `Traces to:` PRD v0.7.0 / DEVSPEC v0.10.0 / UISPEC v0.8.0.
 - 2026-10-01 — Copilot — Non-tracable segment + lowercase canvas spec-update pass: added T-029 (non-tracable segments pre-filled, skipped, and excluded from "Segment n of N") and T-030 (lowercase 1.36-high canvas bounds, closed full-circle rule, lowercase viewBox), documented the lowercase fixture-invariant test file in §2, and bumped TESTSPEC to v0.8.0 with `Traces to:` DEVSPEC v0.9.0 / UISPEC v0.7.2.
 - 2026-09-23 — Copilot — Task 008 follow-up: updated T-026 to assert Helplines default-off and extended the dry-run helpline check to include starting state; bumped TESTSPEC to v0.7.1 and `Traces to:` PRD v0.6.1 / DEVSPEC v0.8.1 / UISPEC v0.7.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing Helplines coverage (T-026/T-027/T-028), extended the dry-run protocol with Helplines checks, added a resolved decision for helpline test coverage, and bumped `Traces to:` PRD v0.6.0 / DEVSPEC v0.8.0 / UISPEC v0.7.0.

@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.6.1
-**Last Updated:** 2026-09-23
+**Version:** 0.7.0
+**Last Updated:** 2026-10-01
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -44,6 +44,8 @@ paradigm as a sub-app of the Curious Reader container.
 - Let the child move between letters (MVP: Next/Previous; Great tier: a letter-selection screen reachable at any time).
 - Offer a session-only Hard mode toggle on the letter-selection screen so caregivers/children can switch between
   baseline fixtures and harder continuous-stroke variants.
+- Offer a session-only case toggle on the letter-selection screen so caregivers/children can switch between
+  uppercase and lowercase letter practice.
 - Add a Tracing-screen Helplines toggle (available in both Easy and Hard mode) that shows/hides three horizontal
   handwriting guide lines at normalized y positions 0.12, 0.50, and 0.86 (middle line dashed) to support alignment.
 - Keep the letter/segment data model data-driven so non-English scripts can be added without code changes later.
@@ -54,7 +56,7 @@ paradigm as a sub-app of the Curious Reader container.
 - Degree-of-deviation accuracy detection (Better tier — see §6, M2).
 - Persisted mastery/progress tracking, stars, or rewards beyond the per-letter celebration animation — not specified in the brief; open question if wanted later.
 - Multiplayer, leaderboards, social features, accounts, monetization, ads.
-- Lowercase letters, numbers, words/sentences, and non-English scripts (unless a specific milestone scopes them in — see Open Questions).
+- Numbers, words/sentences, and non-English scripts (unless a specific milestone scopes them in — see Open Questions).
 
 ## 5. KPIs / Success Metrics
 
@@ -96,8 +98,12 @@ paradigm as a sub-app of the Curious Reader container.
 - Add a letter-selection screen listing all in-scope letters as the default app entry point.
 - Add a top-centered Hard mode toggle on the letter-selection screen; Hard mode starts off on app load and remains
   in-memory only for the current session.
+- Add a top-centered case toggle on the letter-selection screen; case defaults to uppercase on app load and remains
+  in-memory only for the current session.
 - Hard mode toggles which authored letter fixture set is launched from the menu (baseline vs. harder variants), while
   letters already open in Tracing keep their current fixture set until the child returns to the menu.
+- Case toggle switches which authored letter set is shown/launched from the menu (uppercase A-Z or lowercase a-z), while
+  letters already open in Tracing keep their current case set until the child returns to the menu.
 - Add a top-left Menu control that returns the child to the letter-selection screen from the tracing screen at any time.
 - Keep top-right Next navigation on the tracing screen to quickly advance letters with wraparound behavior.
 - Flow: app opens on letter selection → child picks a letter → tracing starts at segment 1 for that letter.
@@ -110,12 +116,12 @@ paradigm as a sub-app of the Curious Reader container.
 
 ## 7. Milestones
 
-| Milestone                      | Description                                                                                                                                                | Target date |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation                                                               | TBD         |
-| M2 — Better accuracy detection | Degree-of-deviation cancel-on-threshold, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                              | TBD         |
-| M3 — Great navigation          | Letter-selection screen as app entry, top-bar Menu back-navigation, top-bar Next wrap navigation, and a session-only Hard mode toggle for fixture variants | TBD         |
-| M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                                                                                           | TBD         |
+| Milestone                      | Description                                                                                                                                                                         | Target date |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation                                                                                        | TBD         |
+| M2 — Better accuracy detection | Degree-of-deviation cancel-on-threshold, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                                                       | TBD         |
+| M3 — Great navigation          | Letter-selection screen as app entry, top-bar Menu back-navigation, top-bar Next wrap navigation, session-only Hard mode toggle, and session-only case toggle (uppercase/lowercase) | TBD         |
+| M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                                                                                                                    | TBD         |
 
 ## 8. Constraints & Assumptions
 
@@ -139,6 +145,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 | Date       | Decision                                                                                                                                                                                                                  | Rationale                                                                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-01 | M3 letter selection now includes a session-only case toggle (Uppercase/Lowercase) that defaults to uppercase on app load and switches which authored case dataset is shown/launched from the menu                         | Expands practice coverage to lowercase letters while preserving a single tracing architecture and keeping state session-only (no persistence scope increase)                                                             |
 | 2026-09-23 | Helplines default to OFF when a tracing session begins; the child/caregiver can toggle them on at any time during tracing                                                                                                 | Keeps the default tracing surface uncluttered while leaving handwriting alignment support one tap away for learners who want it                                                                                          |
 | 2026-09-23 | Tracing includes a Helplines toggle in both Easy and Hard mode; when enabled, the tracing surface shows three horizontal guide lines at y=0.12, y=0.50 (dashed), and y=0.86, spanning nearly the full draw-box width      | Provides optional handwriting alignment support without forcing extra guidance on every learner; keeps support level adjustable during tracing sessions                                                                  |
 | 2026-09-22 | Shadow as a learning aid: Easy mode shows a persistent faint ghost outline of the complete letter while tracing; Hard mode shows the same shadow for 2 seconds on letter open, then it disappears for the tracing attempt | Research supports letter acquisition through visual reference followed by active reproduction; persistent shadow aids recognition in easy mode; brief preview in hard mode encourages recall while increasing difficulty |
@@ -156,12 +163,13 @@ paradigm as a sub-app of the Curious Reader container.
 
 - Letter-selection screen and degree-of-deviation detection in MVP (staged into M2/M3 instead).
 - Persisted mastery/progress/stars beyond the per-letter celebration animation, unless later decided.
-- Lowercase letters, numbers, words, and non-English scripts, unless a milestone explicitly scopes them in.
+- Numbers, words, and non-English scripts, unless a milestone explicitly scopes them in.
 
 ## 12. Spec Change Log
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-01 — Copilot — Task 009 spec-update pass: promoted lowercase a-z practice into shipped M3 scope via a session-only Letter Selection case toggle (Uppercase/Lowercase, default uppercase, no persistence), updated M3 milestone wording, removed lowercase from non-goals/out-of-scope lists, added a resolved decision, and bumped PRD to v0.7.0.
 - 2026-09-23 — Copilot — Task 008 follow-up: changed the Helplines initial default from ON to OFF (child/caregiver opts in during the session) and bumped PRD to v0.6.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing-screen Helplines product behavior (toggle visible in Easy/Hard mode and three horizontal guide lines at y=0.12/0.50/0.86 with dashed middle line), updated M3 scope wording, and bumped PRD to v0.6.0.
 - 2026-09-22 — Copilot — Task 007 spec-update pass: refined difficulty model per Stephanie Gottwald feedback; Easy mode now shows persistent letter shadow as a learning aid, Hard mode shows 2-second shadow preview before tracing begins to encourage letter recall; bumped PRD to v0.5.0 and updated Resolved Decisions.

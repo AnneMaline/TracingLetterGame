@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
 import { LOWERCASE_CANVAS_HEIGHT } from "../../shared/constants";
+import { Helplines } from "./Helplines";
 import { SegmentGuide } from "./SegmentGuide";
 import { curvePointAt, isCurvedSegment } from "./geometry";
 import type { SegmentTraceView } from "./useSegmentTrace";
@@ -20,11 +21,6 @@ interface Props {
 const VIEWBOX_SIZE = 400;
 const CURVE_X = 0.75;
 const OVAL_PATH_STEPS = 96;
-const HELP_LINE_X1 = 0.06;
-const HELP_LINE_X2 = 0.94;
-const HELPLINES = [0.14, 0.5, 0.86] as const;
-const HELPLINE_SPACING = HELPLINES[1] - HELPLINES[0];
-const LOWERCASE_DESCENDER_HELPLINE = HELPLINES[2] + HELPLINE_SPACING;
 
 function isLowercaseLetter(letter: LetterDefinition): boolean {
   return /^[a-z]$/.test(letter.id);
@@ -179,43 +175,7 @@ export function TraceSurface({
         height: "min(80vmin, 480px)",
       }}
     >
-      {showHelplines && (
-        <g
-          stroke="#8ea3bd"
-          strokeWidth={0.008}
-          opacity={0.65}
-          pointerEvents="none"
-          data-testid="helplines"
-        >
-          {HELPLINES.map((y, index) => (
-            <line
-              key={`helpline-${index}`}
-              x1={HELP_LINE_X1}
-              y1={y}
-              x2={HELP_LINE_X2}
-              y2={y}
-              strokeDasharray={index === 1 ? "0.02 0.02" : undefined}
-              data-testid={
-                index === 0
-                  ? "helpline-top"
-                  : index === 1
-                    ? "helpline-middle"
-                    : "helpline-bottom"
-              }
-            />
-          ))}
-          {isLowercase && (
-            <line
-              x1={HELP_LINE_X1}
-              y1={LOWERCASE_DESCENDER_HELPLINE}
-              x2={HELP_LINE_X2}
-              y2={LOWERCASE_DESCENDER_HELPLINE}
-              strokeDasharray="0.02 0.02"
-              data-testid="helpline-lowercase-descender"
-            />
-          )}
-        </g>
-      )}
+      {showHelplines && <Helplines isLowercase={isLowercase} />}
 
       {showShadow && (
         <g
@@ -226,6 +186,7 @@ export function TraceSurface({
           fill="none"
           opacity={0.9}
           pointerEvents="none"
+          data-testid="letter-shadow"
         >
           {letter.segments.map((seg, i) => {
             if (isCurvedSegment(seg)) {

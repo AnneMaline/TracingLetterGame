@@ -1,4 +1,4 @@
-import React from "react";
+import type { CSSProperties } from "react";
 
 interface Props {
   displayLabel?: string;
@@ -98,7 +98,7 @@ export function TracingHeader({
   );
 }
 
-const navButtonStyle: React.CSSProperties = {
+const navButtonStyle: CSSProperties = {
   minWidth: 80,
   minHeight: 48,
   padding: "0.5rem 1rem",
@@ -114,7 +114,7 @@ const navButtonStyle: React.CSSProperties = {
   justifyContent: "center",
 };
 
-const toggleButtonStyle: React.CSSProperties = {
+const toggleButtonStyle: CSSProperties = {
   minWidth: 120,
   minHeight: 48,
   padding: "0.5rem 0.75rem",

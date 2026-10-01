@@ -3,6 +3,7 @@ import type { LetterDefinition, LineSegment, Point } from "../../types";
 import {
   END_REGION_RADIUS,
   MIN_SEGMENT_COVERAGE,
+  SEGMENT_ADVANCE_DELAY_MS,
   START_REGION_RADIUS,
 } from "../../shared/constants";
 import { computeBoundaryBox, distanceBetween, isPointInBox } from "./geometry";
@@ -91,7 +92,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     });
     setStatus("segment-complete");
     const nextIndex = currentSegmentIndex + 1;
-    setTimeout(() => advanceOrComplete(nextIndex), 250);
+    setTimeout(() => advanceOrComplete(nextIndex), SEGMENT_ADVANCE_DELAY_MS);
   }, [advanceOrComplete, currentSegmentIndex]);
 
   const onPointerDown = useCallback(

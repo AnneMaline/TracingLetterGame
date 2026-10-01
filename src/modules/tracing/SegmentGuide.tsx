@@ -1,4 +1,8 @@
 import type { LineSegment } from "../../types";
+import {
+  END_REGION_RADIUS,
+  START_MARKER_RADIUS,
+} from "../../shared/constants";
 import { curvePath } from "./TraceSurface";
 import { curvePointAt, isCurvedSegment, segmentTangentAt } from "./geometry";
 
@@ -84,7 +88,7 @@ export function SegmentGuide({ segment }: Props) {
       <circle
         cx={end.x}
         cy={end.y}
-        r={0.035}
+        r={END_REGION_RADIUS}
         fill="none"
         stroke="#e07b39"
         strokeWidth={0.012}
@@ -93,7 +97,7 @@ export function SegmentGuide({ segment }: Props) {
       <circle
         cx={start.x}
         cy={start.y}
-        r={0.05}
+        r={START_MARKER_RADIUS}
         fill="#3aa856"
         data-testid="segment-guide-start"
       />

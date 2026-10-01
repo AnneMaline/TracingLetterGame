@@ -41,7 +41,7 @@ const rightAnglePolyline: LineSegment = {
   polylinePoints: [{ x: 0.2, y: 0.8 }],
 };
 
-const harderWPolyline: LineSegment = {
+const wPolyline: LineSegment = {
   start: { x: 0.15, y: 0.14 },
   end: { x: 0.85, y: 0.14 },
   isCurve: true,
@@ -176,7 +176,7 @@ describe("Boundary-box exit after >=80% pre-finger-up coverage still resets (T-0
 
 // Regression: a slightly curved in-box trace whose local direction stays under the threshold
 // must not cancel. Historical noise (any single sample with a bad direction reading) also
-// must not cancel — only the current tail direction is checked.
+// must not cancel â€” only the current tail direction is checked.
 describe("Natural curves under the threshold do not cancel (regression)", () => {
   it("completes a gentle arc that peaks near the box edge", () => {
     const arc: Point[] = [];
@@ -268,21 +268,21 @@ describe("Curve segments cancel zigzags and backtracking", () => {
   it("does not deviation-reset near the first W corner when tracing slightly left of the segment", () => {
     const pts: Point[] = [];
     for (let i = 0; i <= 15; i++) {
-      pts.push(curvePointAt(harderWPolyline, (i / 20) * 0.33));
+      pts.push(curvePointAt(wPolyline, (i / 20) * 0.33));
     }
     pts.push({ x: 0.245, y: 0.79 });
     pts.push({ x: 0.27, y: 0.84 });
 
-    const out = evaluatePathM2(pts, harderWPolyline, false);
+    const out = evaluatePathM2(pts, wPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 });
 
-// Hard-mode B has two stacked stadium bumps sharing the horizontal arm at y=0.5.
+// A B-shaped polyline: two stacked stadium bumps sharing the horizontal arm at y=0.5.
 // Standalone nearest-point projection cannot tell which bump a shared-arm sample belongs
 // to; the tracing engine must use progressive projection to keep the trace on the
 // forward branch when moving from the end of bump 1 into bump 2.
-const hardBTwoBumps: LineSegment = {
+const twoBumpPolyline: LineSegment = {
   start: { x: 0.25, y: 0.14 },
   end: { x: 0.25, y: 0.86 },
   curveKind: "polyline",
@@ -302,24 +302,24 @@ const hardBTwoBumps: LineSegment = {
   ],
 };
 
-describe("Self-overlapping polyline curves (hard-mode B) — T-024", () => {
+describe("Self-overlapping polyline curves (two-bump B shape)", () => {
   it("does not cancel when tracing continues from the end of bump 1 into the start of bump 2 along the shared arm", () => {
     const pts: Point[] = [];
     // Trace all of bump 1 (t = 0 .. 0.5), then continue rightward along the shared
     // y=0.5 arm and into bump 2 (t = 0.5 .. 0.7).
     for (let i = 0; i <= 60; i++) {
-      pts.push(curvePointAt(hardBTwoBumps, (i / 60) * 0.7));
+      pts.push(curvePointAt(twoBumpPolyline, (i / 60) * 0.7));
     }
-    const out = evaluatePathM2(pts, hardBTwoBumps, false);
+    const out = evaluatePathM2(pts, twoBumpPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 
   it("completes a full trace of both bumps", () => {
     const pts: Point[] = [];
     for (let i = 0; i <= 80; i++) {
-      pts.push(curvePointAt(hardBTwoBumps, i / 80));
+      pts.push(curvePointAt(twoBumpPolyline, i / 80));
     }
-    const out = evaluatePathM2(pts, hardBTwoBumps, true);
+    const out = evaluatePathM2(pts, twoBumpPolyline, true);
     expect(out.kind).toBe("complete");
   });
 
@@ -329,12 +329,12 @@ describe("Self-overlapping polyline curves (hard-mode B) — T-024", () => {
     // path leaves the boundary box since the curve bulges out to x=0.65.
     const pts: Point[] = [];
     for (let i = 0; i <= 40; i++) {
-      pts.push(curvePointAt(hardBTwoBumps, (i / 40) * 0.5));
+      pts.push(curvePointAt(twoBumpPolyline, (i / 40) * 0.5));
     }
     pts.push({ x: 0.25, y: 0.6 });
     pts.push({ x: 0.25, y: 0.7 });
     pts.push({ x: 0.25, y: 0.8 });
-    const out = evaluatePathM2(pts, hardBTwoBumps, false);
+    const out = evaluatePathM2(pts, twoBumpPolyline, false);
     expect(out.kind === "exit-box" || out.kind === "deviation-reset").toBe(
       true,
     );
@@ -346,12 +346,12 @@ describe("Self-overlapping polyline curves (hard-mode B) — T-024", () => {
     // turns early.
     const pts: Point[] = [];
     for (let i = 0; i <= 40; i++) {
-      pts.push(curvePointAt(hardBTwoBumps, (i / 40) * 0.47));
+      pts.push(curvePointAt(twoBumpPolyline, (i / 40) * 0.47));
     }
     pts.push({ x: 0.28, y: 0.5 });
     pts.push({ x: 0.32, y: 0.5 });
     pts.push({ x: 0.36, y: 0.5 });
-    const out = evaluatePathM2(pts, hardBTwoBumps, false);
+    const out = evaluatePathM2(pts, twoBumpPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 
@@ -361,14 +361,14 @@ describe("Self-overlapping polyline curves (hard-mode B) — T-024", () => {
     // the tail is spatially near the previously-traced bump-1 bottom arm.
     const pts: Point[] = [];
     for (let i = 0; i <= 40; i++) {
-      pts.push(curvePointAt(hardBTwoBumps, (i / 40) * 0.5));
+      pts.push(curvePointAt(twoBumpPolyline, (i / 40) * 0.5));
     }
     pts.push({ x: 0.3, y: 0.5 });
     pts.push({ x: 0.33, y: 0.52 });
     pts.push({ x: 0.36, y: 0.49 });
     pts.push({ x: 0.4, y: 0.5 });
     pts.push({ x: 0.45, y: 0.5 });
-    const out = evaluatePathM2(pts, hardBTwoBumps, false);
+    const out = evaluatePathM2(pts, twoBumpPolyline, false);
     expect(out.kind).toBe("in-progress");
   });
 });
@@ -376,18 +376,6 @@ describe("Self-overlapping polyline curves (hard-mode B) — T-024", () => {
 // Regression: W's tracing already tolerates cutting corners; confirm the corner-turn
 // leniency continues to work after widening the corner window.
 describe("W polyline corner cutting (regression)", () => {
-  const wPolyline: LineSegment = {
-    start: { x: 0.15, y: 0.14 },
-    end: { x: 0.85, y: 0.14 },
-    isCurve: true,
-    curveKind: "polyline",
-    polylinePoints: [
-      { x: 0.3, y: 0.86 },
-      { x: 0.5, y: 0.38 },
-      { x: 0.7, y: 0.86 },
-    ],
-  };
-
   it("does not cancel when the trace clips the (0.3, 0.86) corner instead of landing on it", () => {
     const pts: Point[] = [];
     for (let i = 0; i <= 20; i++) {

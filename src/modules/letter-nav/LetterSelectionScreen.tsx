@@ -1,10 +1,10 @@
-import React from "react";
-import type { LetterDefinition } from "../../types";
+import type { LetterCase, LetterDefinition } from "../../types";
+import { ToggleSwitch } from "../../shared/ToggleSwitch";
 import { LetterTile } from "./LetterTile";
 
 interface Props {
   letters: LetterDefinition[];
-  selectedCase: "uppercase" | "lowercase";
+  selectedCase: LetterCase;
   onToggleCase: () => void;
   isHardMode: boolean;
   onToggleHardMode: () => void;
@@ -41,101 +41,18 @@ export function LetterSelectionScreen({
           gap: "0.75rem",
         }}
       >
-        <button
-          type="button"
-          data-testid="case-toggle"
-          role="switch"
-          aria-checked={selectedCase === "lowercase"}
-          onClick={onToggleCase}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            border: "none",
-            borderRadius: "999px",
-            padding: "0.4rem 0.9rem",
-            background: selectedCase === "lowercase" ? "#17324d" : "#e2e8f0",
-            color: selectedCase === "lowercase" ? "#ffffff" : "#334155",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            cursor: "pointer",
-          }}
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              display: "inline-block",
-              width: "2rem",
-              height: "1.1rem",
-              borderRadius: "999px",
-              background: selectedCase === "lowercase" ? "#4ade80" : "#94a3b8",
-              position: "relative",
-              transition: "background 0.15s ease",
-            }}
-          >
-            <span
-              style={{
-                position: "absolute",
-                top: "0.15rem",
-                left: selectedCase === "lowercase" ? "1.05rem" : "0.15rem",
-                width: "0.8rem",
-                height: "0.8rem",
-                borderRadius: "50%",
-                background: "#ffffff",
-                transition: "left 0.15s ease",
-              }}
-            />
-          </span>
-          {selectedCase === "uppercase" ? "Uppercase" : "Lowercase"}
-        </button>
-
-        <button
-          type="button"
-          data-testid="hard-mode-toggle"
-          role="switch"
-          aria-checked={isHardMode}
-          onClick={onToggleHardMode}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            border: "none",
-            borderRadius: "999px",
-            padding: "0.4rem 0.9rem",
-            background: isHardMode ? "#17324d" : "#e2e8f0",
-            color: isHardMode ? "#ffffff" : "#334155",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            cursor: "pointer",
-          }}
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              display: "inline-block",
-              width: "2rem",
-              height: "1.1rem",
-              borderRadius: "999px",
-              background: isHardMode ? "#4ade80" : "#94a3b8",
-              position: "relative",
-              transition: "background 0.15s ease",
-            }}
-          >
-            <span
-              style={{
-                position: "absolute",
-                top: "0.15rem",
-                left: isHardMode ? "1.05rem" : "0.15rem",
-                width: "0.8rem",
-                height: "0.8rem",
-                borderRadius: "50%",
-                background: "#ffffff",
-                transition: "left 0.15s ease",
-              }}
-            />
-          </span>
-          Hard mode
-        </button>
+        <ToggleSwitch
+          testId="case-toggle"
+          checked={selectedCase === "lowercase"}
+          onToggle={onToggleCase}
+          label={selectedCase === "uppercase" ? "Uppercase" : "Lowercase"}
+        />
+        <ToggleSwitch
+          testId="hard-mode-toggle"
+          checked={isHardMode}
+          onToggle={onToggleHardMode}
+          label="Hard mode"
+        />
       </div>
 
       <header style={{ textAlign: "center" }}>

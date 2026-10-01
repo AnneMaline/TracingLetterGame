@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { LetterDefinition, LineSegment } from "../../types";
+import {
+  CELEBRATION_DELAY_MS,
+  HARD_MODE_PREVIEW_MS,
+} from "../../shared/constants";
 import { Celebration } from "../celebration/Celebration";
 import { TraceSurface } from "./TraceSurface";
 import { useSegmentTrace } from "./useSegmentTrace";
@@ -33,7 +37,10 @@ export function LetterTracer({
     }
 
     setShadowPreviewVisible(true);
-    const timer = setTimeout(() => setShadowPreviewVisible(false), 2000);
+    const timer = setTimeout(
+      () => setShadowPreviewVisible(false),
+      HARD_MODE_PREVIEW_MS,
+    );
     return () => clearTimeout(timer);
   }, [isHardMode, letter.id]);
 
@@ -43,7 +50,10 @@ export function LetterTracer({
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   useEffect(() => {
     if (view.status !== "letter-complete") return;
-    const timer = setTimeout(() => setCelebrationVisible(true), 500);
+    const timer = setTimeout(
+      () => setCelebrationVisible(true),
+      CELEBRATION_DELAY_MS,
+    );
     return () => clearTimeout(timer);
   }, [view.status]);
 

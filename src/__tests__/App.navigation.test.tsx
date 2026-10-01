@@ -54,14 +54,14 @@ describe("App Hard mode toggle", () => {
     expect(toggle).toHaveAttribute("aria-checked", "false");
   });
 
-  it("switches to the harder letter fixtures once Hard mode is enabled", () => {
+  it("keeps the same letter fixtures in Hard mode (Hard mode only changes the shadow aid)", () => {
     render(<App />);
 
-    // R has 3 traceable segments in the standard fixture set.
     fireEvent.click(screen.getByTestId("letter-tile-R"));
     expect(screen.getByTestId("progress-label")).toHaveTextContent(
       "Segment 1 of 3",
     );
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("menu-button"));
     fireEvent.click(screen.getByTestId("hard-mode-toggle"));
@@ -70,11 +70,13 @@ describe("App Hard mode toggle", () => {
       "true",
     );
 
-    // R has 2 traceable segments (a continuous bowl+leg stroke) in Hard mode.
     fireEvent.click(screen.getByTestId("letter-tile-R"));
     expect(screen.getByTestId("progress-label")).toHaveTextContent(
       "Segment 1 of 3",
     );
+    // Hard mode opens with the shadow-only preview: no segment guide yet.
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
+    expect(screen.queryByTestId("segment-guide")).not.toBeInTheDocument();
   });
 
   it("shows helplines toggle during hard-mode tracing and allows turning lines on", () => {

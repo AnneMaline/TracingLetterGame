@@ -17,6 +17,14 @@ actively misleading — in that case, mark it "SUPERSEDED" rather than deleting 
 
 ## Lessons
 
+## 2026-10-01 — Closed-loop ovals need seam unwrapping, not just a start radius
+
+On full-circle ovals (O, o, Q bowl), nearest-point projection at the start marker returns t≈1
+on the trailing side of the seam, so the first move read as a huge backtrack and reset; crossing
+the seam at the finish did the same. Fix: `isClosedLoopSegment` + unwrapped progress in
+`projectPathProgressively` (t may go <0 or >1), coverage clipped to [0,1], tangent read at
+`wrapLoopT(t)`, and `evaluatePathM2` returns `complete` mid-drag once t ≥ 1 with ≥80% coverage.
+
 ## 2026-10-01 — Lowercase canvas height: use a literal, not float arithmetic
 
 `1 + (0.3 + DEFAULT_BOUNDARY_PADDING)` renders as `viewBox="0 0 1 1.3599999999999999"`, so string

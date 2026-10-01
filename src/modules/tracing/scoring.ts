@@ -9,12 +9,14 @@ import {
   computeBoundaryBox,
   computeCoverage,
   computeDragDirection,
+  isClosedLoopSegment,
   isCurvedSegment,
   isPointInBox,
   projectPathProgressively,
   segmentDirection,
   segmentTangentAt,
   shouldSuppressDeviationAtPolylineCorner,
+  wrapLoopT,
 } from "./geometry";
 
 const BACKTRACK_TOLERANCE = 0.02;
@@ -51,6 +53,8 @@ export function evaluatePathM2(
   const baselineDistance = options.baselineDistance ?? DRAG_DIRECTION_BASELINE;
 
   const box = computeBoundaryBox(segment);
+  const isClosedLoop = isClosedLoopSegment(segment);
+  let tailT = 0;
 
   for (let i = 0; i < points.length; i++) {
     if (!isPointInBox(points[i], box)) {
@@ -69,7 +73,7 @@ export function evaluatePathM2(
     // projection cannot tell which bump owns a shared-arm sample).
     const ts = projectPathProgressively(points, segment);
     const prevT = ts[ts.length - 2];
-    const tailT = ts[ts.length - 1];
+    tailT = ts[ts.length - 1];
     const suppressDeviationCheck = shouldSuppressDeviationAtPolylineCorner(
       segment,
       prevT,
@@ -87,7 +91,7 @@ export function evaluatePathM2(
     }
 
     const ideal = isCurvedSegment(segment)
-      ? segmentTangentAt(segment, tailT)
+      ? segmentTangentAt(segment, isClosedLoop ? wrapLoopT(tailT) : tailT)
       : segmentDirection(segment);
     const drag = computeDragDirection(points, baselineDistance);
     if (
@@ -105,6 +109,11 @@ export function evaluatePathM2(
   }
 
   const coverage = computeCoverage(points, segment);
+  // Closed loops end where they start: crossing the seam with enough coverage finishes the
+  // lap even if no pointer sample landed inside the small end marker.
+  if (isClosedLoop && tailT >= 1 && coverage >= MIN_SEGMENT_COVERAGE) {
+    return { kind: "complete", coverage };
+  }
   if (!fingerUp) return { kind: "in-progress", coverage };
   return coverage >= MIN_SEGMENT_COVERAGE
     ? { kind: "complete", coverage }

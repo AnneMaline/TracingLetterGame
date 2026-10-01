@@ -124,6 +124,14 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
         return;
       }
 
+      if (outcome.kind === "complete") {
+        setPoints(next);
+        setCoverage(outcome.coverage);
+        setWithin(true);
+        completeSegment();
+        return;
+      }
+
       const currentCoverage =
         outcome.kind === "in-progress" ? outcome.coverage : 0;
       setPoints(next);

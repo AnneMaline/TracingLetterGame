@@ -341,6 +341,25 @@ function getOvalSweepDeltaDeg(segment: LineSegment): number {
   return delta;
 }
 
+const CLOSED_LOOP_MIN_SWEEP_DEG = 350;
+
+// Full-circle ovals (O, o) start and end at the same spot, so progress is ambiguous at the seam.
+export function isClosedLoopSegment(segment: LineSegment): boolean {
+  return (
+    isOvalCurve(segment) &&
+    Math.abs(getOvalSweepDeltaDeg(segment)) >= CLOSED_LOOP_MIN_SWEEP_DEG
+  );
+}
+
+// Shifts rawT by a whole lap so it lands closest to prevT (t may go < 0 or > 1 across the seam).
+function unwrapLoopT(rawT: number, prevT: number): number {
+  return rawT + Math.round(prevT - rawT);
+}
+
+export function wrapLoopT(t: number): number {
+  return t - Math.floor(t);
+}
+
 function ovalPointAt(segment: LineSegment, t: number): Point {
   if (!isOvalCurve(segment)) return segment.start;
   const clampedT = t < 0 ? 0 : t > 1 ? 1 : t;
@@ -653,9 +672,21 @@ export function projectPathProgressively(
 ): number[] {
   const ts: number[] = [];
   if (points.length === 0) return ts;
-  ts.push(projectPointOntoSegment(points[0], segment));
+  if (!isClosedLoopSegment(segment)) {
+    ts.push(projectPointOntoSegment(points[0], segment));
+    for (let i = 1; i < points.length; i++) {
+      ts.push(projectPointOntoSegment(points[i], segment, ts[i - 1]));
+    }
+    return ts;
+  }
+
+  // Closed loops: unwrap across the seam so a start on the trailing side of the start marker
+  // reads as t slightly < 0 and finishing past the end reads as t >= 1, not a jump backward.
+  ts.push(unwrapLoopT(projectPointOntoSegment(points[0], segment), 0));
   for (let i = 1; i < points.length; i++) {
-    ts.push(projectPointOntoSegment(points[i], segment, ts[i - 1]));
+    const prevT = ts[i - 1];
+    const rawT = projectPointOntoSegment(points[i], segment, wrapLoopT(prevT));
+    ts.push(unwrapLoopT(rawT, prevT));
   }
   return ts;
 }
@@ -677,26 +708,21 @@ export function computeCoverage(
     }
     if (curveLength <= 0) return 0;
 
+    const ts = projectPathProgressively(points, segment);
     let coverage = 0;
-    let prevPoint = points[0];
-    let prevT = projectPointOntoSegment(prevPoint, segment);
 
     for (let i = 1; i < points.length; i++) {
-      const point = points[i];
-      const t = projectPointOntoSegment(point, segment, prevT);
-      const rawDeltaT = t - prevT;
+      // Clip to [0, 1] so unwrapped closed-loop progress outside the lap earns nothing.
+      const rawDeltaT = Math.min(ts[i], 1) - Math.max(ts[i - 1], 0);
 
       if (rawDeltaT > 0) {
-        const moveDistance = distanceBetween(prevPoint, point);
+        const moveDistance = distanceBetween(points[i - 1], points[i]);
         const maxDeltaTFromMotion =
           (moveDistance / curveLength) * CURVE_PROGRESS_GAIN_FACTOR +
           CURVE_PROGRESS_EPSILON_T;
         coverage += Math.min(rawDeltaT, maxDeltaTFromMotion);
         if (coverage >= 1) return 1;
       }
-
-      prevPoint = point;
-      prevT = t;
     }
 
     return coverage;

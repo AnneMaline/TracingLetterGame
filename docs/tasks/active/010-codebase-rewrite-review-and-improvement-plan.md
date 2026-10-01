@@ -1,6 +1,6 @@
 # Task 010 - Codebase rewrite, review, and quality hardening
 
-**Status:** Active (approved 2026-10-01) — in execution on branch `rewrite`
+**Status:** Active (approved 2026-10-01) — implemented on branch `rewrite`, ready for review
 **Milestone:** Stabilization and maintainability pass before next feature milestone
 
 ## What and why
@@ -224,15 +224,15 @@ If approved, move this file to `docs/tasks/active/` and execute in a phased PR w
 
 ### Phase 0 - Baseline (before any change)
 
-| Metric                    | Value                                                                 |
-| ------------------------- | --------------------------------------------------------------------- |
-| Tests                     | 10 files / 354 passed / 0 failed (~7 s)                              |
-| `vitest-report.json`      | Stale (committed 2026-09-11); its 4 failures no longer reproduce      |
-| Typecheck (`tsc -b`)      | Pass                                                                  |
-| Lint                      | None configured                                                       |
-| Bundle                    | JS 226.38 kB (69.44 kB gzip), CSS 9.82 kB                             |
-| `npm audit --omit=dev`    | 0 vulnerabilities                                                     |
-| Largest tracing file      | `geometry.ts` 828 lines (all four curve models + projection + scoring helpers) |
+| Metric                 | Value                                                                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tests                  | 10 files / 354 passed / 0 failed (~7 s)                                                                                                              |
+| `vitest-report.json`   | Stale (committed 2026-09-11); its 4 failures no longer reproduce                                                                                     |
+| Typecheck (`tsc -b`)   | Pass                                                                                                                                                 |
+| Lint                   | None configured                                                                                                                                      |
+| Bundle                 | JS 226.38 kB as first measured, but `node_modules` had drifted from the lockfile. Re-measured with the lockfile installed: 255.63 kB (78.14 kB gzip) |
+| `npm audit --omit=dev` | 0 vulnerabilities                                                                                                                                    |
+| Largest tracing file   | `geometry.ts` 828 lines (all four curve models + projection + scoring helpers)                                                                       |
 
 Risk matrix (blast radius x change risk): `geometry.ts` high/high; `scoring.ts` high/medium;
 `useSegmentTrace.ts` high/medium; `TraceSurface.tsx` medium/medium; letter-nav, celebration,
@@ -240,18 +240,18 @@ header low/low. Authored fixtures are not regenerable and were not touched.
 
 ### Phase 1 - Test inventory
 
-| File                                    | Class                 | Action                                                                  |
-| --------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
-| `geometry.test.ts` (T-001, T-002)       | contract/invariant    | keep                                                                    |
-| `scoring.test.ts` (T-003..T-005)        | contract/invariant    | keep                                                                    |
-| `deviation.test.ts` (T-006..T-008 + curve regressions) | contract/invariant | keep; renamed "hard-mode" fixtures (no hard fixture set exists) and removed a wrong `T-024` label; merged a duplicated W fixture |
-| `closedLoop.test.ts`                    | contract/invariant    | keep                                                                    |
-| letter fixture invariants (A-Z, a-z)    | contract/invariant    | keep                                                                    |
-| `TracingScreen.test.tsx`                | integration           | keep; **added** T-024 (Easy shadow persistent) and T-025 (Hard 2 s preview) which had no coverage |
-| `TracingScreen.alphabet.test.tsx`       | integration (smoke)   | keep                                                                    |
-| `LetterSelectionScreen.test.tsx`        | integration           | keep                                                                    |
-| `App.navigation.test.tsx`               | integration           | rewrote the misleading "switches to the harder letter fixtures" test (asserted equal counts under a false title) |
-| `characterization.test.ts` (new)        | golden master         | every authored tracable segment (A-Z, a-z) must complete along its ideal path; coverage/containment numbers frozen in a snapshot |
+| File                                                   | Class               | Action                                                                                                                           |
+| ------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `geometry.test.ts` (T-001, T-002)                      | contract/invariant  | keep                                                                                                                             |
+| `scoring.test.ts` (T-003..T-005)                       | contract/invariant  | keep                                                                                                                             |
+| `deviation.test.ts` (T-006..T-008 + curve regressions) | contract/invariant  | keep; renamed "hard-mode" fixtures (no hard fixture set exists) and removed a wrong `T-024` label; merged a duplicated W fixture |
+| `closedLoop.test.ts`                                   | contract/invariant  | keep                                                                                                                             |
+| letter fixture invariants (A-Z, a-z)                   | contract/invariant  | keep                                                                                                                             |
+| `TracingScreen.test.tsx`                               | integration         | keep; **added** T-024 (Easy shadow persistent) and T-025 (Hard 2 s preview) which had no coverage                                |
+| `TracingScreen.alphabet.test.tsx`                      | integration (smoke) | keep                                                                                                                             |
+| `LetterSelectionScreen.test.tsx`                       | integration         | keep                                                                                                                             |
+| `App.navigation.test.tsx`                              | integration         | rewrote the misleading "switches to the harder letter fixtures" test (asserted equal counts under a false title)                 |
+| `characterization.test.ts` (new)                       | golden master       | every authored tracable segment (A-Z, a-z) must complete along its ideal path; coverage/containment numbers frozen in a snapshot |
 
 No failing tests remained to adjudicate (see Phase 0).
 
@@ -290,3 +290,60 @@ No failing tests remained to adjudicate (see Phase 0).
   characterization workload (52 letters × ~10 evaluations per segment) from 842 ms to 60 ms.
   This matters on the 2015-era target hardware.
 - No failing tests to reconcile (see Phase 0).
+
+### Phase 4 - UI/state flow cleanup
+
+- `App` owns navigation state (`screen`, `selectedLetterIndex`, `isHardMode`, `selectedCase`).
+  `TracingScreen` owns the current letter and helplines. `LetterTracer` owns the per-letter
+  preview and celebration. `useSegmentTrace` owns the segment state machine.
+- The redundant `showShadow` prop chain (App → TracingScreen → LetterTracer, always
+  `!isHardMode`) was removed; shadow visibility now derives from `isHardMode` alone. The Hard
+  mode preview effect no longer calls `setState` synchronously in an effect: `LetterTracer` is
+  keyed per letter, so its initial state is enough.
+- Fixed unstable callbacks: `onCelebrationDone` depended on the whole hook result, which is a new
+  object on every render, so the celebration timer could restart on every re-render. The
+  segment-advance timeout is now cleared on unmount.
+- All three toggles (case, Hard mode, helplines) are `role="switch"` + `aria-checked`. Case and
+  Hard mode share `ToggleSwitch`.
+- Spec drift (helplines, Hard mode fixtures) resolved in favor of the code, per the human
+  decision above. Spec text follows in task 011.
+
+### Phase 5 - Tooling and security hardening
+
+- Lint: oxlint (`.oxlintrc.json`, `npm run lint`, warnings fail). Chosen because TS 7 has no
+  compiler API for `typescript-eslint`. Rule choices and the disabled rules are in
+  [ADR 0002](../../adr/0002-code-conventions-and-quality-gates.md).
+- Typecheck: added `noUnusedLocals`, `noUnusedParameters` and `noFallthroughCasesInSwitch`. This
+  removed one unused `React` import.
+- CI: `.github/workflows/ci.yml` runs `npm ci` (lockfile hygiene), typecheck, lint, tests,
+  `npm audit --omit=dev --audit-level=high`, and build. `npm run check` runs the same gates
+  locally.
+- Dependency policy: Dependabot runs weekly for npm (dev minor/patch grouped) and monthly for
+  Actions. The policy is in README "Dependency maintenance".
+
+### Phase 6 - Docs and follow-ups
+
+- ADRs: [0001 curve models and coverage](../../adr/0001-curve-models-and-coverage.md),
+  [0002 conventions and quality gates](../../adr/0002-code-conventions-and-quality-gates.md).
+- Spec-update follow-up: [draft task 011](../draft/011-spec-update-after-task-010.md).
+- Lessons appended to `.agents/memory/lessons.md`.
+
+### Final gate results (2026-10-01)
+
+| Gate                        | Result                                                      |
+| --------------------------- | ----------------------------------------------------------- |
+| `npm run typecheck`         | pass                                                        |
+| `npm run lint`              | 0 warnings, 0 errors                                        |
+| `npm test`                  | 11 files / 410 passed / 0 failed                            |
+| `npm run audit:prod`        | 0 vulnerabilities                                           |
+| Build (same `node_modules`) | JS 255.63 kB at baseline commit → 253.88 kB (77.85 kB gzip) |
+| Largest tracing logic file  | `curves.ts` 202 lines (budget 350)                          |
+| Orphaned files              | none known                                                  |
+
+Not done here, and open for the reviewer:
+
+- Playwright e2e (T-014..T-016) is still not set up. It was never in this repo, and task 011
+  flags it.
+- On-device check (human): the Hard mode preview, helplines, and tracing feel on a 2015-era
+  phone. The scoring math was proven unchanged, so this is a sanity check, not a requirement.
+- Push the `rewrite` branch, open the PR, and merge (human).

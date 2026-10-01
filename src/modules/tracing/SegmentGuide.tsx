@@ -1,8 +1,5 @@
 import type { LineSegment } from "../../types";
-import {
-  END_REGION_RADIUS,
-  START_MARKER_RADIUS,
-} from "../../shared/constants";
+import { END_REGION_RADIUS, START_MARKER_RADIUS } from "../../shared/constants";
 import {
   curvePointAt,
   curveSvgPath,

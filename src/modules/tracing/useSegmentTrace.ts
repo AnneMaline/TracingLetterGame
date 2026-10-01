@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
 import {
   END_REGION_RADIUS,
@@ -54,6 +54,13 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
   const [points, setPoints] = useState<Point[]>([]);
   const [coverage, setCoverage] = useState(0);
   const [isWithinBoundaryBox, setWithin] = useState(false);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (advanceTimer.current !== null) clearTimeout(advanceTimer.current);
+    },
+    [],
+  );
 
   const currentSegment = letter.segments[currentSegmentIndex];
   const box = useMemo(
@@ -92,7 +99,10 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     });
     setStatus("segment-complete");
     const nextIndex = currentSegmentIndex + 1;
-    setTimeout(() => advanceOrComplete(nextIndex), SEGMENT_ADVANCE_DELAY_MS);
+    advanceTimer.current = setTimeout(
+      () => advanceOrComplete(nextIndex),
+      SEGMENT_ADVANCE_DELAY_MS,
+    );
   }, [advanceOrComplete, currentSegmentIndex]);
 
   const onPointerDown = useCallback(

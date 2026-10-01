@@ -64,7 +64,10 @@ export function evaluateSegmentPath(
   const coverage = coverageFromProgress(points, ts, segment);
   const tailT = ts.length > 0 ? ts[ts.length - 1] : 0;
 
-  if (points.length >= 2 && isDeviating(points, ts, segment, thresholdDegrees, baselineDistance)) {
+  if (
+    points.length >= 2 &&
+    isDeviating(points, ts, segment, thresholdDegrees, baselineDistance)
+  ) {
     return {
       kind: "deviation-reset",
       coverage,

@@ -53,7 +53,6 @@ export default function App() {
       letters={letters}
       initialLetterIndex={selectedLetterIndex}
       onBackToMenu={handleBackToMenu}
-      showShadow={!isHardMode}
       isHardMode={isHardMode}
     />
   );

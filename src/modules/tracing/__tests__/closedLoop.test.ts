@@ -88,7 +88,11 @@ describe("Closed-loop segments (O, o)", () => {
 
     it(`${letter.id}: touching only the start/end markers does not complete`, () => {
       const seg = letter.segments[0];
-      const out = evaluateSegmentPath([seg.start, seg.end, seg.start], seg, true);
+      const out = evaluateSegmentPath(
+        [seg.start, seg.end, seg.start],
+        seg,
+        true,
+      );
       expect(out.kind).toBe("reset");
     });
   }

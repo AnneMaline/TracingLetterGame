@@ -146,7 +146,11 @@ describe("Deviation past threshold cancels the trace (T-007)", () => {
   });
 
   it("does not cancel when the entire trace stays aligned with the ideal vector", () => {
-    const out = evaluateSegmentPath(pathAlong(horizontal, 0.6), horizontal, false);
+    const out = evaluateSegmentPath(
+      pathAlong(horizontal, 0.6),
+      horizontal,
+      false,
+    );
     expect(out.kind).toBe("in-progress");
   });
 });

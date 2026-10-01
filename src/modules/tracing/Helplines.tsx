@@ -1,7 +1,4 @@
-import {
-  HELPLINE_X_INSET,
-  HELPLINE_Y_POSITIONS,
-} from "../../shared/constants";
+import { HELPLINE_X_INSET, HELPLINE_Y_POSITIONS } from "../../shared/constants";
 
 interface Props {
   isLowercase: boolean;

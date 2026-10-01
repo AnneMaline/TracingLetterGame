@@ -13,9 +13,7 @@ export type OvalCurveSegment = LineSegment & {
 // Sweeps at least this wide are treated as full circles (O, o, dots on i/j).
 const CLOSED_LOOP_MIN_SWEEP_DEG = 350;
 
-export function isOvalCurve(
-  segment: LineSegment,
-): segment is OvalCurveSegment {
+export function isOvalCurve(segment: LineSegment): segment is OvalCurveSegment {
   return (
     segment.curveKind === "oval" &&
     !!segment.ovalCenter &&
@@ -55,7 +53,8 @@ export function wrapLoopT(t: number): number {
 }
 
 function ovalAngleRad(segment: OvalCurveSegment, t: number): number {
-  const angleDeg = segment.ovalStartAngleDeg + ovalSweepDeg(segment) * clamp01(t);
+  const angleDeg =
+    segment.ovalStartAngleDeg + ovalSweepDeg(segment) * clamp01(t);
   return (angleDeg * Math.PI) / 180;
 }
 

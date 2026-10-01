@@ -46,7 +46,10 @@ function simulateDrag(points: Point[], segment: LineSegment) {
     const outcome = evaluateSegmentPath(points.slice(0, n), segment, false);
     if (outcome.kind !== "in-progress") return { kind: outcome.kind, at: n };
   }
-  return { kind: evaluateSegmentPath(points, segment, true).kind, at: points.length };
+  return {
+    kind: evaluateSegmentPath(points, segment, true).kind,
+    at: points.length,
+  };
 }
 
 const round = (value: number) => Math.round(value * 1e4) / 1e4;

@@ -1,4 +1,3 @@
-import React from "react";
 import type { LetterDefinition } from "../../types";
 
 interface Props {
@@ -24,7 +23,8 @@ export function LetterTile({ letter, index, onSelect }: Props) {
         border: "2px solid #17324d",
         background: "#fffdf6",
         color: "#17324d",
-        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
+        boxShadow:
+          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
         cursor: "pointer",
       }}
     >

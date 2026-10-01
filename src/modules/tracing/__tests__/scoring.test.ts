@@ -22,7 +22,11 @@ function pathAlong(segment: LineSegment, targetT: number, steps = 20): Point[] {
 // T-003
 describe("segment complete on finger-up when coverage >= 80% (T-003)", () => {
   it("marks complete at exactly 80%", () => {
-    const out = evaluateSegmentPath(pathAlong(horizontal, 0.8), horizontal, true);
+    const out = evaluateSegmentPath(
+      pathAlong(horizontal, 0.8),
+      horizontal,
+      true,
+    );
     expect(out.kind).toBe("complete");
     if (out.kind === "complete")
       expect(out.coverage).toBeGreaterThanOrEqual(0.8);
@@ -36,11 +40,19 @@ describe("segment complete on finger-up when coverage >= 80% (T-003)", () => {
 // T-004
 describe("segment resets on finger-up when coverage < 80% (T-004)", () => {
   it("resets at 50%", () => {
-    const out = evaluateSegmentPath(pathAlong(horizontal, 0.5), horizontal, true);
+    const out = evaluateSegmentPath(
+      pathAlong(horizontal, 0.5),
+      horizontal,
+      true,
+    );
     expect(out.kind).toBe("reset");
   });
   it("resets just below 80%", () => {
-    const out = evaluateSegmentPath(pathAlong(horizontal, 0.79), horizontal, true);
+    const out = evaluateSegmentPath(
+      pathAlong(horizontal, 0.79),
+      horizontal,
+      true,
+    );
     expect(out.kind).toBe("reset");
   });
 });

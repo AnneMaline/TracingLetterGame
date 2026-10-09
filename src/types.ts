@@ -23,10 +23,10 @@ export interface LineSegment extends LineValues {
   boundaryHalfWidth?: number;
   /** When false, the segment is pre-filled and skipped during tracing. Defaults to true. */
   isTracable?: boolean;
-  isCurve?: boolean;
-  curveKind?: "oval" | "polyline";
   polylinePoints?: PolylinePoint[];
 }
+
+export type LetterCase = "uppercase" | "lowercase";
 
 export interface LetterDefinition {
   id: string;

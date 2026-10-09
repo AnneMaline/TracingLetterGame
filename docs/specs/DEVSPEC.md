@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.10.0
-**Last Updated:** 2026-10-01
+**Version:** 0.11.0
+**Last Updated:** 2026-10-09
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.7.0
+**Traces to:** PRD v0.8.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -39,6 +39,16 @@ interface LineSegment {
   start: Point;
   end: Point;
   boundaryHalfWidth?: number; // normalized units; overrides the default `boundaryPadding` for this segment (see §14 Resolved Decisions)
+  isCurve?: boolean; // default false
+  curveKind?: "stadium" | "oval" | "polyline"; // required when isCurve is true
+  curveControlX?: number; // stadium centerline x for vertical-start/end stadium curves
+  ovalCenterX?: number;
+  ovalCenterY?: number;
+  ovalRadiusX?: number;
+  ovalRadiusY?: number;
+  ovalStartAngle?: number; // degrees
+  ovalSweepAngle?: number; // degrees; non-zero multiple of 360 allows full circle with start===end
+  polylinePoints?: Point[]; // explicit sampled path for curve-by-polyline segments
   isTracable?: boolean; // default true; false = pre-filled decoration (e.g. the dot on i/j), never traced or counted
 }
 // Segment order is the array index within LetterDefinition.segments (traced in array order) —
@@ -55,7 +65,7 @@ interface LetterDefinition {
 interface SegmentTraceState {
   points: Point[]; // captured pointer path for the current attempt; cleared on every restart
   isWithinBoundaryBox: boolean; // whether the most recently captured point is inside the current segment's boundary box
-  progressAlongVector: number; // 0-1, projected coverage of the segment from start toward end
+  progressAlongVector: number; // 0-1, canonical coverage: furthest forward projection reached, advanced only by net forward pointer travel
 }
 
 interface LetterSessionState {
@@ -85,7 +95,7 @@ resolved otherwise.
 
 - **Goal:** Let the child move between letters to trace.
 - **Tasks:**
-  1. **MVP:** Render Next/Previous buttons; advance/retreat `letterIndex` through the ordered
+  1. **MVP (superseded by M3 task 5):** Render Next/Previous buttons; advance/retreat `letterIndex` through the ordered
      in-scope letter list, wrapping from the last letter to the first and from the first to the
      last.
   2. **Great (M3):** Make the letter-selection screen the default app entry point, listing every
@@ -95,21 +105,20 @@ resolved otherwise.
      `src/data/letterSegments/english/lowercaseLetters`. Case defaults to uppercase on every app
      load and is in-memory only (no persistence).
   4. **Great (M3):** Add a Letter Selection Hard mode toggle (`role="switch"`, `aria-checked`)
-     that selects the active fixture set (`src/data/letterSegments` baseline or
-     `src/data/harderLetterSegments` corrected set). Hard mode defaults to off on every app load
-     and is in-memory only (no persistence).
+     that selects the active difficulty mode (Easy vs. Hard) while keeping the same authored
+     fixture set (`src/data/letterSegments`) in both modes. Hard mode defaults to off on every
+     app load and is in-memory only (no persistence).
   5. **Great (M3):** Replace bottom Next/Previous with a top bar on the Tracing screen containing:
      (a) a top-left Menu control that returns to the letter-selection screen at any time from any
      tracing state and discards any in-progress segment, and (b) a top-right Next control that
      advances to the next letter with wraparound and resets to segment 1.
-  6. Case-set and fixture-set switching take effect only when selecting/opening a letter from Letter
-     Selection;
-     it does not hot-swap an already-open Tracing screen.
+  6. Case switching and Hard-mode selection take effect only when selecting/opening a letter from
+     Letter Selection; they do not hot-swap an already-open Tracing screen.
 - **Exit Criterion:** MVP — Next/Previous correctly cycles through every in-scope letter, loading
   the correct `LetterDefinition` each time. Great — app launch opens letter selection; selecting any
-  letter opens Tracing for it; Hard mode toggle reflects and flips active fixture-set state;
-  the top-left Menu control is reachable from every Tracing state; and the top-right Next control
-  advances through all letters with wraparound.
+  letter opens Tracing for it; Hard mode toggle reflects active difficulty mode without changing
+  selected fixtures; the top-left Menu control is reachable from every Tracing state; and the
+  top-right Next control advances through all letters with wraparound.
 
 #### Module: Line Segment Rendering & Directional Guide
 
@@ -155,6 +164,10 @@ resolved otherwise.
   5. On pointer-up (finger up) without having reached the end region, compute
      `progressAlongVector`. If ≥ 80%, mark the segment complete and advance. If < 80%, force
      the child to restart that segment from the beginning.
+     5a. `progressAlongVector` uses the canonical coverage rule: the furthest progress reached along
+     the segment path is recorded, but each pointer sample can increase coverage only by its own
+     net forward movement, capped by actual pointer travel distance. Back-and-forth wiggles and
+     re-tracing covered path must not double-count progress.
   6. **Non-tracable segments** (`isTracable: false`): marked complete when the letter loads and
      rendered as already traced. `currentSegmentIndex` starts at, and advances to, the next
      tracable segment only; when no tracable segment remains the letter is complete.
@@ -223,10 +236,11 @@ resolved otherwise.
   1. Add a Tracing-screen Helplines toggle that is visible and operable in both Easy and Hard
      mode.
   2. When Helplines are enabled, render three horizontal lines on the trace surface at normalized
-     y positions 0.12, 0.50, and 0.86.
+     y positions 0.14, 0.50, and 0.86.
   3. Render the middle line (`y=0.50`) with a dashed stroke style so it is visually distinct from
-     the top and bottom lines.
-  4. Render all three lines nearly edge-to-edge with a small, consistent left/right inset from
+     the top and bottom lines. For lowercase letters only, render an additional dashed descender
+     guide at `y=1.22`.
+  4. Render all guides nearly edge-to-edge with a small, consistent left/right inset from
      the draw-box border.
   5. Helplines are a visual aid only: they must not intercept pointer input and must not alter
      boundary-box checks, deviation checks, segment-completion scoring, or hard-mode preview
@@ -235,9 +249,10 @@ resolved otherwise.
      Hard mode). The child/caregiver may turn Helplines on at any time; the choice is not
      persisted across sessions or letters.
 - **Exit Criterion:** In both Easy and Hard mode, the Helplines toggle can show/hide exactly three
-  horizontal guides at the specified y positions; the middle line is dashed; the guides span
-  nearly the full width with consistent inset; the toggle starts in the off state on every letter
-  open; and existing tracing mechanics remain unchanged.
+  horizontal guides for uppercase and four for lowercase at the specified y positions; the middle
+  line and lowercase descender line are dashed; the guides span nearly the full width with
+  consistent inset; the toggle starts in the off state on every letter open; and existing tracing
+  mechanics remain unchanged.
 
 ---
 
@@ -299,12 +314,13 @@ functional tree:
       modules/
         letter-nav/          # Next/Previous (MVP) and letter-selection screen (Great)
         tracing/              # segment rendering, boundary box, completion, deviation detection
+          geometry/           # focused geometry modules (vector, curves, projection, boundary, svg path)
         celebration/
       data/
-        letterSegments/      # baseline authored LetterDefinition data, one file per letter/glyph
-        harderLetterSegments/ # corrected/harder authored LetterDefinition data (same shape/order)
+        letterSegments/      # authored LetterDefinition data, one file per letter/glyph
       shared/
     docs/
+      adr/
       specs/
       standalone-game-spec.md
       standalone-game-spec-data.md
@@ -313,27 +329,33 @@ functional tree:
         active/
     .agents/
       memory/
+    .github/
+      workflows/
     public/
 
 implementation layout (annotated):
   TracingGame/src/modules/letter-nav/         # versioned
   TracingGame/src/modules/tracing/            # versioned
   TracingGame/src/modules/celebration/        # versioned
-  TracingGame/src/data/letterSegments/        # versioned (baseline hand-authored reference data)
-  TracingGame/src/data/harderLetterSegments/  # versioned (hard-mode reference data)
+  TracingGame/src/data/letterSegments/        # versioned (hand-authored reference data)
+  TracingGame/src/modules/tracing/geometry/   # versioned (geometry/math modules per ADR 0001)
+  TracingGame/docs/adr/                       # versioned (architecture decisions)
+  TracingGame/.github/workflows/              # versioned (CI quality gates)
   TracingGame/src/shared/                     # versioned
   TracingGame/node_modules/                   # ephemeral (npm install)
   TracingGame/dist/                           # ephemeral (npm run build)
 ```
 
-| Directory                        | Classification | Notes                                                              |
-| -------------------------------- | -------------- | ------------------------------------------------------------------ |
-| `src/**`                         | versioned      | Source of truth, committed                                         |
-| `src/data/letterSegments/`       | versioned      | Baseline hand-authored fixtures, not regenerable — treat carefully |
-| `src/data/harderLetterSegments/` | versioned      | Hard-mode hand-authored fixtures, same schema/order as baseline    |
-| `.agents/memory/`                | versioned      | Durable lessons; committed, never gitignored                       |
-| `node_modules/`                  | ephemeral      | Regenerate via `npm install`                                       |
-| `dist/`                          | ephemeral      | Regenerate via `npm run build`                                     |
+| Directory                       | Classification | Notes                                                     |
+| ------------------------------- | -------------- | --------------------------------------------------------- |
+| `src/**`                        | versioned      | Source of truth, committed                                |
+| `src/data/letterSegments/`      | versioned      | Hand-authored fixtures, not regenerable — treat carefully |
+| `src/modules/tracing/geometry/` | versioned      | Geometry model split by domain boundary (ADR 0001)        |
+| `docs/adr/`                     | versioned      | Architectural decisions and rationale                     |
+| `.github/workflows/`            | versioned      | CI policy gates (typecheck, lint, test, audit, build)     |
+| `.agents/memory/`               | versioned      | Durable lessons; committed, never gitignored              |
+| `node_modules/`                 | ephemeral      | Regenerate via `npm install`                              |
+| `dist/`                         | ephemeral      | Regenerate via `npm run build`                            |
 
 ### 9. Environment & Config
 
@@ -349,6 +371,8 @@ dev. Container packaging config TBD once standalone-game-spec.md is finalized.
 | Build tool   | Vite                                               | Fast dev server, standard React+TS scaffold                                                                                 |
 | Canvas/input | HTML `<canvas>` or SVG + Pointer Events API        | Native browser support, no extra dependency needed for MVP; either is sufficient for line-segment rendering + point capture |
 | Testing      | Vitest + React Testing Library, Playwright for e2e | Standard, fast, TS-native                                                                                                   |
+| Linting      | oxlint                                             | Fast linting with TS 7-compatible toolchain (see ADR 0002)                                                                  |
+| CI/CD        | GitHub Actions                                     | Enforces lockfile hygiene and quality gates on every PR                                                                     |
 | Persistence  | None required for MVP (in-memory session state)    | Not specified in the brief; revisit if Open Question on persistence resolves to "yes"                                       |
 
 ### 11. Runbook (Clean Machine)
@@ -356,20 +380,23 @@ dev. Container packaging config TBD once standalone-game-spec.md is finalized.
 ```bash
 git clone https://github.com/AnneMaline/Game1.git TracingGame
 cd TracingGame
-npm install
+npm ci
 npm run dev      # local dev server (standalone mode)
-npm run build    # production build to dist/
+npm run lint
 npm test         # unit + integration tests
+npm run audit:prod
+npm run check    # typecheck + lint + tests + prod audit
+npm run build    # production build to dist/
 ```
 
 ### 12. Deliverables per Milestone
 
-| Milestone (PRD)                | DEVSPEC deliverable                                                                                                                                                                                                                                                   |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M1 — MVP core tracing loop     | Letter Navigation (Next/Previous) + Line Segment Rendering + Segment Completion & Boundary Box + Celebration Animation modules functional end-to-end for all in-scope letters                                                                                         |
-| M2 — Better accuracy detection | Deviation Detection module: cancel-on-threshold behavior, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                                                                                                                        |
-| M3 — Great navigation          | Letter Navigation module: letter-selection screen replaces Next/Previous, anytime back-navigation, session-only case toggle (uppercase/lowercase), and session-only Hard mode fixture toggle; Tracing Helplines module: in-session toggle + 3-line handwriting guides |
-| M4 — Container integration     | Packaging conforms to standalone-game-spec.md; events conform to standalone-game-spec-data.md                                                                                                                                                                         |
+| Milestone (PRD)                | DEVSPEC deliverable                                                                                                                                                                                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1 — MVP core tracing loop     | Letter Navigation (Next/Previous) + Line Segment Rendering + Segment Completion & Boundary Box + Celebration Animation modules functional end-to-end for all in-scope letters                                                                                                 |
+| M2 — Better accuracy detection | Deviation Detection module: cancel-on-threshold behavior, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                                                                                                                                |
+| M3 — Great navigation          | Letter Navigation module: letter-selection screen replaces Next/Previous, anytime back-navigation, session-only case toggle (uppercase/lowercase), and session-only Hard mode shadow-preview toggle; Tracing Helplines module: in-session toggle + aligned handwriting guides |
+| M4 — Container integration     | Packaging conforms to standalone-game-spec.md; events conform to standalone-game-spec-data.md                                                                                                                                                                                 |
 
 ---
 
@@ -386,6 +413,10 @@ npm test         # unit + integration tests
 
 | Date       | Decision                                                                                                                                                                                                                                                                              | Rationale                                                                                                                                                                                                                                                 |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-09 | Hard mode uses a shadow-only difficulty model on top of the same authored fixtures as Easy mode (no dedicated `harderLetterSegments` dataset)                                                                                                                                         | Matches shipped rewrite behavior and removes duplicate content maintenance while preserving expected difficulty semantics                                                                                                                                 |
+| 2026-10-09 | Canonical coverage uses furthest-progress projection constrained by net forward pointer travel so re-tracing and curve wiggles cannot farm completion                                                                                                                                 | Aligns scoring behavior with ADR 0001 and keeps completion tied to real forward tracing progress                                                                                                                                                          |
+| 2026-10-09 | Curves are authored as one of four models: straight, stadium, oval, or sampled polyline; full-circle ovals with `start === end` are valid tracable segments                                                                                                                           | Reflects shipped geometry model split and preserves authored curve intent under one canonical evaluation pipeline                                                                                                                                         |
+| 2026-10-09 | Helplines align to authored writing geometry at y=0.14/0.50/0.86 with a lowercase-only dashed descender guide at y=1.22                                                                                                                                                               | Matches shipped visual aids and lowercase baseline/descender proportions without affecting scoring logic                                                                                                                                                  |
 | 2026-10-01 | Case selection is tracked as session-only app-navigation state (`selectedCase`) with default `uppercase`; Letter Selection toggles between authored uppercase and lowercase datasets, and the selected case applies when launching letters from the menu only (no hot-swap mid-trace) | Matches shipped Task 009 behavior and composes safely with Hard mode by keeping dataset selection explicit and menu-scoped                                                                                                                                |
 | 2026-10-01 | Segment progress position ("segment _n_ of _N_") counts only tracable segments; non-tracable segments are pre-completed and skipped                                                                                                                                                   | A pre-filled dot is not something the child traces, so counting it made `i` read "1 of 2" until the letter was already complete                                                                                                                           |
 | 2026-10-01 | Lowercase canvas height is 1.36 (1 + 0.3 descender room + `boundaryPadding`); lowercase endpoints may use y in 0-1.36. Full-circle ovals author identical `start`/`end`                                                                                                               | Descenders (g, j, p, q, y) intentionally dip below the uppercase baseline box; a closed circle's start and end are the same point by definition                                                                                                           |
@@ -403,7 +434,7 @@ npm test         # unit + integration tests
 | 2026-09-11 | Uppercase A-Z `LetterDefinition` fixtures are authored/exported alphabetically and used as the baseline content set (`src/data/letterSegments/`)                                                                                                                                      | Completes Task 003 content authoring so navigation and tracing dry-runs operate over a realistic letter set rather than the MVP-only A/L/T sample                                                                                                         |
 | 2026-09-11 | Stroke-order convention for uppercase fixtures: prefer primary-school manuscript order, choosing top-to-bottom / left-to-right directions where a natural option exists; A/L/T were reviewed and retained as authored                                                                 | Keeps expected drag direction intuitive for children and consistent across letters                                                                                                                                                                        |
 | 2026-09-11 | Curved uppercase letters are approximated with short polylines (typically 3-4 segments) with gentle turns chosen to stay comfortably below the M2 45-degree deviation threshold; no per-segment `boundaryHalfWidth` overrides used                                                    | Balances trace smoothness with maintainable fixture complexity while avoiding overlap-tuning churn unless a concrete collision issue appears                                                                                                              |
-| 2026-09-18 | Corrected uppercase stroke-order/grouping fixtures are maintained in a second authored dataset (`src/data/harderLetterSegments/`) and selected by M3 Hard mode from Letter Selection; toggle defaults off per session                                                                 | Preserves original MVP-friendly letter flow as default while exposing a stricter continuous-stroke model without letter-specific tracing logic                                                                                                            |
+| 2026-09-18 | Corrected uppercase stroke-order/grouping fixtures were initially explored as a second authored dataset, but this architecture is superseded by the shipped Hard-mode shadow-preview model                                                                                            | Historical note retained for traceability; superseded to keep one fixture source of truth                                                                                                                                                                 |
 
 ### 15. Out of Scope
 
@@ -419,6 +450,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode to same-fixture shadow-preview behavior, documented canonical curve/coverage rules and curve fields in the data schema, updated Helplines geometry (including lowercase descender), refreshed directory/stack/runbook content for geometry-module split and CI gates, updated resolved decisions, and bumped DEVSPEC to v0.11.0 with `Traces to:` PRD v0.8.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: added M3 Letter Selection case-toggle behavior (session-only uppercase/lowercase selection, default uppercase, menu-scoped launch semantics), added `AppNavigationState.selectedCase`, updated M3 deliverables, removed lowercase from out-of-scope, added a resolved decision, and bumped DEVSPEC to v0.10.0 with `Traces to:` PRD v0.7.0.
 - 2026-10-01 — Copilot — Non-tracable segment + lowercase canvas spec-update pass: added `LineSegment.isTracable` and the full-circle `start === end` authoring rule to the Data Schema, widened the `Point` coordinate note to the 1.36-high lowercase canvas, added Segment Completion tasks 6–7 (non-tracable segments pre-completed/skipped; progress position counts tracable segments only) and the matching exit criterion, clarified §5 malformed-data handling for closed circles, added two Resolved Decisions, and bumped DEVSPEC to v0.9.0.
 - 2026-09-23 — Copilot — Task 008 follow-up: set the Helplines toggle default to off on every tracing session in the Tracing Helplines module and Resolved Decisions; bumped DEVSPEC to v0.8.1 and `Traces to:` PRD v0.6.1.

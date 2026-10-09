@@ -163,6 +163,74 @@ describe("Helplines toggle", () => {
   });
 });
 
+// T-024
+describe("Easy mode shows a persistent letter shadow (T-024)", () => {
+  it("keeps the shadow visible while awaiting start, tracing, after a reset, and after completion", async () => {
+    vi.useFakeTimers();
+    render(<TracingScreen letters={[A]} />);
+    const surface = screen.getByTestId(
+      "trace-surface",
+    ) as unknown as SVGSVGElement;
+    mockRect(surface);
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
+
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
+    fireEvent.pointerMove(surface, { pointerId: 1, ...toClient(0.3, 0.5) });
+    expect(surface.getAttribute("data-segment-status")).toBe("tracing");
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
+
+    fireEvent.pointerUp(surface, { pointerId: 1, ...toClient(0.3, 0.5) });
+    expect(surface.getAttribute("data-segment-status")).toBe("segment-reset");
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
+
+    fireEvent.pointerDown(surface, { pointerId: 2, ...toClient(0.2, 0.5) });
+    for (let t = 0; t <= 1; t += 0.1) {
+      fireEvent.pointerMove(surface, {
+        pointerId: 2,
+        ...toClient(0.2 + 0.6 * t, 0.5),
+      });
+    }
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(surface.getAttribute("data-segment-status")).toBe("letter-complete");
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+});
+
+// T-025
+describe("Hard mode shows the shadow only as a 2-second preview (T-025)", () => {
+  it("blocks input and hides the guide during the preview, then hides the shadow and enables tracing", async () => {
+    vi.useFakeTimers();
+    render(<TracingScreen letters={[A]} isHardMode={true} />);
+    const surface = screen.getByTestId(
+      "trace-surface",
+    ) as unknown as SVGSVGElement;
+    mockRect(surface);
+
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
+    expect(screen.queryByTestId("segment-guide")).not.toBeInTheDocument();
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
+    expect(surface.getAttribute("data-segment-status")).toBe("awaiting-start");
+    fireEvent.pointerUp(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
+
+    await act(async () => {
+      vi.advanceTimersByTime(1900);
+    });
+    expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(screen.queryByTestId("letter-shadow")).not.toBeInTheDocument();
+    expect(screen.getByTestId("segment-guide")).toBeInTheDocument();
+    fireEvent.pointerDown(surface, { pointerId: 2, ...toClient(0.2, 0.5) });
+    expect(surface.getAttribute("data-segment-status")).toBe("tracing");
+    vi.useRealTimers();
+  });
+});
+
 // T-013
 describe("Celebration triggers exactly once on letter completion (T-013)", () => {
   it("shows celebration after tracing all segments to >=80%", async () => {

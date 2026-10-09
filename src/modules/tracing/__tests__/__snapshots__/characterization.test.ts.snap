@@ -1,0 +1,1971 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Authored lowercase letters (characterization) > letter a: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter b: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter c: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter d: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter e: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter f: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter g: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter h: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 0.9934,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter i: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter j: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter k: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter l: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter m: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter n: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 0.9934,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter o: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter p: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter q: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter r: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter s: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter t: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter u: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter v: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter w: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 3,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter x: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter y: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored lowercase letters (characterization) > letter z: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      false,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter A: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter B: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter C: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter D: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter E: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 2,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 3,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter F: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter G: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter H: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter I: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter J: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter K: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      false,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter L: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter M: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 3,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter N: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter O: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter P: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter Q: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      false,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter R: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter S: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter T: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter U: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter V: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter W: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 3,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter X: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter Y: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 2,
+  },
+]
+`;
+
+exports[`Authored uppercase letters (characterization) > letter Z: ideal traces complete and scoring numbers are stable 1`] = `
+[
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 0,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      false,
+      true,
+    ],
+    "segment": 1,
+  },
+  {
+    "drag": {
+      "at": 31,
+      "kind": "complete",
+    },
+    "fullCoverage": 1,
+    "halfCoverage": 0.5,
+    "probesInBox": [
+      true,
+      true,
+      true,
+      false,
+    ],
+    "segment": 2,
+  },
+]
+`;

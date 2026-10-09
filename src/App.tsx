@@ -1,11 +1,11 @@
 import { useState } from "react";
+import type { LetterCase } from "./types";
 import { letters as uppercaseLetters } from "./data/letterSegments/english/capitalLetters";
 import { letters as lowercaseLetters } from "./data/letterSegments/english/lowercaseLetters";
 import { LetterSelectionScreen } from "./modules/letter-nav/LetterSelectionScreen";
 import { TracingScreen } from "./modules/tracing/TracingScreen";
 
 type Screen = "menu" | "tracing";
-type LetterCase = "uppercase" | "lowercase";
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("menu");
@@ -53,7 +53,6 @@ export default function App() {
       letters={letters}
       initialLetterIndex={selectedLetterIndex}
       onBackToMenu={handleBackToMenu}
-      showShadow={!isHardMode}
       isHardMode={isHardMode}
     />
   );

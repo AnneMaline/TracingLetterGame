@@ -1,12 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
 import {
   END_REGION_RADIUS,
   MIN_SEGMENT_COVERAGE,
+  SEGMENT_ADVANCE_DELAY_MS,
   START_REGION_RADIUS,
 } from "../../shared/constants";
 import { computeBoundaryBox, distanceBetween, isPointInBox } from "./geometry";
-import { evaluatePathM2 } from "./scoring";
+import { evaluateSegmentPath } from "./scoring";
 
 export type SegmentStatus =
   | "awaiting-start"
@@ -53,6 +54,13 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
   const [points, setPoints] = useState<Point[]>([]);
   const [coverage, setCoverage] = useState(0);
   const [isWithinBoundaryBox, setWithin] = useState(false);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (advanceTimer.current !== null) clearTimeout(advanceTimer.current);
+    },
+    [],
+  );
 
   const currentSegment = letter.segments[currentSegmentIndex];
   const box = useMemo(
@@ -91,7 +99,10 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     });
     setStatus("segment-complete");
     const nextIndex = currentSegmentIndex + 1;
-    setTimeout(() => advanceOrComplete(nextIndex), 250);
+    advanceTimer.current = setTimeout(
+      () => advanceOrComplete(nextIndex),
+      SEGMENT_ADVANCE_DELAY_MS,
+    );
   }, [advanceOrComplete, currentSegmentIndex]);
 
   const onPointerDown = useCallback(
@@ -115,7 +126,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
       if (status !== "tracing") return;
 
       const next = [...points, p];
-      const outcome = evaluatePathM2(next, currentSegment, false);
+      const outcome = evaluateSegmentPath(next, currentSegment, false);
       if (outcome.kind === "exit-box" || outcome.kind === "deviation-reset") {
         setCoverage(outcome.coverage);
         setWithin(false);
@@ -152,7 +163,7 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
     if (!currentSegment) return;
     if (status !== "tracing") return;
 
-    const outcome = evaluatePathM2(points, currentSegment, true);
+    const outcome = evaluateSegmentPath(points, currentSegment, true);
     setCoverage(outcome.coverage);
     if (outcome.kind === "complete") {
       completeSegment();

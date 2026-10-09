@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.7.0
-**Last Updated:** 2026-10-01
+**Version:** 0.8.0
+**Last Updated:** 2026-10-09
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -42,12 +42,13 @@ paradigm as a sub-app of the Curious Reader container.
 - Require meaningful completion of a segment (≥80% of its length, checked on finger-up) before advancing.
 - Celebrate completing all segments of a letter with an animation.
 - Let the child move between letters (MVP: Next/Previous; Great tier: a letter-selection screen reachable at any time).
-- Offer a session-only Hard mode toggle on the letter-selection screen so caregivers/children can switch between
-  baseline fixtures and harder continuous-stroke variants.
+- Offer a session-only Hard mode toggle on the letter-selection screen so caregivers/children can switch
+  tracing difficulty using a shadow-only preview model (same authored letter fixtures in both modes).
 - Offer a session-only case toggle on the letter-selection screen so caregivers/children can switch between
   uppercase and lowercase letter practice.
 - Add a Tracing-screen Helplines toggle (available in both Easy and Hard mode) that shows/hides three horizontal
-  handwriting guide lines at normalized y positions 0.12, 0.50, and 0.86 (middle line dashed) to support alignment.
+  handwriting guide lines at normalized y positions 0.14, 0.50, and 0.86 (middle line dashed), plus a lowercase-only
+  dashed descender guide at y=1.22, to support alignment.
 - Keep the letter/segment data model data-driven so non-English scripts can be added without code changes later.
 
 ## 4. Non-Goals (MVP)
@@ -100,15 +101,16 @@ paradigm as a sub-app of the Curious Reader container.
   in-memory only for the current session.
 - Add a top-centered case toggle on the letter-selection screen; case defaults to uppercase on app load and remains
   in-memory only for the current session.
-- Hard mode toggles which authored letter fixture set is launched from the menu (baseline vs. harder variants), while
-  letters already open in Tracing keep their current fixture set until the child returns to the menu.
+- Hard mode does not switch authored fixture sets; it uses the same letter fixtures as Easy mode and applies difficulty
+  only through a 2-second shadow-only preview that blocks tracing input before the segment guide appears.
 - Case toggle switches which authored letter set is shown/launched from the menu (uppercase A-Z or lowercase a-z), while
   letters already open in Tracing keep their current case set until the child returns to the menu.
 - Add a top-left Menu control that returns the child to the letter-selection screen from the tracing screen at any time.
 - Keep top-right Next navigation on the tracing screen to quickly advance letters with wraparound behavior.
 - Flow: app opens on letter selection → child picks a letter → tracing starts at segment 1 for that letter.
 - Add a Tracing-screen Helplines toggle that is visible in both Easy and Hard mode and controls the visibility of
-  three horizontal guide lines (top y=0.12, dashed middle y=0.50, bottom y=0.86) spanning almost the full draw-box width.
+  three horizontal guide lines (top y=0.14, dashed middle y=0.50, bottom y=0.86) plus a lowercase-only dashed descender
+  guide at y=1.22, spanning almost the full draw-box width.
 
 ### Container integration (M4, Curious Learning convention)
 
@@ -145,6 +147,8 @@ paradigm as a sub-app of the Curious Reader container.
 
 | Date       | Decision                                                                                                                                                                                                                  | Rationale                                                                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-09 | Hard mode uses the same authored fixtures as Easy mode; difficulty is delivered by a 2-second shadow-only preview with tracing input blocked until preview end                                                            | Matches shipped rewrite behavior from Task 010, avoids duplicate fixture maintenance, and preserves predictable authored data contracts                                                                                  |
+| 2026-10-09 | Helplines are authored-alignment guides at y=0.14, y=0.50 (dashed), and y=0.86, plus a lowercase-only dashed descender guide at y=1.22                                                                                    | Aligns guides to shipped letter authoring proportions (cap-height/baseline/descender zones) and preserves optional support without changing scoring behavior                                                             |
 | 2026-10-01 | M3 letter selection now includes a session-only case toggle (Uppercase/Lowercase) that defaults to uppercase on app load and switches which authored case dataset is shown/launched from the menu                         | Expands practice coverage to lowercase letters while preserving a single tracing architecture and keeping state session-only (no persistence scope increase)                                                             |
 | 2026-09-23 | Helplines default to OFF when a tracing session begins; the child/caregiver can toggle them on at any time during tracing                                                                                                 | Keeps the default tracing surface uncluttered while leaving handwriting alignment support one tap away for learners who want it                                                                                          |
 | 2026-09-23 | Tracing includes a Helplines toggle in both Easy and Hard mode; when enabled, the tracing surface shows three horizontal guide lines at y=0.12, y=0.50 (dashed), and y=0.86, spanning nearly the full draw-box width      | Provides optional handwriting alignment support without forcing extra guidance on every learner; keeps support level adjustable during tracing sessions                                                                  |
@@ -169,6 +173,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode behavior to shipped shadow-only preview semantics (no fixture-set swap), updated Helplines geometry to y=0.14/0.50/0.86 plus lowercase descender y=1.22, added resolved decisions, and bumped PRD to v0.8.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: promoted lowercase a-z practice into shipped M3 scope via a session-only Letter Selection case toggle (Uppercase/Lowercase, default uppercase, no persistence), updated M3 milestone wording, removed lowercase from non-goals/out-of-scope lists, added a resolved decision, and bumped PRD to v0.7.0.
 - 2026-09-23 — Copilot — Task 008 follow-up: changed the Helplines initial default from ON to OFF (child/caregiver opts in during the session) and bumped PRD to v0.6.1.
 - 2026-09-23 — Copilot — Task 008 spec-update pass: added Tracing-screen Helplines product behavior (toggle visible in Easy/Hard mode and three horizontal guide lines at y=0.12/0.50/0.86 with dashed middle line), updated M3 scope wording, and bumped PRD to v0.6.0.

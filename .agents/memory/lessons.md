@@ -17,6 +17,35 @@ actively misleading — in that case, mark it "SUPERSEDED" rather than deleting 
 
 ## Lessons
 
+## 2026-10-01 — Committed test reports and local node_modules go stale; re-measure first
+
+Task 010's draft plan quoted 4 failing tests from a committed `vitest-report.json` (from
+2026-09-11). They no longer reproduced, and the report is now git-ignored. The baseline bundle
+size was also wrong: local `node_modules` had drifted from `package-lock.json` until the next
+`npm install` synced it. Always re-run tests and builds from a lockfile-faithful install
+(`npm ci`) before planning around them.
+
+## 2026-10-01 — TypeScript 7 has no JS compiler API, so typescript-eslint can't run
+
+`node_modules/typescript/lib/typescript.js` doesn't exist on TS 7, so ESLint with
+`typescript-eslint` can't parse the project. Use oxlint (`.oxlintrc.json`, `npm run lint`); see
+ADR 0002.
+
+## 2026-10-01 — Prove refactors with a temporary old-vs-new equivalence test
+
+When splitting `geometry.ts`, keeping the old file as `geometry.legacy.ts` and comparing every
+exported function on every authored segment (plus random probes) with `toBe`/`toEqual` showed
+the rewrite was exact. The legacy file and the test were deleted in the same commit. The
+characterization snapshot (`__tests__/characterization.test.ts`) is the permanent guard. If it
+changes, scoring changed, and that needs an ADR or spec note.
+
+## 2026-10-01 — Cache derived curve data per segment object
+
+Without caching, `evaluateSegmentPath` re-sampled polylines (48 samples × sub-segment
+re-sampling) for every point on every pointer move. `WeakMap` caches keyed by the immutable
+authored segment cut the characterization workload 14×. Never mutate an authored
+`LineSegment`, because cached geometry would go stale.
+
 ## 2026-10-01 — Closed-loop ovals need seam unwrapping, not just a start radius
 
 On full-circle ovals (O, o, Q bowl), nearest-point projection at the start marker returns t≈1

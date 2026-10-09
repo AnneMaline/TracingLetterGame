@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.8.0
-**Last Updated:** 2026-10-01
+**Version:** 0.9.0
+**Last Updated:** 2026-10-09
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.7.0 · DEVSPEC v0.10.0
+**Traces to:** PRD v0.8.0 · DEVSPEC v0.11.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box that is never rendered. See §8 Spec Change Log.
@@ -23,8 +23,9 @@
 - **Layout:** The current line segment is shown with a start marker, a direction indicator
   (arrow along the start→end vector), and an end marker. A faint ghost outline of all letter segments
   is always rendered as a background layer (letter shadow; see DEVSPEC Letter Shadow Guide module).
-  Optional helplines can be rendered as three horizontal writing guides at y=0.12, y=0.50 (dashed),
-  and y=0.86, spanning almost the full width of the draw box with small side insets.
+  Optional helplines can be rendered as three horizontal writing guides at y=0.14, y=0.50 (dashed),
+  and y=0.86, spanning almost the full width of the draw box with small side insets. For lowercase
+  letters, an additional dashed descender guide is rendered at y=1.22.
   The boundary box is **never rendered** (it's an invisible accuracy check, per DEVSPEC Segment Completion module). MVP: bottom
   Next/Previous buttons. M3 (Great): bottom Next/Previous are removed and replaced by a top bar
   with a left "Menu" control, right "Next" control, and Helplines toggle.
@@ -34,8 +35,10 @@
   - **Helplines:** When enabled, top and bottom guide lines are solid and the middle guide line is dashed.
 - **Components:** `SegmentGuide` (start/direction/end markers, references DEVSPEC Line Segment
   Rendering module), `TraceSurface` (captures drag input, renders letter shadow, references DEVSPEC Segment Completion &
-  Boundary Box module), `NextPreviousControls` (MVP only), and `TracingHeader` with
-  `menu-button`/`next-letter` actions plus `helplines-toggle` (`role="switch"`) in M3.
+  Boundary Box module), and `TracingHeader` with
+  `menu-button`/`next-letter` actions plus `helplines-toggle` (`role="switch"`) in M3. Tracing
+  test IDs include `letter-shadow` for the ghost-outline layer and
+  `helpline-lowercase-descender` for the lowercase-only descender guide.
 - **States:**
   - `helplines-on` / `helplines-off` — visual-aid sub-state that can be changed without resetting tracing progress. Every tracing session starts in `helplines-off`.
   - `shadow-preview` (Hard mode only) — on letter open, shadow outline displayed alone for 2 seconds; segment guide hidden; pointer input blocked.
@@ -61,8 +64,8 @@
 - **States:** `loading`, `ready` + `case-uppercase` / `case-lowercase` and `hard-mode-off` / `hard-mode-on` sub-states.
 - **Visibility rules:** Only exists once M3 ships; before that, Next/Previous on the Tracing
   screen serve this purpose instead.
-- **Transitions:** Toggle case on/off while on Letter Selection (updates which case set opens when a tile is selected). Toggle Hard mode on/off while on Letter Selection (updates which fixture set
-  opens when a tile is selected). Tap a letter tile → Tracing screen, `awaiting-start` for that
+- **Transitions:** Toggle case on/off while on Letter Selection (updates which case set opens when a tile is selected). Toggle Hard mode on/off while on Letter Selection (updates whether letters open in Easy or Hard shadow-preview mode,
+  without changing the authored fixture set). Tap a letter tile → Tracing screen, `awaiting-start` for that
   letter's first segment.
 
 ## 3. State Machine (Tracing screen, per segment)
@@ -114,7 +117,7 @@ Feature: Tracing helplines
   Scenario: Helplines can be toggled in Easy mode
     Given the child is tracing in Easy mode
     When Helplines is toggled on
-    Then three horizontal guide lines are visible at y=0.12, y=0.50, and y=0.86
+    Then three horizontal guide lines are visible at y=0.14, y=0.50, and y=0.86
     And the middle line is dashed
     When Helplines is toggled off
     Then the guide lines are hidden
@@ -124,6 +127,7 @@ Feature: Tracing helplines
     And the 2-second shadow preview has ended
     When Helplines is toggled on
     Then three horizontal guide lines are visible on the tracing surface
+    And lowercase letters show a dashed descender guide at y=1.22
     And tracing behavior remains unchanged
 
 Feature: Segment tracing completion (MVP)
@@ -198,15 +202,16 @@ Feature: Letter selection (M3 — Great tier)
     Then the Letter Selection screen is displayed
     And the in-progress segment is discarded with no penalty
 
-Feature: Hard mode fixture selection (M3)
+Feature: Hard mode preview mode selection (M3)
   Scenario: Hard mode starts off on app load
     Given the app has just loaded
     Then the Letter Selection screen shows Hard mode in the off state
 
-  Scenario: Enabling Hard mode swaps the fixture set used when launching letters
+  Scenario: Enabling Hard mode keeps fixtures and changes launch behavior to preview-first tracing
     Given the child is on the Letter Selection screen
     When the child toggles Hard mode on
-    Then selecting a corrected letter opens that letter from the harder fixture set
+    Then selecting a letter opens the same authored fixture as Easy mode
+    And tracing begins with a 2-second shadow-only preview before segment guidance appears
     And letters already open in Tracing are not hot-swapped until returning to Letter Selection
 
 Feature: Case selection (M3)
@@ -252,6 +257,8 @@ Feature: Letter completion celebration
 
 | Date       | Decision                                                                                                                                                                                                                                              | Rationale                                                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-09 | Hard mode switch controls a preview-first tracing mode (2-second shadow-only intro) and does not switch authored fixture datasets                                                                                                                     | Matches shipped rewrite behavior and keeps one fixture source of truth                                                                                                   |
+| 2026-10-09 | Helpline geometry is aligned to authored writing guides at y=0.14/0.50/0.86, plus a lowercase-only dashed descender guide at y=1.22                                                                                                                   | Reflects shipped visual alignment aids for cap-height, midline, baseline, and lowercase descender zones                                                                  |
 | 2026-10-01 | Letter Selection UI includes a case switch (`role="switch"`, `data-testid="case-toggle"`) that defaults to uppercase and toggles the menu between uppercase and lowercase letter labels/launch behavior                                               | Matches shipped Task 009 UI and keeps case selection discoverable alongside existing Hard mode controls                                                                  |
 | 2026-09-23 | Helplines toggle starts in the off state on every tracing session (Easy and Hard); the child/caregiver opts in per session                                                                                                                            | Keeps the tracing surface uncluttered by default while leaving handwriting alignment support one tap away                                                                |
 | 2026-09-23 | Tracing UI includes a Helplines switch (`role="switch"`, `data-testid="helplines-toggle"`) visible in both Easy and Hard mode; enabled state renders top/middle/bottom horizontal guides at y=0.12/0.50/0.86, with dashed middle guide                | Provides optional handwriting alignment cues while preserving existing tracing flow and hard-mode semantics                                                              |
@@ -262,12 +269,13 @@ Feature: Letter completion celebration
 | 2026-09-07 | Removed the `tracing-paused` state and its pause/resume transitions; M2 deviation past threshold now transitions directly `tracing → segment-reset` (same visible effect as a boundary-box exit)                                                      | Follows the DEVSPEC v0.4.0 deviation model change                                                                                                                        |
 | 2026-09-07 | Added a `tracing → segment-complete` transition when the pointer enters the segment's end region with ≥80% coverage (no finger-up required)                                                                                                           | Overshooting the end marker used to risk a false fail; auto-complete on end-region entry makes reaching the end marker itself the completion event                       |
 | 2026-09-14 | M3 navigation ships as a top bar in Tracing (`Menu` left, `Next` right), replacing only the legacy bottom Next/Previous controls while preserving next-letter wrap navigation                                                                         | Matches Task 004 implementation and keeps fast in-game progression while making Letter Selection the primary entry flow                                                  |
-| 2026-09-18 | Letter Selection includes a Hard mode switch (`role="switch"`) that defaults off and selects between baseline and harder fixture sets only for menu-launched letters                                                                                  | Matches shipped M3 behavior while avoiding mid-trace fixture hot-swaps and persistence scope                                                                             |
+| 2026-09-18 | Letter Selection includes a Hard mode switch (`role="switch"`) that defaults off and controls difficulty mode for menu-launched letters                                                                                                               | Historical behavior note retained with superseded fixture-swap wording removed                                                                                           |
 
 ## 8. Spec Change Log
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode to preview-mode selection (no fixture swap), updated Helplines geometry to y=0.14/0.50/0.86 with lowercase descender y=1.22, added Tracing test IDs for shadow/descender guide, updated M3 Gherkin wording, and bumped UISPEC to v0.9.0 with `Traces to:` PRD v0.8.0 / DEVSPEC v0.11.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: added Letter Selection case-toggle UI (layout/components/states/transitions), added M3 case-selection Gherkin scenarios (default uppercase, lowercase launch behavior, and independence from Hard mode), added a resolved decision, and bumped UISPEC to v0.8.0 with `Traces to:` PRD v0.7.0 / DEVSPEC v0.10.0.
 - 2026-10-01 — Copilot — Bumped `Traces to:` DEVSPEC to v0.9.0 (non-tracable segment counting and lowercase canvas height); no UI content changed; UISPEC v0.7.2.
 - 2026-09-23 — Copilot — Task 008 follow-up: set the Helplines toggle initial state to off in the Tracing screen details, `helplines-on/off` state description, Gherkin scenarios, and Resolved Decisions; bumped UISPEC to v0.7.1 and `Traces to:` PRD v0.6.1 / DEVSPEC v0.8.1.

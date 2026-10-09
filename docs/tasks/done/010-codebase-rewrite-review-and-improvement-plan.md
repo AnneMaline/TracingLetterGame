@@ -1,6 +1,6 @@
 # Task 010 - Codebase rewrite, review, and quality hardening
 
-**Status:** Active (approved 2026-10-01) — implemented on branch `rewrite`, ready for review
+**Status:** Completed (2026-10-09 — PRD v0.8.0, DEVSPEC v0.11.0, UISPEC v0.9.0, TESTSPEC v0.10.0)
 **Milestone:** Stabilization and maintainability pass before next feature milestone
 
 ## What and why

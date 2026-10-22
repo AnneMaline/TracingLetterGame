@@ -15,6 +15,7 @@ const letterC: LetterDefinition = {
       ovalStartAngleDeg: 53,
       ovalEndAngleDeg: 307,
       ovalCounterClockwise: true,
+      boundaryHalfWidth: 0.11,
     },
   ],
 };

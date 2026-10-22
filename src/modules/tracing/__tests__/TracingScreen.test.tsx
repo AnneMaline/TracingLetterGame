@@ -175,11 +175,12 @@ describe("Easy mode shows a persistent letter shadow (T-024)", () => {
     expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
 
     fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
-    fireEvent.pointerMove(surface, { pointerId: 1, ...toClient(0.3, 0.5) });
+    fireEvent.pointerMove(surface, { pointerId: 1, ...toClient(0.22, 0.5) });
     expect(surface.getAttribute("data-segment-status")).toBe("tracing");
     expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
 
-    fireEvent.pointerUp(surface, { pointerId: 1, ...toClient(0.3, 0.5) });
+    // Below RESUME_MIN_COVERAGE, lifting is a plain reset rather than a pause.
+    fireEvent.pointerUp(surface, { pointerId: 1, ...toClient(0.22, 0.5) });
     expect(surface.getAttribute("data-segment-status")).toBe("segment-reset");
     expect(screen.getByTestId("letter-shadow")).toBeInTheDocument();
 
@@ -227,6 +228,83 @@ describe("Hard mode shows the shadow only as a 2-second preview (T-025)", () => 
     expect(screen.getByTestId("segment-guide")).toBeInTheDocument();
     fireEvent.pointerDown(surface, { pointerId: 2, ...toClient(0.2, 0.5) });
     expect(surface.getAttribute("data-segment-status")).toBe("tracing");
+    vi.useRealTimers();
+  });
+});
+
+// T-040
+function renderA(isHardMode = false) {
+  render(<TracingScreen letters={[A]} isHardMode={isHardMode} />);
+  const surface = screen.getByTestId(
+    "trace-surface",
+  ) as unknown as SVGSVGElement;
+  mockRect(surface);
+  return surface;
+}
+
+describe("Direction cues and tracing aids (T-040)", () => {
+  it("shows the corridor band, pulsing start, flowing guide, star end and demo dot while waiting", () => {
+    renderA();
+    expect(screen.getByTestId("corridor-band")).toBeInTheDocument();
+    expect(screen.getByTestId("segment-guide-start")).toHaveClass(
+      "trace-pulse",
+    );
+    expect(screen.getByTestId("segment-guide-line")).toHaveClass("guide-flow");
+    expect(screen.getByTestId("segment-guide-end").tagName).toBe("polygon");
+    expect(screen.getByTestId("demo-dot")).toBeInTheDocument();
+  });
+
+  it("hides the demo while tracing and shows live progress", () => {
+    const surface = renderA();
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
+    fireEvent.pointerMove(surface, { pointerId: 1, ...toClient(0.35, 0.5) });
+    expect(screen.queryByTestId("demo-dot")).not.toBeInTheDocument();
+    expect(screen.getByTestId("progress-fill")).toBeInTheDocument();
+    expect(screen.getByTestId("segment-guide-start")).not.toHaveClass(
+      "trace-pulse",
+    );
+  });
+
+  it("after a lift mid-stroke shows the resume dot, keeps progress and replays the demo", () => {
+    const surface = renderA();
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.2, 0.5) });
+    for (let x = 0.25; x <= 0.5; x += 0.05) {
+      fireEvent.pointerMove(surface, { pointerId: 1, ...toClient(x, 0.5) });
+    }
+    fireEvent.pointerUp(surface, { pointerId: 1, ...toClient(0.5, 0.5) });
+    expect(surface.getAttribute("data-segment-status")).toBe("segment-paused");
+    expect(screen.getByTestId("resume-marker")).toBeInTheDocument();
+    expect(screen.getByTestId("progress-fill")).toBeInTheDocument();
+    expect(screen.getByTestId("demo-dot")).toBeInTheDocument();
+
+    fireEvent.pointerDown(surface, { pointerId: 2, ...toClient(0.5, 0.5) });
+    for (let x = 0.55; x <= 0.81; x += 0.05) {
+      fireEvent.pointerMove(surface, { pointerId: 2, ...toClient(x, 0.5) });
+    }
+    expect(surface.getAttribute("data-segment-status")).toBe(
+      "segment-complete",
+    );
+  });
+
+  it("replays the demo when the child presses the wrong place", () => {
+    const surface = renderA();
+    const before = screen.getByTestId("demo-dot");
+    fireEvent.pointerDown(surface, { pointerId: 1, ...toClient(0.8, 0.5) });
+    fireEvent.pointerUp(surface, { pointerId: 1, ...toClient(0.8, 0.5) });
+    expect(surface.getAttribute("data-segment-status")).toBe("awaiting-start");
+    expect(screen.getByTestId("demo-dot")).not.toBe(before);
+  });
+
+  it("Hard mode shows the corridor band and demo only after the preview", async () => {
+    vi.useFakeTimers();
+    renderA(true);
+    expect(screen.queryByTestId("corridor-band")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("demo-dot")).not.toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(screen.getByTestId("corridor-band")).toBeInTheDocument();
+    expect(screen.getByTestId("demo-dot")).toBeInTheDocument();
     vi.useRealTimers();
   });
 });

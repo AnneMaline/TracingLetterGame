@@ -5,6 +5,7 @@ import { LOWERCASE_CANVAS_HEIGHT } from "../../shared/constants";
 import { Helplines } from "./Helplines";
 import { SegmentGuide } from "./SegmentGuide";
 import { SegmentShape } from "./SegmentShape";
+import { CorridorBand, DemoDot, ProgressFill, ResumeMarker } from "./TraceAids";
 import type { SegmentTraceView } from "./useSegmentTrace";
 
 interface Props {
@@ -103,6 +104,15 @@ export function TraceSurface({
   );
 
   const currentSegment = letter.segments[view.currentSegmentIndex];
+  const guideVisible =
+    canTrace && !!currentSegment && view.status !== "letter-complete";
+  const isPaused = view.status === "segment-paused";
+  const isWaiting =
+    view.status === "awaiting-start" ||
+    view.status === "segment-reset" ||
+    isPaused;
+  const progressVisible =
+    (view.status === "tracing" || isPaused) && view.coverage > 0;
 
   const feedbackVisible = view.status === "tracing" && view.points.length > 1;
   const feedbackPath = feedbackVisible
@@ -143,6 +153,8 @@ export function TraceSurface({
     >
       {showHelplines && <Helplines isLowercase={isLowercase} />}
 
+      {guideVisible && <CorridorBand segment={currentSegment} />}
+
       {showShadow && (
         <g
           stroke="#dfe6ef"
@@ -178,8 +190,28 @@ export function TraceSurface({
         )}
       </g>
 
-      {canTrace && currentSegment && view.status !== "letter-complete" && (
-        <SegmentGuide segment={currentSegment} />
+      {guideVisible && (
+        <SegmentGuide
+          segment={currentSegment}
+          isPaused={isPaused}
+          pulseStart={isWaiting && !isPaused}
+        />
+      )}
+
+      {guideVisible && progressVisible && (
+        <ProgressFill segment={currentSegment} coverage={view.coverage} />
+      )}
+
+      {guideVisible && isPaused && view.resumeT !== null && (
+        <ResumeMarker segment={currentSegment} resumeT={view.resumeT} />
+      )}
+
+      {guideVisible && isWaiting && (
+        <DemoDot
+          key={`${view.currentSegmentIndex}-${view.status}-${view.wrongStartCount}`}
+          segment={currentSegment}
+          fromT={view.resumeT ?? 0}
+        />
       )}
 
       {canTrace && feedbackPath && (

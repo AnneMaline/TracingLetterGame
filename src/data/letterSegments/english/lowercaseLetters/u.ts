@@ -23,6 +23,7 @@ const letterU: LetterDefinition = {
           ovalCounterClockwise: true,
         },
       ],
+      boundaryHalfWidth: 0.11,
     },
     { start: { x: 0.665, y: 0.5 }, end: { x: 0.665, y: 0.85 } },
   ],

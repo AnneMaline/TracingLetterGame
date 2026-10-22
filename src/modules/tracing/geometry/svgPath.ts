@@ -1,5 +1,5 @@
 import type { LineSegment } from "../../../types";
-import { curvePointAt } from "./curves";
+import { curvePointAt, isCurvedSegment } from "./curves";
 import { stadiumSvgPath } from "./stadium";
 
 const PATH_STEPS = 96;
@@ -23,4 +23,10 @@ export function curveSvgPath(segment: LineSegment): string {
   }
   pathCache.set(segment, d);
   return d;
+}
+
+export function segmentSvgPath(segment: LineSegment): string {
+  if (isCurvedSegment(segment)) return curveSvgPath(segment);
+  const { start, end } = segment;
+  return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
 }

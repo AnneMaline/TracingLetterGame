@@ -1,18 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { LetterDefinition, LineSegment, Point } from "../../types";
 import {
   END_REGION_RADIUS,
   MIN_SEGMENT_COVERAGE,
+  RESUME_MIN_COVERAGE,
   SEGMENT_ADVANCE_DELAY_MS,
   START_REGION_RADIUS,
 } from "../../shared/constants";
-import { computeBoundaryBox, distanceBetween, isPointInBox } from "./geometry";
+import { distanceBetween, segmentPointAt } from "./geometry";
 import { evaluateSegmentPath } from "./scoring";
 
 export type SegmentStatus =
   | "awaiting-start"
   | "tracing"
   | "segment-reset"
+  | "segment-paused"
   | "segment-complete"
   | "letter-complete";
 
@@ -23,6 +25,10 @@ export interface SegmentTraceView {
   points: readonly Point[];
   coverage: number;
   isWithinBoundaryBox: boolean;
+  // Progress the child can resume from after lifting mid-segment (status "segment-paused").
+  resumeT: number | null;
+  // Increments on every ignored pointer-down while waiting, so the UI can replay the demo.
+  wrongStartCount: number;
 }
 
 export interface SegmentTraceApi {
@@ -54,6 +60,9 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
   const [points, setPoints] = useState<Point[]>([]);
   const [coverage, setCoverage] = useState(0);
   const [isWithinBoundaryBox, setWithin] = useState(false);
+  const [resumeT, setResumeT] = useState<number | null>(null);
+  const [attemptStartT, setAttemptStartT] = useState(0);
+  const [wrongStartCount, setWrongStartCount] = useState(0);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -63,10 +72,14 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
   );
 
   const currentSegment = letter.segments[currentSegmentIndex];
-  const box = useMemo(
-    () => (currentSegment ? computeBoundaryBox(currentSegment) : null),
-    [currentSegment],
-  );
+
+  const clearAttempt = useCallback(() => {
+    setPoints([]);
+    setCoverage(0);
+    setWithin(false);
+    setResumeT(null);
+    setAttemptStartT(0);
+  }, []);
 
   const advanceOrComplete = useCallback(
     (candidateIndex: number) => {
@@ -77,19 +90,15 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
         setCurrentSegmentIndex(nextIndex);
         setStatus("awaiting-start");
       }
-      setPoints([]);
-      setCoverage(0);
-      setWithin(false);
+      clearAttempt();
     },
-    [letter.segments],
+    [letter.segments, clearAttempt],
   );
 
   const resetSegment = useCallback(() => {
     setStatus("segment-reset");
-    setPoints([]);
-    setCoverage(0);
-    setWithin(false);
-  }, []);
+    clearAttempt();
+  }, [clearAttempt]);
 
   const completeSegment = useCallback(() => {
     setCompletedSegments((prev) => {
@@ -107,31 +116,50 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
 
   const onPointerDown = useCallback(
     (p: Point) => {
-      if (!currentSegment || !box) return;
-      if (status !== "awaiting-start" && status !== "segment-reset") return;
-      if (!isPointInBox(p, box)) return;
-      if (distanceBetween(p, currentSegment.start) > START_REGION_RADIUS)
+      if (!currentSegment) return;
+      if (
+        status !== "awaiting-start" &&
+        status !== "segment-reset" &&
+        status !== "segment-paused"
+      ) {
         return;
+      }
+      const toStart = distanceBetween(p, currentSegment.start);
+      const toResume =
+        resumeT === null
+          ? Number.POSITIVE_INFINITY
+          : distanceBetween(p, segmentPointAt(currentSegment, resumeT));
+      let startT: number;
+      if (toResume <= START_REGION_RADIUS && toResume <= toStart) {
+        startT = resumeT ?? 0;
+      } else if (toStart <= START_REGION_RADIUS) {
+        startT = 0;
+      } else {
+        setWrongStartCount((n) => n + 1);
+        return;
+      }
+      setAttemptStartT(startT);
+      setResumeT(null);
       setPoints([p]);
-      setCoverage(0);
+      setCoverage(startT);
       setWithin(true);
       setStatus("tracing");
     },
-    [box, currentSegment, status],
+    [currentSegment, resumeT, status],
   );
 
   const onPointerMove = useCallback(
     (p: Point) => {
-      if (!currentSegment || !box) return;
+      if (!currentSegment) return;
       if (status !== "tracing") return;
 
       const next = [...points, p];
-      const outcome = evaluateSegmentPath(next, currentSegment, false);
+      const outcome = evaluateSegmentPath(next, currentSegment, false, {
+        startT: attemptStartT,
+      });
       if (outcome.kind === "exit-box" || outcome.kind === "deviation-reset") {
+        resetSegment();
         setCoverage(outcome.coverage);
-        setWithin(false);
-        setStatus("segment-reset");
-        setPoints([]);
         return;
       }
 
@@ -156,30 +184,55 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
         completeSegment();
       }
     },
-    [box, completeSegment, currentSegment, points, status],
+    [
+      attemptStartT,
+      completeSegment,
+      currentSegment,
+      points,
+      resetSegment,
+      status,
+    ],
   );
 
   const onPointerUp = useCallback(() => {
     if (!currentSegment) return;
     if (status !== "tracing") return;
 
-    const outcome = evaluateSegmentPath(points, currentSegment, true);
-    setCoverage(outcome.coverage);
+    const outcome = evaluateSegmentPath(points, currentSegment, true, {
+      startT: attemptStartT,
+    });
     if (outcome.kind === "complete") {
+      setCoverage(outcome.coverage);
       completeSegment();
+    } else if (
+      outcome.kind === "reset" &&
+      outcome.coverage >= RESUME_MIN_COVERAGE
+    ) {
+      // Lifting keeps progress; the child continues from the resume dot.
+      setStatus("segment-paused");
+      setPoints([]);
+      setWithin(false);
+      setCoverage(outcome.coverage);
+      setResumeT(outcome.coverage);
     } else {
       resetSegment();
+      setCoverage(outcome.coverage);
     }
-  }, [completeSegment, currentSegment, points, resetSegment, status]);
+  }, [
+    attemptStartT,
+    completeSegment,
+    currentSegment,
+    points,
+    resetSegment,
+    status,
+  ]);
 
   const reset = useCallback(() => {
     setCurrentSegmentIndex(nextTracableIndex(letter.segments, 0));
     setCompletedSegments(initialCompleted(letter.segments));
     setStatus("awaiting-start");
-    setPoints([]);
-    setCoverage(0);
-    setWithin(false);
-  }, [letter.segments]);
+    clearAttempt();
+  }, [letter.segments, clearAttempt]);
 
   return {
     view: {
@@ -189,6 +242,8 @@ export function useSegmentTrace(letter: LetterDefinition): SegmentTraceApi {
       points,
       coverage,
       isWithinBoundaryBox,
+      resumeT,
+      wrongStartCount,
     },
     onPointerDown,
     onPointerMove,

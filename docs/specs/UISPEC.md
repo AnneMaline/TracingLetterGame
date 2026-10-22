@@ -1,13 +1,14 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.9.0
-**Last Updated:** 2026-10-09
+**Version:** 0.10.0
+**Last Updated:** 2026-10-22
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.8.0 · DEVSPEC v0.11.0
+**Traces to:** PRD v0.9.0 · DEVSPEC v0.12.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
-> tracing with a boundary box that is never rendered. See §8 Spec Change Log.
+> tracing with a boundary box, shown to the child as a soft band since task 013. See §8 Spec
+> Change Log.
 
 ## 1. Screen Inventory
 
@@ -20,41 +21,51 @@
 
 ### Screen: Tracing
 
-- **Layout:** The current line segment is shown with a start marker, a direction indicator
-  (arrow along the start→end vector), and an end marker. A faint ghost outline of all letter segments
+- **Layout:** The current line segment is shown with a start marker (a green disc that pulses while
+  waiting for a fresh start), a direction indicator (dashed guide path whose dashes flow from start
+  to end, plus arrows), and an end marker (an orange star). The current segment's boundary box is
+  drawn as a soft light-green band beneath everything else. While the child waits, a yellow demo
+  dot glides along the segment from start to end, then pauses and repeats. While tracing or
+  paused, the covered part of the segment fills in green. While paused, a pulsing green resume dot
+  marks where to continue and the start marker is dimmed. A faint ghost outline of all letter segments
   is always rendered as a background layer (letter shadow; see DEVSPEC Letter Shadow Guide module).
   Optional helplines can be rendered as three horizontal writing guides at y=0.14, y=0.50 (dashed),
   and y=0.86, spanning almost the full width of the draw box with small side insets. For lowercase
-  letters, an additional dashed descender guide is rendered at y=1.22.
-  The boundary box is **never rendered** (it's an invisible accuracy check, per DEVSPEC Segment Completion module). MVP: bottom
+  letters, an additional dashed descender guide is rendered at y=1.22. MVP: bottom
   Next/Previous buttons. M3 (Great): bottom Next/Previous are removed and replaced by a top bar
   with a left "Menu" control, right "Next" control, and Helplines toggle.
 - **Style notes:**
   - **Easy mode:** Shadow ghost outline is visible throughout tracing and after letter completion.
   - **Hard mode:** On letter open, shadow outline appears alone for exactly 2 seconds (segment guide and tracing feedback hidden); pointer events are blocked. After 2 seconds, shadow disappears, segment guide appears, and tracing is enabled.
   - **Helplines:** When enabled, top and bottom guide lines are solid and the middle guide line is dashed.
+  - **Reduced motion:** when the device requests reduced motion, the start/resume pulse and flowing dashes are still and the demo dot is not shown.
 - **Components:** `SegmentGuide` (start/direction/end markers, references DEVSPEC Line Segment
-  Rendering module), `TraceSurface` (captures drag input, renders letter shadow, references DEVSPEC Segment Completion &
+  Rendering module), `TraceAids` (`CorridorBand`, `ProgressFill`, `ResumeMarker`, `DemoDot`;
+  references DEVSPEC Line Segment Rendering tasks 5–9), `TraceSurface` (captures drag input, renders letter shadow, references DEVSPEC Segment Completion &
   Boundary Box module), and `TracingHeader` with
   `menu-button`/`next-letter` actions plus `helplines-toggle` (`role="switch"`) in M3. Tracing
-  test IDs include `letter-shadow` for the ghost-outline layer and
-  `helpline-lowercase-descender` for the lowercase-only descender guide.
+  test IDs include `letter-shadow` for the ghost-outline layer,
+  `helpline-lowercase-descender` for the lowercase-only descender guide, and `corridor-band`,
+  `demo-dot`, `progress-fill`, `resume-marker`, `segment-guide-start`, `segment-guide-end` and
+  `segment-guide-line` for the tracing aids.
 - **States:**
   - `helplines-on` / `helplines-off` — visual-aid sub-state that can be changed without resetting tracing progress. Every tracing session starts in `helplines-off`.
   - `shadow-preview` (Hard mode only) — on letter open, shadow outline displayed alone for 2 seconds; segment guide hidden; pointer input blocked.
-  - `awaiting-start` — segment guide shown, no drag in progress, shadow outline visible (Easy mode always; Hard mode after preview ends).
-  - `tracing` — child is actively dragging inside the boundary box; visual feedback follows the drag; shadow outline remains visible.
+  - `awaiting-start` — segment guide and corridor band shown, start marker pulses, demo dot glides along the segment, no drag in progress, shadow outline visible (Easy mode always; Hard mode after preview ends).
+  - `tracing` — child is actively dragging inside the boundary box; visual feedback follows the drag; the covered part fills in green; demo dot hidden; start marker still; shadow outline remains visible.
+  - `segment-paused` — finger-up with <80% but ≥10% coverage; the green fill stays, a pulsing resume dot marks the frontier, the start marker is dimmed, and the demo dot glides from the resume dot to the end; shadow outline remains visible.
   - `segment-reset` — boundary-box exit, angular deviation past the threshold (M2), or a
-    finger-up with <80% coverage; feedback stops, the child must restart the current segment; shadow outline remains visible.
+    finger-up with <10% coverage; feedback stops, the child must restart the current segment; start marker pulses and the demo replays; shadow outline remains visible.
   - `segment-complete` — coverage ≥ 80% confirmed either on finger-up while in-box or on
     pointer entry into the segment's end region (M2); brief transition to the next segment; shadow outline remains visible.
   - `letter-complete` — all segments done; celebration animation plays; shadow outline remains visible until celebration ends.
 - **Visibility rules:** Bottom Next/Previous visible only in MVP (removed once M3 ships). M3 top-bar
-  Menu, Next, and Helplines controls are visible in Tracing and reachable from every state above. The boundary
-  box itself is never visible in any state, in any milestone. Shadow outline is always visible except during the Hard-mode preview (where it's the only visible element).
+  Menu, Next, and Helplines controls are visible in Tracing and reachable from every state above. The corridor
+  band, segment guide, demo dot, progress fill and resume dot are hidden during the Hard-mode preview and after
+  `letter-complete`; the demo dot shows only in `awaiting-start`, `segment-reset` and `segment-paused`. Shadow outline is always visible except during the Hard-mode preview (where it's the only visible element).
 - **Transitions:** `shadow-preview` (Hard only) --(2 seconds elapse)--> `awaiting-start` for the first segment.
   `helplines-on` --(toggle Helplines off)--> `helplines-off`; `helplines-off` --(toggle Helplines on)--> `helplines-on`; toggling helplines never changes segment-completion state.
-  `segment-complete` → next segment's `awaiting-start`, or `letter-complete` if it was the last segment. `segment-reset` → `awaiting-start` for the same segment (progress on that segment discarded; other completed segments unaffected). `letter-complete` → celebration ends → remain on the completed letter with top-bar Menu/Next available.
+  `segment-complete` → next segment's `awaiting-start`, or `letter-complete` if it was the last segment. `segment-reset` → `awaiting-start` for the same segment (progress on that segment discarded; other completed segments unaffected). `segment-paused` → `tracing` from the resume dot (progress kept) or from the start marker (progress discarded). `letter-complete` → celebration ends → remain on the completed letter with top-bar Menu/Next available.
 
 ### Screen: Letter Selection (M3 — Great tier)
 
@@ -73,11 +84,15 @@
 ```
 # Common flow (Easy mode + Hard mode after preview):
 awaiting-start --(pointer down inside the segment's start region)--> tracing
-awaiting-start --(pointer down inside the boundary box but outside the start region)--> awaiting-start (ignored)
+awaiting-start --(pointer down outside the start region)--> awaiting-start (ignored; demo dot replays)
 tracing --(pointer exits boundary box)--> segment-reset --(auto)--> awaiting-start (same segment)
 tracing --(pointer enters end region while coverage >= 80%)--> segment-complete --(auto)--> awaiting-start (next segment) | letter-complete
 tracing --(pointer up, coverage >= 80%)--> segment-complete --(auto)--> awaiting-start (next segment) | letter-complete
-tracing --(pointer up, coverage < 80%)--> segment-reset --(auto)--> awaiting-start (same segment)
+tracing --(pointer up, 10% <= coverage < 80%)--> segment-paused (progress kept)
+tracing --(pointer up, coverage < 10%)--> segment-reset --(auto)--> awaiting-start (same segment)
+segment-paused --(pointer down near the resume dot)--> tracing (continues from the resume point)
+segment-paused --(pointer down inside the start region)--> tracing (fresh attempt, progress discarded)
+segment-paused --(pointer down anywhere else)--> segment-paused (ignored; demo dot replays)
 
 # Hard mode preview (on letter open):
 (letter opens in Hard mode) --(auto)--> shadow-preview (display ghost shadow only, block pointer input, 2-second timer)
@@ -86,6 +101,7 @@ shadow-preview --(2 seconds elapsed)--> awaiting-start (show segment guide, enab
 # M2 (Better tier) additions:
 tracing --(drag direction deviates past threshold, still in-box)--> segment-reset
 tracing --(pointer exits boundary box even after >=80% pre-finger-up coverage)--> segment-reset
+# On curves the deviation must last 0.04 units of travel before it resets (DEVSPEC Deviation Detection task 3).
 ```
 
 ## 4. Acceptance Criteria (Gherkin)
@@ -139,9 +155,22 @@ Feature: Segment tracing completion (MVP)
 
   Scenario: Insufficient coverage forces a restart
     Given the Tracing screen shows segment 1 of letter "E"
-    When the child drags to less than 80% of the segment and releases
+    When the child drags less than 10% of the segment and releases
     Then segment 1 resets
     And the child must begin tracing that segment again
+
+  Scenario: Lifting mid-stroke keeps progress
+    Given the child has traced about half of the letter "C"
+    When the child lifts their finger
+    Then the traced part stays green
+    And a pulsing resume dot appears at the end of the green part
+    When the child presses the resume dot and traces to the end
+    Then the segment is marked complete
+
+  Scenario: Starting over from the start marker while paused
+    Given the segment is paused with a resume dot showing
+    When the child presses the start marker instead
+    Then a fresh attempt starts and the earlier progress is discarded
 
   Scenario: Leaving the boundary box stops feedback and resets
     Given the child is actively tracing a segment
@@ -181,14 +210,48 @@ Feature: Deviation cancels the trace (M2 — Better tier)
 Feature: Start region and end region (M2)
   Scenario: Pointer-down outside the start region is ignored
     Given the Tracing screen shows a segment
-    When the child touches inside the boundary box but outside the segment's start region
+    When the child touches anywhere outside the segment's start region
     Then no tracing begins and the segment guide is still shown
+    And the demo dot replays from the start
+
+  Scenario: Pointer-down just outside the band but on the start dot starts tracing
+    Given the Tracing screen shows a segment
+    When the child touches within the start region but outside the corridor band
+    Then tracing begins
 
   Scenario: Trace auto-completes on entering the end region
     Given the child is tracing a segment and has already covered at least 80% of it in-box
     When the child's pointer enters the segment's end region
     Then the segment is marked complete without requiring a finger-up
     And the next segment is shown, or the celebration animation plays if it was the last segment
+
+Feature: Direction guidance and tracing aids
+  Scenario: Waiting for a start shows where and which way to trace
+    Given the Tracing screen shows a segment awaiting a start
+    Then the corridor band, the pulsing start marker and the star end marker are visible
+    And the guide dashes flow from start to end
+    And a demo dot glides along the segment from start to end
+
+  Scenario: Tracing hides the demo and shows progress
+    Given the child presses the start marker and drags along the segment
+    Then the demo dot is hidden and the start marker stops pulsing
+    And the covered part of the segment fills in green
+
+  Scenario: Hard mode shows the aids only after the preview
+    Given the child opens a letter in Hard mode
+    Then the corridor band and demo dot are hidden during the 2-second preview
+    And they appear once the preview ends
+
+Feature: Long curves are forgiving (C, G, O, U)
+  Scenario: A wobbly trace of a long curve completes
+    Given the child traces the long stroke of "O" with small wobbles inside the band
+    When the child reaches the end
+    Then the segment is marked complete
+
+  Scenario: Tracing a curve the wrong way still resets
+    Given the child is tracing a curve
+    When the child moves backwards along it
+    Then the segment resets
 
 Feature: Letter selection (M3 — Great tier)
   Scenario: Selecting a letter from the selection screen
@@ -242,28 +305,32 @@ Feature: Letter completion celebration
 - Minimum touch target size 44x44px for Next/Previous (MVP), letter tiles, and the M3 top-bar Menu/Next controls.
 - Text/marker contrast ratio ≥ 4.5:1 against background (WCAG AA).
 - All interactive controls reachable and operable via keyboard for desktop fallback (Tab + Enter/Space).
-- The boundary box is intentionally never shown to the child (functional requirement) — this is a
-  deliberate exception to "no invisible state," not an oversight.
+- The boundary box is shown as a soft band so the child can see the allowed area (since task 013).
+- All decorative motion (start/resume pulse, flowing dashes, demo dot) is disabled when the
+  platform requests reduced motion.
 - No autoplay audio without an accompanying visual cue, if audio is added to the celebration animation.
 
 ## 6. Appendix — Open Questions
 
-| Question                                                                    | Blocks                       | Owner  |
-| --------------------------------------------------------------------------- | ---------------------------- | ------ |
-| Exact visual style of the direction indicator/arrow                         | Segment guide implementation | Design |
-| Whether `segment-reset` shows a distinct visual cue beyond "feedback stops" | Tracing screen states        | Design |
+| Question                                                                    | Blocks                | Owner  |
+| --------------------------------------------------------------------------- | --------------------- | ------ |
+| Whether `segment-reset` shows a distinct visual cue beyond "feedback stops" | Tracing screen states | Design |
 
 ## 7. Appendix — Resolved Decisions
 
 | Date       | Decision                                                                                                                                                                                                                                              | Rationale                                                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-22 | Direction indicator style resolved: flowing guide dashes, arrows, a gliding demo dot (replayed on a wrong touch), a pulsing green start disc and an orange star end marker (closes the arrow-style open question)                                     | Play-testing: children did not know which way to trace or where the stroke ends                                                                                          |
+| 2026-10-22 | The boundary box is drawn as a soft light-green band under the letter shadow (supersedes the 2026-09-03 "never rendered" decision)                                                                                                                    | Feedback asked for a visible "bubble letter" background so the child can see the allowed area                                                                            |
+| 2026-10-22 | New `segment-paused` state after a finger-up with 10–80% coverage: green progress stays, a pulsing resume dot marks where to continue, and the start marker is dimmed                                                                                 | Feedback: "Correct from before." Long curves were rarely finished when every lift discarded progress                                                                     |
+| 2026-10-22 | Corridor band and demo dot also show in Hard mode, after the 2-second preview                                                                                                                                                                         | Human decision in task 013; Hard mode already shows the segment guide after the preview                                                                                  |
 | 2026-10-09 | Hard mode switch controls a preview-first tracing mode (2-second shadow-only intro) and does not switch authored fixture datasets                                                                                                                     | Matches shipped rewrite behavior and keeps one fixture source of truth                                                                                                   |
 | 2026-10-09 | Helpline geometry is aligned to authored writing guides at y=0.14/0.50/0.86, plus a lowercase-only dashed descender guide at y=1.22                                                                                                                   | Reflects shipped visual alignment aids for cap-height, midline, baseline, and lowercase descender zones                                                                  |
 | 2026-10-01 | Letter Selection UI includes a case switch (`role="switch"`, `data-testid="case-toggle"`) that defaults to uppercase and toggles the menu between uppercase and lowercase letter labels/launch behavior                                               | Matches shipped Task 009 UI and keeps case selection discoverable alongside existing Hard mode controls                                                                  |
 | 2026-09-23 | Helplines toggle starts in the off state on every tracing session (Easy and Hard); the child/caregiver opts in per session                                                                                                                            | Keeps the tracing surface uncluttered by default while leaving handwriting alignment support one tap away                                                                |
 | 2026-09-23 | Tracing UI includes a Helplines switch (`role="switch"`, `data-testid="helplines-toggle"`) visible in both Easy and Hard mode; enabled state renders top/middle/bottom horizontal guides at y=0.12/0.50/0.86, with dashed middle guide                | Provides optional handwriting alignment cues while preserving existing tracing flow and hard-mode semantics                                                              |
 | 2026-09-22 | Letter shadow rendered as a persistent low-opacity ghost outline layer in Easy mode, and as a 2-second preview on letter open in Hard mode (all pointer events blocked during preview)                                                                | Supports letter acquisition and visual memory in Easy mode; brief preview in Hard mode encourages active recall and increases difficulty per Stephanie Gottwald feedback |
-| 2026-09-03 | The boundary box is never rendered in the UI, in any milestone                                                                                                                                                                                        | Explicit functional requirement in the product brief — it's an accuracy check, not a visible guide                                                                       |
+| 2026-09-03 | The boundary box is never rendered in the UI, in any milestone _(superseded 2026-10-22: rendered as a soft band)_                                                                                                                                     | Explicit functional requirement in the product brief — it's an accuracy check, not a visible guide                                                                       |
 | 2026-09-04 | MVP Next/Previous controls wrap between the first and last in-scope letters                                                                                                                                                                           | Provides continuous navigation until M3 replaces the controls with letter selection                                                                                      |
 | 2026-09-04 | Celebration animation is a full-tracing-surface CSS-keyframe overlay (⭐ pop + ✨ spin, ~1.5 s, `pointer-events: none`), preceded by a short pause after the last segment completes so the finished letter stays visible before the celebration plays | Meets DEVSPEC legacy-hardware performance constraint; gives the child visual closure on the completed letter before the reward plays                                     |
 | 2026-09-07 | Removed the `tracing-paused` state and its pause/resume transitions; M2 deviation past threshold now transitions directly `tracing → segment-reset` (same visible effect as a boundary-box exit)                                                      | Follows the DEVSPEC v0.4.0 deviation model change                                                                                                                        |
@@ -275,6 +342,7 @@ Feature: Letter completion celebration
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-22 — Copilot — Task 013 spec-update pass: made the boundary box a visible band, added the direction aids (flowing dashes, demo dot, pulsing start, star end), live progress fill and resume dot to the Tracing layout/components/test IDs, added the `segment-paused` state and its transitions, narrowed `segment-reset` on finger-up to <10% coverage, added Gherkin for resume after lift, direction guidance, Hard-mode aids and long-curve forgiveness, added reduced-motion accessibility, closed the arrow-style open question, and bumped UISPEC to v0.10.0 with `Traces to:` PRD v0.9.0 / DEVSPEC v0.12.0.
 - 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode to preview-mode selection (no fixture swap), updated Helplines geometry to y=0.14/0.50/0.86 with lowercase descender y=1.22, added Tracing test IDs for shadow/descender guide, updated M3 Gherkin wording, and bumped UISPEC to v0.9.0 with `Traces to:` PRD v0.8.0 / DEVSPEC v0.11.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: added Letter Selection case-toggle UI (layout/components/states/transitions), added M3 case-selection Gherkin scenarios (default uppercase, lowercase launch behavior, and independence from Hard mode), added a resolved decision, and bumped UISPEC to v0.8.0 with `Traces to:` PRD v0.7.0 / DEVSPEC v0.10.0.
 - 2026-10-01 — Copilot — Bumped `Traces to:` DEVSPEC to v0.9.0 (non-tracable segment counting and lowercase canvas height); no UI content changed; UISPEC v0.7.2.

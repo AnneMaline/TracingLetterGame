@@ -1,4 +1,4 @@
-import type { LineSegment } from "../../types";
+import type { LineSegment, Point } from "../../types";
 import { END_REGION_RADIUS, START_MARKER_RADIUS } from "../../shared/constants";
 import {
   curvePointAt,
@@ -9,6 +9,9 @@ import {
 
 interface Props {
   segment: LineSegment;
+  // While paused the resume dot is the place to continue, so the start dot steps back.
+  isPaused?: boolean;
+  pulseStart?: boolean;
 }
 
 const calculateArrowPosition = ({
@@ -59,11 +62,23 @@ const calculateArrowPosition = ({
   return `${arrowTipX},${arrowTipY} ${arrowBaseX + perpX},${arrowBaseY + perpY} ${arrowBaseX - perpX},${arrowBaseY - perpY}`;
 };
 
-export function SegmentGuide({ segment }: Props) {
+// Five-pointed star centred on `center`, used as the end target.
+const starPoints = (center: Point, outer: number, inner: number) =>
+  Array.from({ length: 10 }, (_, i) => {
+    const r = i % 2 === 0 ? outer : inner;
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    return `${center.x + r * Math.cos(angle)},${center.y + r * Math.sin(angle)}`;
+  }).join(" ");
+
+export function SegmentGuide({
+  segment,
+  isPaused = false,
+  pulseStart = false,
+}: Props) {
   const { start, end } = segment;
 
   return (
-    <g data-testid="segment-guide">
+    <g data-testid="segment-guide" pointerEvents="none">
       {isCurvedSegment(segment) ? (
         <path
           d={curveSvgPath(segment)}
@@ -72,6 +87,7 @@ export function SegmentGuide({ segment }: Props) {
           strokeWidth={0.02}
           strokeLinecap="round"
           strokeDasharray="0.03 0.02"
+          className="guide-flow"
         />
       ) : (
         <line
@@ -83,16 +99,20 @@ export function SegmentGuide({ segment }: Props) {
           strokeWidth={0.02}
           strokeLinecap="round"
           strokeDasharray="0.03 0.02"
+          className="guide-flow"
           data-testid="segment-guide-line"
         />
       )}
-      <circle
-        cx={end.x}
-        cy={end.y}
-        r={END_REGION_RADIUS}
-        fill="none"
+      <polygon
+        points={starPoints(
+          end,
+          END_REGION_RADIUS * 1.4,
+          END_REGION_RADIUS * 0.6,
+        )}
+        fill="#f4a261"
         stroke="#e07b39"
-        strokeWidth={0.012}
+        strokeWidth={0.006}
+        strokeLinejoin="round"
         data-testid="segment-guide-end"
       />
       <circle
@@ -100,6 +120,8 @@ export function SegmentGuide({ segment }: Props) {
         cy={start.y}
         r={START_MARKER_RADIUS}
         fill="#3aa856"
+        opacity={isPaused ? 0.45 : 1}
+        className={pulseStart ? "trace-pulse" : undefined}
         data-testid="segment-guide-start"
       />
       <polygon

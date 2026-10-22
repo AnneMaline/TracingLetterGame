@@ -26,6 +26,7 @@ const letterU: LetterDefinition = {
         { x: 0.75, y: 0.64 },
         { x: 0.75, y: 0.15 },
       ],
+      boundaryHalfWidth: 0.11,
     },
   ],
 };

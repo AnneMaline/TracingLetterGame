@@ -54,3 +54,40 @@ body {
     opacity: 0;
   }
 }
+
+@keyframes trace-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* One dash period (0.03 + 0.02) per cycle, so the dashes flow from start to end. */
+@keyframes guide-flow {
+  from {
+    stroke-dashoffset: 0.05;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.trace-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: trace-pulse 1.2s ease-in-out infinite;
+}
+
+.guide-flow {
+  animation: guide-flow 0.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trace-pulse,
+  .guide-flow {
+    animation: none;
+  }
+}

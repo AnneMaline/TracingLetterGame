@@ -167,6 +167,26 @@ export function curvePointAt(segment: LineSegment, t: number): Point {
   return stadiumPointAt(segment, t);
 }
 
+export function segmentPointAt(segment: LineSegment, t: number): Point {
+  return isCurvedSegment(segment)
+    ? curvePointAt(segment, t)
+    : lerpPoint(segment.start, segment.end, clamp01(t));
+}
+
+// Points along the segment from its start up to progress t (inclusive).
+export function segmentPathUpTo(segment: LineSegment, t: number): Point[] {
+  const end = clamp01(t);
+  if (!isCurvedSegment(segment))
+    return [segment.start, segmentPointAt(segment, end)];
+  const samples = sampleCurve(segment);
+  const points: Point[] = [];
+  for (let i = 0; i < samples.length && i / CURVE_SAMPLE_STEPS < end; i++) {
+    points.push(samples[i]);
+  }
+  points.push(curvePointAt(segment, end));
+  return points;
+}
+
 export function sampleCurve(segment: LineSegment): readonly Point[] {
   const cached = sampleCache.get(segment);
   if (cached) return cached;

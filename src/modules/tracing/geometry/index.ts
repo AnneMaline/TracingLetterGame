@@ -13,6 +13,8 @@ export {
   curvePointAt,
   isCurvedSegment,
   segmentDirection,
+  segmentPathUpTo,
+  segmentPointAt,
   segmentTangentAt,
 } from "./curves";
 export { isClosedLoopSegment, wrapLoopT } from "./oval";
@@ -22,7 +24,7 @@ export {
   projectPathProgressively,
   projectPointOntoSegment,
 } from "./projection";
-export { curveSvgPath } from "./svgPath";
+export { curveSvgPath, segmentSvgPath } from "./svgPath";
 export {
   angleBetweenDegrees,
   computeDragDirection,

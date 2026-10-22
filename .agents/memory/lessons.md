@@ -58,6 +58,27 @@ engine bundle. Only `vite.config.ts` and tests import it.
 `ReactNativeWebView.postMessage` (a false positive: it isn't `window.postMessage`). The
 suppression is a file-scoped override in `.oxlintrc.json` instead.
 
+## 2026-10-22 — A bigger start region needs the first sample anchored, not box-checked
+
+Raising `START_REGION_RADIUS` above the corridor padding means a valid press can sit outside the
+boundary box, or project onto a distant branch (for example the end of a tight `g` bowl).
+Scoring now takes `startT`. Samples inside the anchor's touch disc skip the box check, and the
+first sample is pinned to `startT` only when it projects far away. Always pinning it broke
+closed loops when the press landed just behind the seam.
+
+## 2026-10-22 — Resume after lift: new attempt anchored at the frontier, no point splicing
+
+Lifting below 80% now pauses (`segment-paused`). Resuming starts a fresh point list with
+`startT` set to the frontier, rather than appending to the old points. Appending would recreate
+the 2026-09-07 snap problem: the jump between the old tail and the new press would corrupt the
+drag-direction chord. Exit or deviation still resets fully.
+
+## 2026-10-22 — SMIL animations start at document time 0, not at insertion
+
+A `<animateMotion begin="0s">` inserted later joins mid-cycle. The demo dot uses
+`begin="indefinite"` and calls `beginElement()` on mount. To replay it, remount it with a new
+`key`. jsdom has no `beginElement`, so guard the call.
+
 ## 2026-10-01 — Cache derived curve data per segment object
 
 Without caching, `evaluateSegmentPath` re-sampled polylines (48 samples × sub-segment

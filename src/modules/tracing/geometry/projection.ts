@@ -1,10 +1,12 @@
 import type { LineSegment, Point } from "../../../types";
+import { START_REGION_RADIUS } from "../../../shared/constants";
 import { isDegenerate } from "./boundary";
 import {
   CURVE_SAMPLE_STEPS,
   curveLength,
   isCurvedSegment,
   sampleCurve,
+  segmentPointAt,
 } from "./curves";
 import { isClosedLoopSegment, unwrapLoopT, wrapLoopT } from "./oval";
 import { clamp01, distanceBetween } from "./vector";
@@ -83,24 +85,44 @@ export function projectPointOntoSegment(
   );
 }
 
+function firstSampleT(
+  point: Point,
+  segment: LineSegment,
+  startT?: number,
+): number {
+  const closed = isClosedLoopSegment(segment);
+  const anchorT = startT ?? 0;
+  const raw = projectPointOntoSegment(
+    point,
+    segment,
+    startT === undefined ? undefined : wrapLoopT(startT),
+  );
+  const t = closed ? unwrapLoopT(raw, anchorT) : raw;
+  if (startT === undefined) return t;
+  const pathDistance = Math.abs(t - startT) * curveLength(segment);
+  return pathDistance > 2 * START_REGION_RADIUS ? startT : t;
+}
+
 // Each sample is projected with the previous progress as a hint, which keeps
 // self-overlapping polylines on the correct branch. Closed loops are unwrapped across the
 // seam, so the result may go slightly < 0 (start behind the seam) or >= 1 (lap finished).
+// With `startT` (a start or resume anchor) the first sample is unwrapped around that progress,
+// and pinned to it if it projected onto a distant branch of the path.
 export function projectPathProgressively(
   points: readonly Point[],
   segment: LineSegment,
+  startT?: number,
 ): number[] {
   const ts: number[] = [];
   if (points.length === 0) return ts;
+  ts.push(firstSampleT(points[0], segment, startT));
   if (!isClosedLoopSegment(segment)) {
-    ts.push(projectPointOntoSegment(points[0], segment));
     for (let i = 1; i < points.length; i++) {
       ts.push(projectPointOntoSegment(points[i], segment, ts[i - 1]));
     }
     return ts;
   }
 
-  ts.push(unwrapLoopT(projectPointOntoSegment(points[0], segment), 0));
   for (let i = 1; i < points.length; i++) {
     const prevT = ts[i - 1];
     const rawT = projectPointOntoSegment(points[i], segment, wrapLoopT(prevT));
@@ -111,22 +133,25 @@ export function projectPathProgressively(
 
 // Canonical coverage for every segment kind: the furthest progress (frontier) reached, where
 // each step may only advance the frontier by its own forward progress, capped by the pointer's
-// physical travel. The segment start acts as a virtual first sample at t=0.
+// physical travel. The point at `startT` (segment start, or a resume point) acts as a virtual
+// first sample.
 // Straight lines: identical to the max projected t. Curves: re-tracing or jitter never earns
 // coverage twice, and seam/branch projection jumps are gated.
 export function coverageFromProgress(
   points: readonly Point[],
   ts: readonly number[],
   segment: LineSegment,
+  startT = 0,
 ): number {
-  if (points.length === 0) return 0;
+  if (points.length === 0) return startT;
   if (!isCurvedSegment(segment) && isDegenerate(segment)) return 0;
   const pathLength = curveLength(segment);
   if (pathLength <= 0) return 0;
 
-  let frontier = 0;
-  let prevPoint = segment.start;
-  let prevT = 0;
+  let frontier = startT;
+  let prevPoint =
+    startT === 0 ? segment.start : segmentPointAt(segment, startT);
+  let prevT = startT;
   for (let i = 0; i < points.length; i++) {
     const t = clamp01(ts[i]);
     const forward = t - prevT;
@@ -147,10 +172,12 @@ export function coverageFromProgress(
 export function computeCoverage(
   points: readonly Point[],
   segment: LineSegment,
+  startT?: number,
 ): number {
   return coverageFromProgress(
     points,
-    projectPathProgressively(points, segment),
+    projectPathProgressively(points, segment, startT),
     segment,
+    startT,
   );
 }

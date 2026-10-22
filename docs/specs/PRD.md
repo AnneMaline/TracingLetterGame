@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.8.0
-**Last Updated:** 2026-10-09
+**Version:** 0.9.0
+**Last Updated:** 2026-10-22
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -27,19 +27,21 @@ paradigm as a sub-app of the Curious Reader container.
 
 ## 2. Personas
 
-| Persona                      | Description                                                            | Primary need                                                                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Child learner                | Ages 4–7, pre-writer to early writer, may not read instructions        | Continuous, low-text, high-visual guidance on exactly where/how to trace; forgiving of small drift, strict about leaving the line entirely |
-| Parent/guardian              | Supervises play, wants reassurance of learning value, no ads/data risk | Safe, offline, no accounts, no personal data collection                                                                                    |
-| Curious Reader container/CMS | Hosts and launches the game, distributes content packs                 | A game that conforms to the standalone-game-spec packaging/data contract                                                                   |
+| Persona                      | Description                                                            | Primary need                                                                                                                                                                                      |
+| ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Child learner                | Ages 4–7, pre-writer to early writer, may not read instructions        | Continuous, low-text, high-visual guidance on exactly where/how to trace; forgiving of small drift and wobbles, lets them carry on after lifting a finger, strict about leaving the line entirely |
+| Parent/guardian              | Supervises play, wants reassurance of learning value, no ads/data risk | Safe, offline, no accounts, no personal data collection                                                                                                                                           |
+| Curious Reader container/CMS | Hosts and launches the game, distributes content packs                 | A game that conforms to the standalone-game-spec packaging/data contract                                                                                                                          |
 
 ## 3. Goals
 
 - Break each letter into line-segment vectors, each with a defined start and end coordinate, to trace one at a time.
-- Continuously show the child where to start, which direction to trace, and where to end each segment.
-- Measure tracing accuracy per segment using an invisible boundary box around the ideal line; keep the child
-  engaged by giving real-time visual feedback as they drag.
-- Require meaningful completion of a segment (≥80% of its length, checked on finger-up) before advancing.
+- Continuously show the child where to start, which direction to trace, and where to end each segment, including a
+  moving demonstration of the stroke direction that needs no reading.
+- Measure tracing accuracy per segment using a boundary box around the ideal line, shown to the child as a soft band
+  so they can see the allowed area; keep the child engaged by giving real-time visual feedback as they drag.
+- Require meaningful completion of a segment (≥80% of its length) before advancing. Lifting the finger part-way keeps
+  the progress made so far, so the child can continue from where they stopped instead of starting over.
 - Celebrate completing all segments of a letter with an animation.
 - Let the child move between letters (MVP: Next/Previous; Great tier: a letter-selection screen reachable at any time).
 - Offer a session-only Hard mode toggle on the letter-selection screen so caregivers/children can switch
@@ -61,13 +63,13 @@ paradigm as a sub-app of the Curious Reader container.
 
 ## 5. KPIs / Success Metrics
 
-| Metric                                                                  | Target                                             | Measurement method                                |
-| ----------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------- |
-| Segment completions per session                                         | ≥ 10                                               | Local event count (dev/test instrumentation only) |
-| Boundary-box-exit reset rate is visibly enforced (no false completions) | 100% of scripted exit-tests reset the segment      | TESTSPEC scripted fixtures                        |
-| <80%-coverage finger-up correctly forces restart                        | 100% of scripted under-80% tests reset the segment | TESTSPEC scripted fixtures                        |
-| Full-letter completion triggers celebration exactly once                | 100% of scripted full-letter tests                 | TESTSPEC scripted fixtures                        |
-| Zero crashes/blocking errors during a 10-minute play session            | 0                                                  | QA dry-run                                        |
+| Metric                                                                      | Target                                                        | Measurement method                                |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
+| Segment completions per session                                             | ≥ 10                                                          | Local event count (dev/test instrumentation only) |
+| Boundary-box-exit reset rate is visibly enforced (no false completions)     | 100% of scripted exit-tests reset the segment                 | TESTSPEC scripted fixtures                        |
+| <80%-coverage finger-up never completes the segment (it pauses or restarts) | 100% of scripted under-80% tests leave the segment incomplete | TESTSPEC scripted fixtures                        |
+| Full-letter completion triggers celebration exactly once                    | 100% of scripted full-letter tests                            | TESTSPEC scripted fixtures                        |
+| Zero crashes/blocking errors during a 10-minute play session                | 0                                                             | QA dry-run                                        |
 
 ## 6. Scope Summary
 
@@ -77,8 +79,10 @@ paradigm as a sub-app of the Curious Reader container.
 - Next/Previous buttons to move between letters.
 - Directional guide per segment: start point, direction, end point.
 - Real-time visual feedback following the child's drag.
-- Invisible boundary box per segment; exiting it stops feedback and forces a restart of that segment.
-- ≥80%-of-segment-length completion required on finger-up to advance; otherwise restart the segment.
+- Invisible boundary box per segment; exiting it stops feedback and forces a restart of that segment
+  (made visible as a soft band in the M3 forgiveness refinement).
+- ≥80%-of-segment-length completion required on finger-up to advance; otherwise restart the segment
+  (superseded by resume-after-lift in the M3 forgiveness refinement).
 - Celebration animation when all segments of the current letter are completed.
 
 ### Better (M2)
@@ -111,6 +115,22 @@ paradigm as a sub-app of the Curious Reader container.
 - Add a Tracing-screen Helplines toggle that is visible in both Easy and Hard mode and controls the visibility of
   three horizontal guide lines (top y=0.14, dashed middle y=0.50, bottom y=0.86) plus a lowercase-only dashed descender
   guide at y=1.22, spanning almost the full draw-box width.
+
+### Tracing forgiveness & guidance (M3 refinement)
+
+Based on play-testing feedback ("This game is not about success or failure. It's about trying."):
+
+- A wider allowed area around each stroke, shown as a soft band, and an even wider one on the long single-stroke
+  curves (C, G, O, U and c, g, o, u).
+- A bigger, pulsing start point that is easier to hit with a finger.
+- Clearer direction: a dot glides along the stroke from start to end, the guide's dashes move in the tracing
+  direction, and the end point is a star. Touching the wrong place replays the demonstration.
+- On curves, brief wobbles no longer restart the stroke; going the wrong way still does.
+- The traced part of the stroke fills in as the child goes.
+- Lifting the finger part-way keeps the progress and shows a dot to continue from; touching the start point begins
+  the stroke again. Leaving the allowed area or going the wrong way still restarts the stroke.
+- All of this applies in Hard mode after the 2-second preview. Motion is switched off when the device asks for
+  reduced motion.
 
 ### Container integration (M4, Curious Learning convention)
 
@@ -147,6 +167,10 @@ paradigm as a sub-app of the Curious Reader container.
 
 | Date       | Decision                                                                                                                                                                                                                  | Rationale                                                                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-22 | Lifting the finger below 80% keeps the progress (once at least 10% is covered) and the child continues from a resume point; leaving the allowed area or deviating still restarts the stroke                               | Play-testing feedback: "If they pick the finger up, stop the line. Correct from before." Long curves (C, G, O, U) were rarely finished when every lift lost all progress                                                 |
+| 2026-10-22 | The boundary box is shown as a soft band; default padding widened from 0.06 to 0.09 normalized units, and to 0.11 on the long curves of C, G, O, U (upper and lower case)                                                 | Children left the invisible 0.06 area too often; feedback asked for a visible "bubble letter" background. Supersedes the 2026-09-04 padding decision                                                                     |
+| 2026-10-22 | Start point grows (visible radius 0.07, touch radius 0.12, was 0.08); direction is shown by a gliding demo dot, moving dashes and a star end point; a wrong touch replays the demo                                        | Children struggled to hit the start point and to know which way to trace. Supersedes the 0.08 start radius in the 2026-09-07 decision                                                                                    |
+| 2026-10-22 | On curves the deviation threshold is 60° and must last for 0.04 normalized units of travel before the stroke resets; straight strokes keep 45° and reset immediately                                                      | Finger jitter on tight arcs cancelled otherwise good traces of C, G, O, U. Refines the 2026-09-07 deviation decision for curves only                                                                                     |
 | 2026-10-09 | Hard mode uses the same authored fixtures as Easy mode; difficulty is delivered by a 2-second shadow-only preview with tracing input blocked until preview end                                                            | Matches shipped rewrite behavior from Task 010, avoids duplicate fixture maintenance, and preserves predictable authored data contracts                                                                                  |
 | 2026-10-09 | Helplines are authored-alignment guides at y=0.14, y=0.50 (dashed), and y=0.86, plus a lowercase-only dashed descender guide at y=1.22                                                                                    | Aligns guides to shipped letter authoring proportions (cap-height/baseline/descender zones) and preserves optional support without changing scoring behavior                                                             |
 | 2026-10-01 | M3 letter selection now includes a session-only case toggle (Uppercase/Lowercase) that defaults to uppercase on app load and switches which authored case dataset is shown/launched from the menu                         | Expands practice coverage to lowercase letters while preserving a single tracing architecture and keeping state session-only (no persistence scope increase)                                                             |
@@ -173,6 +197,7 @@ paradigm as a sub-app of the Curious Reader container.
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-22 — Copilot — Task 013 spec-update pass: added tracing forgiveness & guidance (visible wider allowed area, bigger start point, direction demo, curve wobble tolerance, live progress, resume after lift) to goals, persona needs and a new M3 refinement scope section, added four resolved decisions superseding the 0.06 padding and 0.08 start radius, and bumped PRD to v0.9.0.
 - 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode behavior to shipped shadow-only preview semantics (no fixture-set swap), updated Helplines geometry to y=0.14/0.50/0.86 plus lowercase descender y=1.22, added resolved decisions, and bumped PRD to v0.8.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: promoted lowercase a-z practice into shipped M3 scope via a session-only Letter Selection case toggle (Uppercase/Lowercase, default uppercase, no persistence), updated M3 milestone wording, removed lowercase from non-goals/out-of-scope lists, added a resolved decision, and bumped PRD to v0.7.0.
 - 2026-09-23 — Copilot — Task 008 follow-up: changed the Helplines initial default from ON to OFF (child/caregiver opts in during the session) and bumped PRD to v0.6.1.

@@ -5,6 +5,7 @@ import {
   HARD_MODE_PREVIEW_MS,
 } from "../../shared/constants";
 import { Celebration } from "../celebration/Celebration";
+import { reportLetterCompleted } from "../container/reporting";
 import { TraceSurface } from "./TraceSurface";
 import { useSegmentTrace } from "./useSegmentTrace";
 
@@ -43,6 +44,12 @@ export function LetterTracer({
   }, [isPreviewing]);
   const canTrace = !isPreviewing;
   const shadowVisible = !isHardMode || isPreviewing;
+
+  useEffect(() => {
+    if (view.status === "letter-complete") {
+      reportLetterCompleted(letter, isHardMode);
+    }
+  }, [view.status, letter, isHardMode]);
 
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   useEffect(() => {

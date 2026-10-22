@@ -39,6 +39,25 @@ the rewrite was exact. The legacy file and the test were deleted in the same com
 characterization snapshot (`__tests__/characterization.test.ts`) is the permanent guard. If it
 changes, scoring changed, and that needs an ADR or spec note.
 
+## 2026-10-09 — Vite's default HTML output does not run from file://
+
+Vite emits `base: "/"` plus `<script type="module" crossorigin>`. Under file:// that resolves to
+the filesystem root and is CORS-blocked. `vite.config.ts` sets `base: "./"`, uses IIFE output,
+and rewrites the tag to `<script defer>`. `scripts/package-cms.mjs` audits for regressions.
+
+## 2026-10-09 — Language data lives in the lang ZIP, not the engine bundle
+
+The CMS engine ZIP is shared by every language tile, so letter geometry is emitted to
+`lang/<code>/letters.json` and loaded at runtime with XHR (`fetch` rejects file:// in Android
+WebView). App code must never import `src/data/languagePacks.ts`, or the data ends up in the
+engine bundle. Only `vite.config.ts` and tests import it.
+
+## 2026-10-09 — oxlint ignored the inline disable for require-post-message-target-origin
+
+`// oxlint-disable-next-line unicorn/require-post-message-target-origin` had no effect on
+`ReactNativeWebView.postMessage` (a false positive: it isn't `window.postMessage`). The
+suppression is a file-scoped override in `.oxlintrc.json` instead.
+
 ## 2026-10-01 — Cache derived curve data per segment object
 
 Without caching, `evaluateSegmentPath` re-sampled polylines (48 samples × sub-segment

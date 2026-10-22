@@ -1,0 +1,9 @@
+{
+  "mcpUrl": "https://cms.curiouslearning.net/mcp",
+  "engineSlug": "tracequest",
+  "title": "TraceQuest",
+  "urlTemplate": "https://tracequest.curiouslearning.org/?cr_lang={lang}",
+  "hasCoreLevel": false,
+  "iconsDir": "cms/icons",
+  "devManifest": "Sopra Steria dev"
+}

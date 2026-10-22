@@ -33,3 +33,9 @@ export interface LetterDefinition {
   displayLabel: string;
   segments: LineSegment[];
 }
+
+/** Shape of `lang/<langCode>/letters.json` in a language pack. */
+export interface LanguageContent {
+  uppercase: LetterDefinition[];
+  lowercase: LetterDefinition[];
+}

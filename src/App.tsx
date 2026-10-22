@@ -1,20 +1,22 @@
 import { useState } from "react";
-import type { LetterCase } from "./types";
-import { letters as uppercaseLetters } from "./data/letterSegments/english/capitalLetters";
-import { letters as lowercaseLetters } from "./data/letterSegments/english/lowercaseLetters";
+import type { LanguageContent, LetterCase } from "./types";
 import { LetterSelectionScreen } from "./modules/letter-nav/LetterSelectionScreen";
 import { TracingScreen } from "./modules/tracing/TracingScreen";
 
 type Screen = "menu" | "tracing";
 
-export default function App() {
+interface Props {
+  content: LanguageContent;
+}
+
+export default function App({ content }: Props) {
   const [currentScreen, setCurrentScreen] = useState<Screen>("menu");
   const [selectedLetterIndex, setSelectedLetterIndex] = useState(0);
   const [isHardMode, setIsHardMode] = useState(false);
   const [selectedCase, setSelectedCase] = useState<LetterCase>("uppercase");
 
   const letters =
-    selectedCase === "uppercase" ? uppercaseLetters : lowercaseLetters;
+    selectedCase === "uppercase" ? content.uppercase : content.lowercase;
 
   const handleSelectLetter = (index: number) => {
     setSelectedLetterIndex(index);

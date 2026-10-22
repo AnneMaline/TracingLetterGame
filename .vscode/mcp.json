@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "crmcp-token",
+      "description": "Curious Reader CMS personal MCP token (crmcp_...)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "curious-reader-cms": {
+      "type": "http",
+      "url": "https://cms.curiouslearning.net/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:crmcp-token}"
+      }
+    }
+  }
+}

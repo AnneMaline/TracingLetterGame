@@ -39,5 +39,15 @@
     "vitest/require-mock-type-parameters": "off",
     "vitest/no-conditional-expect": "off"
   },
-  "ignorePatterns": ["dist/**", "node_modules/**", "coverage/**"]
+  "overrides": [
+    {
+      "files": ["scripts/**"],
+      "rules": { "no-console": "off", "no-await-in-loop": "off" }
+    },
+    {
+      "files": ["src/modules/container/reporting.ts"],
+      "rules": { "unicorn/require-post-message-target-origin": "off" }
+    }
+  ],
+  "ignorePatterns": ["dist/**", "node_modules/**", "coverage/**", "release/**"]
 }

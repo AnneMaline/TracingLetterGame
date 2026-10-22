@@ -15,6 +15,42 @@ npm run lint     # oxlint (see docs/adr/0002-code-conventions-and-quality-gates.
 npm run check    # all CI quality gates: typecheck + lint + tests + production audit
 ```
 
+## Packaging and uploading to the Curious Reader CMS
+
+The game ships as a 2-tier package ("Layout A" in
+[docs/reference/third-party-game-spec.md](docs/reference/third-party-game-spec.md)). Identity
+settings live in [cms.config.json](cms.config.json).
+
+```bash
+npm run package:cms   # build + offline audit -> release/tracequest-core.zip, release/tracequest-lang-english.zip
+```
+
+To check it offline, open `dist/index.html?cr_lang=english` from the file system with the
+network disabled. Desktop Chrome blocks XHR between `file://` URLs unless started with
+`--allow-file-access-from-files`. The container WebView allows it.
+
+**Token (never commit it):** copy `.env.example` to `.env.local`, which is git-ignored, and set
+`CRMCP_TOKEN=crmcp_...`. For Copilot/MCP access in VS Code, [.vscode/mcp.json](.vscode/mcp.json)
+prompts for the token on first use and stores it in VS Code's secret storage.
+
+```bash
+npm run cms -- status                       # our CMS items + whether they're in the dev manifest
+npm run package:cms                         # 1. build the ZIPs
+npm run cms -- upload --init --notes "..."  # 2. upload to development (first time; later omit --init)
+#                                             3. preview in the CMS player (admin site -> inventory)
+npm run cms -- status                       # 4. confirm the tile is in "Sopra Steria dev"
+```
+
+`upload` checks that the language pack was auto-added to the dev manifest named in
+`cms.config.json` (`devManifest`, currently "Sopra Steria dev"). If it wasn't, ask a CMS admin to
+add it or to set that manifest as your auto-add manifest. With an edit-scope token you can run
+`npm run cms -- assign` instead. It only edits dev-only manifests and keeps their existing entries.
+
+Other commands: `list` (slugs + full inventory), `manifests`, `manifest [name]`, `tools`, and
+`reserve --confirm-permanent` (one time, irreversible). Uploads stay in the **development**
+channel; promotion and the final Publish to devices are done by Curious Learning staff. Each
+language tile needs a square true-PNG icon at `cms/icons/<langCode>.png`.
+
 ## Dependency maintenance
 
 - CI (`.github/workflows/ci.yml`) runs `npm run check` and a build on every PR and push to `main`;

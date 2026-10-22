@@ -1,10 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "../App";
+import { languagePacks } from "../data/languagePacks";
+
+const renderApp = () => render(<App content={languagePacks.english} />);
 
 describe("App full navigation flow (M3 Letter selection + Tracing navigation)", () => {
   it("boots to LetterSelectionScreen, launches selected letter, advances with Next, and returns to Menu", () => {
-    render(<App />);
+    renderApp();
 
     // 1. Initial boot should display letter selection menu
     expect(screen.getByTestId("letter-selection-screen")).toBeInTheDocument();
@@ -48,14 +51,14 @@ describe("App full navigation flow (M3 Letter selection + Tracing navigation)", 
 
 describe("App Hard mode toggle", () => {
   it("boots with Hard mode off and uses the standard letter fixtures", () => {
-    render(<App />);
+    renderApp();
 
     const toggle = screen.getByTestId("hard-mode-toggle");
     expect(toggle).toHaveAttribute("aria-checked", "false");
   });
 
   it("keeps the same letter fixtures in Hard mode (Hard mode only changes the shadow aid)", () => {
-    render(<App />);
+    renderApp();
 
     fireEvent.click(screen.getByTestId("letter-tile-R"));
     expect(screen.getByTestId("progress-label")).toHaveTextContent(
@@ -80,7 +83,7 @@ describe("App Hard mode toggle", () => {
   });
 
   it("shows helplines toggle during hard-mode tracing and allows turning lines on", () => {
-    render(<App />);
+    renderApp();
 
     fireEvent.click(screen.getByTestId("hard-mode-toggle"));
     fireEvent.click(screen.getByTestId("letter-tile-A"));
@@ -97,7 +100,7 @@ describe("App Hard mode toggle", () => {
 
 describe("App case toggle", () => {
   it("defaults to uppercase and can switch to lowercase letters", () => {
-    render(<App />);
+    renderApp();
 
     const caseToggle = screen.getByTestId("case-toggle");
     expect(caseToggle).toHaveAttribute("aria-checked", "false");
@@ -145,7 +148,7 @@ describe("App case toggle", () => {
     ];
 
     for (const combination of combinations) {
-      const { unmount } = render(<App />);
+      const { unmount } = renderApp();
 
       if (combination.useHardMode) {
         fireEvent.click(screen.getByTestId("hard-mode-toggle"));

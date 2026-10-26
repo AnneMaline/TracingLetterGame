@@ -1,6 +1,6 @@
 # Task 011 — Spec update after task 010 (rewrite and quality hardening)
 
-**Status:** Draft
+**Status:** Completed (2026-10-09 — PRD v0.8.0, DEVSPEC v0.11.0, UISPEC v0.9.0, TESTSPEC v0.10.0)
 **Milestone:** Stabilization (follow-up to task 010)
 **Depends on:** task 010 merged, tested and approved
 

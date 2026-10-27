@@ -7,22 +7,29 @@ interface Props {
   letters: LetterDefinition[];
   initialLetterIndex?: number;
   onBackToMenu?: () => void;
+  onTrain?: () => void;
+  onLetterComplete?: () => void;
   isHardMode?: boolean;
+  mode?: "run" | "train";
 }
 
 export function TracingScreen({
   letters,
   initialLetterIndex = 0,
   onBackToMenu,
+  onTrain,
+  onLetterComplete,
   isHardMode = false,
+  mode = "train",
 }: Props) {
-  const [letterIndex, setLetterIndex] = useState(initialLetterIndex);
+  const [trainLetterIndex, setTrainLetterIndex] = useState(initialLetterIndex);
+  const letterIndex = mode === "run" ? initialLetterIndex : trainLetterIndex;
   const [showHelplines, setShowHelplines] = useState(false);
   const total = letters.length;
   const letter = letters[letterIndex];
 
   const goNext = useCallback(() => {
-    setLetterIndex((i) => (i + 1) % total);
+    setTrainLetterIndex((i) => (i + 1) % total);
   }, [total]);
 
   return (
@@ -38,17 +45,20 @@ export function TracingScreen({
       data-testid="tracing-screen"
     >
       <TracingHeader
+        mode={mode}
         displayLabel={letter.displayLabel}
         onBackToMenu={onBackToMenu}
         onNext={goNext}
+        onTrain={onTrain}
         showHelplines={showHelplines}
         onToggleHelplines={() => setShowHelplines((v) => !v)}
       />
       <LetterTracer
         key={letter.id}
         letter={letter}
-        isHardMode={isHardMode}
-        showHelplines={showHelplines}
+        isHardMode={mode === "train" && isHardMode}
+        showHelplines={mode === "run" || showHelplines}
+        onLetterComplete={onLetterComplete ?? goNext}
       />
     </main>
   );

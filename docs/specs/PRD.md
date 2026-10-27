@@ -1,8 +1,8 @@
 # PRD — TracingGame
 
 **Status:** Draft
-**Version:** 0.9.0
-**Last Updated:** 2026-10-22
+**Version:** 0.10.0
+**Last Updated:** 2026-10-27
 **Author(s):** Copilot (drafted with user), pending review
 **Traces to:** — (root document; does not trace to other specs)
 
@@ -43,14 +43,14 @@ paradigm as a sub-app of the Curious Reader container.
 - Require meaningful completion of a segment (≥80% of its length) before advancing. Lifting the finger part-way keeps
   the progress made so far, so the child can continue from where they stopped instead of starting over.
 - Celebrate completing all segments of a letter with an animation.
-- Let the child move between letters (MVP: Next/Previous; Great tier: a letter-selection screen reachable at any time).
-- Offer a session-only Hard mode toggle on the letter-selection screen so caregivers/children can switch
-  tracing difficulty using a shadow-only preview model (same authored letter fixtures in both modes).
-- Offer a session-only case toggle on the letter-selection screen so caregivers/children can switch between
-  uppercase and lowercase letter practice.
-- Add a Tracing-screen Helplines toggle (available in both Easy and Hard mode) that shows/hides three horizontal
-  handwriting guide lines at normalized y positions 0.14, 0.50, and 0.86 (middle line dashed), plus a lowercase-only
-  dashed descender guide at y=1.22, to support alignment.
+- Let the child play a guided alphabet run that opens on lowercase "a", advances through lowercase then uppercase
+  letters only after each letter is completed, and automatically loops after the uppercase round.
+- Provide a button-free, session-only "You did it!" celebration between alphabet rounds.
+- Offer a Train path to letter selection for individual practice, with session-only case and Hard mode choices and
+  manual Next/Menu navigation.
+- Keep the game run in Easy mode with helplines always visible; in Train, offer the Helplines toggle in both Easy
+  and Hard mode to show/hide the writing guides at y=0.14, 0.50, and 0.86 (dashed middle), plus the lowercase-only
+  dashed descender guide at y=1.22.
 - Keep the letter/segment data model data-driven so non-English scripts can be added without code changes later.
 
 ## 4. Non-Goals (MVP)
@@ -99,22 +99,21 @@ paradigm as a sub-app of the Curious Reader container.
 
 ### Great (M3)
 
-- Replace the legacy bottom Next/Previous controls with a letter-selection-first flow and a top-bar navigation model.
-- Add a letter-selection screen listing all in-scope letters as the default app entry point.
-- Add a top-centered Hard mode toggle on the letter-selection screen; Hard mode starts off on app load and remains
-  in-memory only for the current session.
-- Add a top-centered case toggle on the letter-selection screen; case defaults to uppercase on app load and remains
-  in-memory only for the current session.
-- Hard mode does not switch authored fixture sets; it uses the same letter fixtures as Easy mode and applies difficulty
-  only through a 2-second shadow-only preview that blocks tracing input before the segment guide appears.
-- Case toggle switches which authored letter set is shown/launched from the menu (uppercase A-Z or lowercase a-z), while
-  letters already open in Tracing keep their current case set until the child returns to the menu.
-- Add a top-left Menu control that returns the child to the letter-selection screen from the tracing screen at any time.
-- Keep top-right Next navigation on the tracing screen to quickly advance letters with wraparound behavior.
-- Flow: app opens on letter selection → child picks a letter → tracing starts at segment 1 for that letter.
-- Add a Tracing-screen Helplines toggle that is visible in both Easy and Hard mode and controls the visibility of
-  three horizontal guide lines (top y=0.14, dashed middle y=0.50, bottom y=0.86) plus a lowercase-only dashed descender
-  guide at y=1.22, spanning almost the full draw-box width.
+- The app opens directly in a guided Run on lowercase "a". Run completes lowercase letters in content order,
+  followed by uppercase letters in content order; each next letter appears one second after its completion
+  animation ends. Run always uses Easy mode with helplines visible and offers only an icon-only Train button.
+- At the end of each case round, show a button-free "You did it!" celebration for 3 seconds, then automatically
+  start the next case; after uppercase, loop to lowercase "a".
+- The Train button opens Letter Selection for individual practice. Case defaults to lowercase; session-only case
+  and Hard mode toggles remain available. Selecting a tile opens tracing in Train mode with Menu, Next and the
+  Helplines toggle. Train advances automatically one second after each letter celebration ends; its manual Next
+  remains available and wraps within the selected case. Home restarts Run at lowercase "a".
+- Hard mode does not switch authored fixture sets; it uses the same letter fixtures as Easy mode and applies
+  difficulty only through a 2-second shadow-only preview that blocks tracing input before the segment guide appears.
+- Train Helplines start off and are adjustable in Easy and Hard mode. Run always shows helplines and does not show
+  a toggle.
+- Case and Hard mode choices are session-only. They apply to Train letters and do not hot-swap an open tracing
+  screen.
 
 ### Tracing forgiveness & guidance (M3 refinement)
 
@@ -142,7 +141,7 @@ Based on play-testing feedback ("This game is not about success or failure. It's
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | M1 — MVP core tracing loop     | Segment-by-segment tracing, boundary box, 80% rule, Next/Previous nav, celebration animation                                                                                        | TBD         |
 | M2 — Better accuracy detection | Degree-of-deviation cancel-on-threshold, stricter exit-always-resets rule, start-region enforcement, end-region auto-complete                                                       | TBD         |
-| M3 — Great navigation          | Letter-selection screen as app entry, top-bar Menu back-navigation, top-bar Next wrap navigation, session-only Hard mode toggle, and session-only case toggle (uppercase/lowercase) | TBD         |
+| M3 — Great navigation          | Guided lowercase-to-uppercase app run, Train letter selection and practice controls, automatic round celebrations, session-only Hard mode and case choices | TBD         |
 | M4 — Container integration     | Conforms to standalone-game-spec packaging + data/event contract                                                                                                                    | TBD         |
 
 ## 8. Constraints & Assumptions
@@ -167,6 +166,7 @@ Based on play-testing feedback ("This game is not about success or failure. It's
 
 | Date       | Decision                                                                                                                                                                                                                  | Rationale                                                                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-27 | The game opens on lowercase "a" and runs through lowercase then uppercase letters, advancing one second after each letter celebration ends; a button-free "You did it!" celebration appears for 3 seconds between case rounds, then the run loops. Train retains individual letter practice and its session-only case, Hard mode, navigation and Helplines controls. This supersedes the 2026-10-01 uppercase-default app-navigation decision. | Play-testing feedback favored an immediate, low-choice game loop while preserving caregiver-directed practice and adjustable aids in Train. |
 | 2026-10-22 | Lifting the finger below 80% keeps the progress (once at least 10% is covered) and the child continues from a resume point; leaving the allowed area or deviating still restarts the stroke                               | Play-testing feedback: "If they pick the finger up, stop the line. Correct from before." Long curves (C, G, O, U) were rarely finished when every lift lost all progress                                                 |
 | 2026-10-22 | The boundary box is shown as a soft band; default padding widened from 0.06 to 0.09 normalized units, and to 0.11 on the long curves of C, G, O, U (upper and lower case)                                                 | Children left the invisible 0.06 area too often; feedback asked for a visible "bubble letter" background. Supersedes the 2026-09-04 padding decision                                                                     |
 | 2026-10-22 | Start point grows (visible radius 0.07, touch radius 0.12, was 0.08); direction is shown by a gliding demo dot, moving dashes and a star end point; a wrong touch replays the demo                                        | Children struggled to hit the start point and to know which way to trace. Supersedes the 0.08 start radius in the 2026-09-07 decision                                                                                    |
@@ -197,6 +197,7 @@ Based on play-testing feedback ("This game is not about success or failure. It's
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-27 — Copilot — Task 014 spec-update pass: replaced letter-selection-first app entry with a guided lowercase-to-uppercase run, documented Train-mode practice and fixed Run aids, one-second post-celebration advance and button-free round celebrations, and bumped PRD to v0.10.0.
 - 2026-10-22 — Copilot — Task 013 spec-update pass: added tracing forgiveness & guidance (visible wider allowed area, bigger start point, direction demo, curve wobble tolerance, live progress, resume after lift) to goals, persona needs and a new M3 refinement scope section, added four resolved decisions superseding the 0.06 padding and 0.08 start radius, and bumped PRD to v0.9.0.
 - 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode behavior to shipped shadow-only preview semantics (no fixture-set swap), updated Helplines geometry to y=0.14/0.50/0.86 plus lowercase descender y=1.22, added resolved decisions, and bumped PRD to v0.8.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: promoted lowercase a-z practice into shipped M3 scope via a session-only Letter Selection case toggle (Uppercase/Lowercase, default uppercase, no persistence), updated M3 milestone wording, removed lowercase from non-goals/out-of-scope lists, added a resolved decision, and bumped PRD to v0.7.0.

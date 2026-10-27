@@ -1,10 +1,10 @@
 # DEVSPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.12.0
-**Last Updated:** 2026-10-22
+**Version:** 0.13.0
+**Last Updated:** 2026-10-27
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.9.0
+**Traces to:** PRD v0.10.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment/vector-based
 > tracing, boundary box, 80% finger-up rule — superseding the earlier whole-path-tolerance +
@@ -79,8 +79,9 @@ interface LetterSessionState {
 }
 
 interface AppNavigationState {
-  isHardMode: boolean; // false by default on every app load; toggled only from Letter Selection screen
-  selectedCase: "uppercase" | "lowercase"; // uppercase by default on every app load; toggled only from Letter Selection screen
+  mode: "run" | "train"; // app opens in Run; Train is entered from the Train button
+  isHardMode: boolean; // false by default; toggled only from Letter Selection in Train
+  selectedCase: "uppercase" | "lowercase"; // lowercase by default; selects the Train letter set
 }
 ```
 
@@ -102,27 +103,27 @@ resolved otherwise.
   1. **MVP (superseded by M3 task 5):** Render Next/Previous buttons; advance/retreat `letterIndex` through the ordered
      in-scope letter list, wrapping from the last letter to the first and from the first to the
      last.
-  2. **Great (M3):** Make the letter-selection screen the default app entry point, listing every
-     in-scope `LetterDefinition`; tapping one loads the Tracing screen for it, resetting `LetterSessionState`.
-  3. **Great (M3):** Add a Letter Selection case toggle (`role="switch"`, `aria-checked`) that
-     switches the active case set between `src/data/letterSegments/english/capitalLetters` and
-     `src/data/letterSegments/english/lowercaseLetters`. Case defaults to uppercase on every app
-     load and is in-memory only (no persistence).
-  4. **Great (M3):** Add a Letter Selection Hard mode toggle (`role="switch"`, `aria-checked`)
-     that selects the active difficulty mode (Easy vs. Hard) while keeping the same authored
-     fixture set (`src/data/letterSegments`) in both modes. Hard mode defaults to off on every
-     app load and is in-memory only (no persistence).
-  5. **Great (M3):** Replace bottom Next/Previous with a top bar on the Tracing screen containing:
-     (a) a top-left Menu control that returns to the letter-selection screen at any time from any
-     tracing state and discards any in-progress segment, and (b) a top-right Next control that
-     advances to the next letter with wraparound and resets to segment 1.
-  6. Case switching and Hard-mode selection take effect only when selecting/opening a letter from
-     Letter Selection; they do not hot-swap an already-open Tracing screen.
-- **Exit Criterion:** MVP — Next/Previous correctly cycles through every in-scope letter, loading
-  the correct `LetterDefinition` each time. Great — app launch opens letter selection; selecting any
-  letter opens Tracing for it; Hard mode toggle reflects active difficulty mode without changing
-  selected fixtures; the top-left Menu control is reachable from every Tracing state; and the
-  top-right Next control advances through all letters with wraparound.
+  2. **Great (M3) Run:** On app launch, open Tracing in Run mode at the first lowercase
+     `LetterDefinition`. Traverse the ordered lowercase list, then the uppercase list. Run uses
+     Easy mode with Helplines always visible and exposes only an icon-only Train action.
+  3. After each completed letter, play the celebration and keep the completed letter drawn.
+     Advance one second after the celebration animation ends. Cancel pending timers if the
+     tracing screen unmounts.
+  4. After the last letter in a case, show a button-free round-complete celebration for 3 seconds.
+     Continue from lowercase to uppercase; after uppercase, loop to lowercase index 0.
+  5. The Train action opens Letter Selection. It lists the selected case, defaults to lowercase,
+     and retains session-only case and Hard mode switches. Tapping a tile opens Tracing in Train
+     mode. Train mode retains Menu, Next and Helplines controls; Next wraps in the selected case,
+     and completed letters auto-advance one second after their celebration ends.
+  6. Home on Letter Selection restarts Run at lowercase index 0. Choosing Train drops the current
+     Run rather than pausing it.
+  7. Hard mode is available only in Train and keeps the same authored fixtures as Easy mode.
+     Case and Hard mode changes apply only to subsequently opened Train letters.
+- **Exit Criterion:** Run opens at lowercase index 0, follows lowercase then uppercase content
+  order, advances one second after each letter celebration ends, presents a 3-second button-free
+  celebration between case rounds, and loops after uppercase. Only Train is available as a Run
+  control. Train opens Letter Selection with lowercase selected, preserves case/Hard mode/Helplines
+  controls and Next/Menu navigation, and Home restarts Run at lowercase index 0.
 
 #### Module: Line Segment Rendering & Directional Guide
 
@@ -277,6 +278,10 @@ resolved otherwise.
   2. Play a celebration animation (lightweight only — CSS keyframe animation, simple SVG animation,
      or a small animated GIF; no heavy canvas redraws or external video/large assets). The animation
      should last 1–2 seconds and not block child interaction.
+  3. Keep the completed letter drawn after the animation. In Run and Train, schedule the next letter
+     one second after the animation ends; clear the timer if the tracing screen unmounts.
+  4. At the end of each case round in Run, show a button-free "You did it!" celebration with an
+     illustration for 3 seconds; then start the next case, looping from uppercase to lowercase.
 - **Exit Criterion:** Completing every segment of a letter triggers the celebration animation
   exactly once per completion. The animation is smooth on legacy (2015-era) smartphones.
 
@@ -295,8 +300,8 @@ resolved otherwise.
 - **Goal:** Provide optional handwriting alignment guides during tracing without changing segment
   scoring logic.
 - **Tasks:**
-  1. Add a Tracing-screen Helplines toggle that is visible and operable in both Easy and Hard
-     mode.
+  1. In Train, add a Tracing-screen Helplines toggle that is visible and operable in both Easy and
+     Hard mode. Run always shows Helplines and does not render a toggle.
   2. When Helplines are enabled, render three horizontal lines on the trace surface at normalized
      y positions 0.14, 0.50, and 0.86.
   3. Render the middle line (`y=0.50`) with a dashed stroke style so it is visually distinct from
@@ -307,14 +312,14 @@ resolved otherwise.
   5. Helplines are a visual aid only: they must not intercept pointer input and must not alter
      boundary-box checks, deviation checks, segment-completion scoring, or hard-mode preview
      timing.
-  6. Default the Helplines toggle to **off** at the start of every tracing session (both Easy and
-     Hard mode). The child/caregiver may turn Helplines on at any time; the choice is not
-     persisted across sessions or letters.
-- **Exit Criterion:** In both Easy and Hard mode, the Helplines toggle can show/hide exactly three
-  horizontal guides for uppercase and four for lowercase at the specified y positions; the middle
-  line and lowercase descender line are dashed; the guides span nearly the full width with
-  consistent inset; the toggle starts in the off state on every letter open; and existing tracing
-  mechanics remain unchanged.
+  6. Default the Train Helplines toggle to **off** at the start of every Train tracing session
+     (both Easy and Hard mode). The child/caregiver may turn Helplines on at any time; the choice is
+     not persisted across sessions or letters. Run Helplines are always on.
+- **Exit Criterion:** In Train, the Helplines toggle can show/hide exactly three horizontal guides
+  for uppercase and four for lowercase at the specified y positions; the middle line and lowercase
+  descender line are dashed; the guides span nearly the full width with consistent inset; the toggle
+  starts off on every letter open; and tracing mechanics remain unchanged. In Run, guides are always
+  visible and no toggle is rendered.
 
 ---
 
@@ -476,6 +481,7 @@ npm run build    # production build to dist/
 
 | Date       | Decision                                                                                                                                                                                                                                                                                                       | Rationale                                                                                                                                                                                                                                                 |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-27 | App Navigation has Run and Train modes. Run starts lowercase, completes both cases in order, auto-advances one second after the per-letter celebration ends, and loops after a 3-second button-free round celebration. Train retains letter selection, lowercase default, Hard mode, Menu/Next and Helplines controls. This supersedes the 2026-10-01 uppercase-default case decision. | Human play-testing decision in Task 014; keeps Run low-choice and preserves individual practice in Train. |
 | 2026-10-22 | Default `boundaryPadding` = 0.09; `boundaryHalfWidth` = 0.11 on the long curves of C, G, O, U and c, g, o, u; the boundary box is rendered as a soft band (supersedes the 2026-09-04 padding decision and the "never rendered" rule)                                                                           | Play-testing: children left the 0.06 area too often, and feedback asked for a visible "bubble letter". The long single-stroke curves are 2–3× longer than other strokes                                                                                   |
 | 2026-10-22 | `startRegionRadius` = 0.12, `startMarkerRadius` = 0.07; pointer-down no longer needs to be inside the boundary box; samples near the anchor are exempt from the box check; the first sample is pinned to the anchor only if it projects onto a distant branch (supersedes the 0.08 start radius of 2026-09-07) | Children struggled to hit the 0.05 dot. Always pinning the first sample broke closed loops pressed just behind the seam                                                                                                                                   |
 | 2026-10-22 | Resume after lift: a finger-up below 80% with at least 10% coverage pauses the segment (`segment-paused`) and keeps progress; the next attempt starts from the resume point as a fresh point list anchored at that progress. Exit and deviation still reset fully                                              | Feedback: "If they pick the finger up, stop the line. Correct from before." A fresh anchored point list avoids the straight-line snap that made the 2026-09-07 departure-point resume feel buggy                                                          |
@@ -518,6 +524,7 @@ _(empty — populate during implementation; fold into spec body or remove at maj
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-27 — Copilot — Task 014 spec-update pass: replaced M3 letter-selection-first entry with Run/Train modes, specified lowercase-to-uppercase guided progression and one-second post-animation advance, documented button-free round celebrations and fixed Run aids, and bumped DEVSPEC to v0.13.0 with `Traces to:` PRD v0.10.0.
 - 2026-10-22 — Copilot — Task 013 spec-update pass: widened `boundaryPadding` to 0.09 (0.11 on C/G/O/U long curves) and made the box a visible band, enlarged the start region to 0.12 with anchor-based first-sample handling, added resume-after-lift (`segment-paused`, `resumeProgress`, `attemptStartProgress`), added curve deviation persistence (60° over 0.04 travel), added Directional Guide tasks 4–10 (pulse, star end, corridor band, flowing guide, demo dot, live progress, resume marker, reduced motion), updated exit criteria, error handling, risks, M3 deliverables and resolved decisions, and bumped DEVSPEC to v0.12.0 with `Traces to:` PRD v0.9.0.
 - 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode to same-fixture shadow-preview behavior, documented canonical curve/coverage rules and curve fields in the data schema, updated Helplines geometry (including lowercase descender), refreshed directory/stack/runbook content for geometry-module split and CI gates, updated resolved decisions, and bumped DEVSPEC to v0.11.0 with `Traces to:` PRD v0.8.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: added M3 Letter Selection case-toggle behavior (session-only uppercase/lowercase selection, default uppercase, menu-scoped launch semantics), added `AppNavigationState.selectedCase`, updated M3 deliverables, removed lowercase from out-of-scope, added a resolved decision, and bumped DEVSPEC to v0.10.0 with `Traces to:` PRD v0.7.0.

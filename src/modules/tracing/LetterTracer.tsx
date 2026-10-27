@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { LetterDefinition, LineSegment } from "../../types";
 import {
+  AUTO_ADVANCE_DELAY_MS,
   CELEBRATION_DELAY_MS,
   HARD_MODE_PREVIEW_MS,
 } from "../../shared/constants";
@@ -13,6 +14,7 @@ interface Props {
   letter: LetterDefinition;
   isHardMode?: boolean;
   showHelplines?: boolean;
+  onLetterComplete: () => void;
 }
 
 const isTracable = (s: LineSegment) => s.isTracable !== false;
@@ -24,8 +26,9 @@ export function LetterTracer({
   letter,
   isHardMode = false,
   showHelplines = false,
+  onLetterComplete,
 }: Props) {
-  const { view, onPointerDown, onPointerMove, onPointerUp, reset } =
+  const { view, onPointerDown, onPointerMove, onPointerUp } =
     useSegmentTrace(letter);
   const tracableTotal = letter.segments.filter(isTracable).length;
   const tracableIndex = letter.segments
@@ -61,10 +64,20 @@ export function LetterTracer({
     return () => clearTimeout(timer);
   }, [view.status]);
 
-  const onCelebrationDone = useCallback(() => {
-    setCelebrationVisible(false);
-    reset();
-  }, [reset]);
+  const [advancePending, setAdvancePending] = useState(false);
+  useEffect(() => {
+    if (!advancePending) return;
+    const timer = setTimeout(onLetterComplete, AUTO_ADVANCE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [advancePending, onLetterComplete]);
+
+  const onCelebrationDone = useCallback(
+    () => {
+      setCelebrationVisible(false);
+      setAdvancePending(true);
+    },
+    [],
+  );
 
   return (
     <>

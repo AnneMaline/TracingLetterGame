@@ -1,10 +1,10 @@
 # UISPEC — TracingGame
 
 **Status:** Draft
-**Version:** 0.10.0
-**Last Updated:** 2026-10-22
+**Version:** 0.11.0
+**Last Updated:** 2026-10-27
 **Author(s):** Copilot (drafted with user), pending review
-**Traces to:** PRD v0.9.0 · DEVSPEC v0.12.0
+**Traces to:** PRD v0.10.0 · DEVSPEC v0.13.0
 
 > Content below reflects the official product brief (received 2026-09-03) — segment-by-segment
 > tracing with a boundary box, shown to the child as a soft band since task 013. See §8 Spec
@@ -12,10 +12,11 @@
 
 ## 1. Screen Inventory
 
-| Screen           | Purpose                                                 | Entry point(s)                              | Milestone  |
-| ---------------- | ------------------------------------------------------- | ------------------------------------------- | ---------- |
-| Tracing          | Trace the current letter's line segments, one at a time | Letter Selection, top-bar Next              | M1         |
-| Letter Selection | Choose which letter to trace                            | App launch (M3+), top-bar Menu from Tracing | M3 (Great) |
+| Screen           | Purpose                                                 | Entry point(s)                                         | Milestone  |
+| ---------------- | ------------------------------------------------------- | ------------------------------------------------------ | ---------- |
+| Tracing          | Trace the current letter's line segments, one at a time | App launch (Run), Letter Selection, Train Next         | M1 / M3    |
+| Letter Selection | Choose a letter for individual Train practice           | Train button, Train Menu                               | M3 (Great) |
+| Round Complete   | Celebrate completion of a case round before continuing  | End of lowercase or uppercase Run round                | M3         |
 
 ## 2. Screen Details
 
@@ -29,11 +30,13 @@
   paused, the covered part of the segment fills in green. While paused, a pulsing green resume dot
   marks where to continue and the start marker is dimmed. A faint ghost outline of all letter segments
   is always rendered as a background layer (letter shadow; see DEVSPEC Letter Shadow Guide module).
-  Optional helplines can be rendered as three horizontal writing guides at y=0.14, y=0.50 (dashed),
-  and y=0.86, spanning almost the full width of the draw box with small side insets. For lowercase
-  letters, an additional dashed descender guide is rendered at y=1.22. MVP: bottom
-  Next/Previous buttons. M3 (Great): bottom Next/Previous are removed and replaced by a top bar
-  with a left "Menu" control, right "Next" control, and Helplines toggle.
+  Helplines are always visible in Run mode; in Train they can be toggled as three horizontal writing
+  guides at y=0.14, y=0.50 (dashed), and y=0.86. For lowercase letters, the dashed descender guide
+  is at y=1.22. On app launch the screen is in Run mode at lowercase "a", with Easy mode and an
+  icon-only Train button (`aria-label="Train"`, `data-testid="train-button"`) as its only control.
+  Run progresses lowercase then uppercase in content order. After the letter celebration ends, the
+  completed letter remains visible for one second before the next letter opens. End of case shows
+  the button-free Round Complete screen. In Train, the header has Menu, Next and Helplines controls.
 - **Style notes:**
   - **Easy mode:** Shadow ghost outline is visible throughout tracing and after letter completion.
   - **Hard mode:** On letter open, shadow outline appears alone for exactly 2 seconds (segment guide and tracing feedback hidden); pointer events are blocked. After 2 seconds, shadow disappears, segment guide appears, and tracing is enabled.
@@ -42,14 +45,15 @@
 - **Components:** `SegmentGuide` (start/direction/end markers, references DEVSPEC Line Segment
   Rendering module), `TraceAids` (`CorridorBand`, `ProgressFill`, `ResumeMarker`, `DemoDot`;
   references DEVSPEC Line Segment Rendering tasks 5–9), `TraceSurface` (captures drag input, renders letter shadow, references DEVSPEC Segment Completion &
-  Boundary Box module), and `TracingHeader` with
-  `menu-button`/`next-letter` actions plus `helplines-toggle` (`role="switch"`) in M3. Tracing
-  test IDs include `letter-shadow` for the ghost-outline layer,
+  Boundary Box module), and `TracingHeader` with Run-only `train-button` and Train-only
+  `menu-button`/`next-letter` actions plus `helplines-toggle` (`role="switch"`) in Train. Tracing
+  test IDs include `train-button`, `letter-shadow` for the ghost-outline layer,
   `helpline-lowercase-descender` for the lowercase-only descender guide, and `corridor-band`,
   `demo-dot`, `progress-fill`, `resume-marker`, `segment-guide-start`, `segment-guide-end` and
   `segment-guide-line` for the tracing aids.
 - **States:**
-  - `helplines-on` / `helplines-off` — visual-aid sub-state that can be changed without resetting tracing progress. Every tracing session starts in `helplines-off`.
+  - `helplines-on` / `helplines-off` — visual-aid sub-state in Train; Run is always `helplines-on`.
+    Train sessions start in `helplines-off`. Toggling never resets tracing progress.
   - `shadow-preview` (Hard mode only) — on letter open, shadow outline displayed alone for 2 seconds; segment guide hidden; pointer input blocked.
   - `awaiting-start` — segment guide and corridor band shown, start marker pulses, demo dot glides along the segment, no drag in progress, shadow outline visible (Easy mode always; Hard mode after preview ends).
   - `tracing` — child is actively dragging inside the boundary box; visual feedback follows the drag; the covered part fills in green; demo dot hidden; start marker still; shadow outline remains visible.
@@ -58,26 +62,35 @@
     finger-up with <10% coverage; feedback stops, the child must restart the current segment; start marker pulses and the demo replays; shadow outline remains visible.
   - `segment-complete` — coverage ≥ 80% confirmed either on finger-up while in-box or on
     pointer entry into the segment's end region (M2); brief transition to the next segment; shadow outline remains visible.
-  - `letter-complete` — all segments done; celebration animation plays; shadow outline remains visible until celebration ends.
-- **Visibility rules:** Bottom Next/Previous visible only in MVP (removed once M3 ships). M3 top-bar
-  Menu, Next, and Helplines controls are visible in Tracing and reachable from every state above. The corridor
+  - `letter-complete` — all segments done; celebration animation plays; shadow outline remains visible until celebration ends. The completed letter stays drawn; after the animation ends, Run and Train advance after a one-second pause.
+- **Visibility rules:** Bottom Next/Previous visible only in MVP (removed once M3 ships). In Run,
+  only the icon-only Train button is shown; Next, Menu and the Helplines toggle are hidden. In Train,
+  top-bar Menu, Next and Helplines controls are visible and reachable from every state above. The corridor
   band, segment guide, demo dot, progress fill and resume dot are hidden during the Hard-mode preview and after
   `letter-complete`; the demo dot shows only in `awaiting-start`, `segment-reset` and `segment-paused`. Shadow outline is always visible except during the Hard-mode preview (where it's the only visible element).
 - **Transitions:** `shadow-preview` (Hard only) --(2 seconds elapse)--> `awaiting-start` for the first segment.
   `helplines-on` --(toggle Helplines off)--> `helplines-off`; `helplines-off` --(toggle Helplines on)--> `helplines-on`; toggling helplines never changes segment-completion state.
-  `segment-complete` → next segment's `awaiting-start`, or `letter-complete` if it was the last segment. `segment-reset` → `awaiting-start` for the same segment (progress on that segment discarded; other completed segments unaffected). `segment-paused` → `tracing` from the resume dot (progress kept) or from the start marker (progress discarded). `letter-complete` → celebration ends → remain on the completed letter with top-bar Menu/Next available.
+  `segment-complete` → next segment's `awaiting-start`, or `letter-complete` if it was the last segment. `segment-reset` → `awaiting-start` for the same segment (progress on that segment discarded; other completed segments unaffected). `segment-paused` → `tracing` from the resume dot (progress kept) or from the start marker (progress discarded). `letter-complete` → celebration ends → remain on the completed letter for one second → next letter in Run or Train. Run's last letter in a case → Round Complete for 3 seconds → first letter in the next case; uppercase round completion loops to lowercase.
 
 ### Screen: Letter Selection (M3 — Great tier)
 
-- **Layout:** Top-middle case toggle and Hard mode toggle above the title, plus a grid/list of every in-scope letter.
-- **Components:** Case toggle (`role="switch"`, `data-testid="case-toggle"`), Hard mode toggle (`role="switch"`, `data-testid="hard-mode-toggle"`), and
+- **Layout:** A Home button, top-middle case toggle and Hard mode toggle above the title, plus a grid/list of every in-scope letter.
+- **Entry:** Opened by Train button or Train Menu. Case defaults to lowercase; Hard mode defaults off.
+- **Components:** Home button (`data-testid="home-button"`), case toggle (`role="switch"`, `data-testid="case-toggle"`), Hard mode toggle (`role="switch"`, `data-testid="hard-mode-toggle"`), and
   `LetterTile` (references DEVSPEC Letter Navigation module).
 - **States:** `loading`, `ready` + `case-uppercase` / `case-lowercase` and `hard-mode-off` / `hard-mode-on` sub-states.
 - **Visibility rules:** Only exists once M3 ships; before that, Next/Previous on the Tracing
   screen serve this purpose instead.
 - **Transitions:** Toggle case on/off while on Letter Selection (updates which case set opens when a tile is selected). Toggle Hard mode on/off while on Letter Selection (updates whether letters open in Easy or Hard shadow-preview mode,
   without changing the authored fixture set). Tap a letter tile → Tracing screen, `awaiting-start` for that
-  letter's first segment.
+  letter's first segment in Train mode. Home returns to Run at lowercase "a".
+
+### Screen: Round Complete (M3)
+
+- **Layout:** A celebratory picture and the text "You did it!" centered on the screen.
+- **Components:** `round-complete-screen` and its illustration; no buttons or other controls.
+- **Visibility rules:** Shown after the final letter of a case is completed. It is not interactive.
+- **Transitions:** After 3 seconds, lowercase completion opens uppercase "A"; uppercase completion loops to lowercase "a".
 
 ## 3. State Machine (Tracing screen, per segment)
 
@@ -125,13 +138,18 @@ Feature: Letter shadow guide (learning and difficulty modulation)
     And tracing is now enabled
 
 Feature: Tracing helplines
-  Scenario: Helplines default to off on every tracing session
-    Given the child opens a letter to trace in Easy or Hard mode
+  Scenario: Run always shows Helplines without a toggle
+    Given the app opens in Run mode
+    Then the handwriting guides are visible
+    And no Helplines toggle is rendered
+
+  Scenario: Train Helplines default to off on every tracing session
+    Given the child opens a letter to trace in Train mode
     Then the Helplines toggle is in the off state
     And no horizontal guide lines are visible on the tracing surface
 
-  Scenario: Helplines can be toggled in Easy mode
-    Given the child is tracing in Easy mode
+  Scenario: Helplines can be toggled in Easy-mode Train
+    Given the child is tracing in Easy mode in Train
     When Helplines is toggled on
     Then three horizontal guide lines are visible at y=0.14, y=0.50, and y=0.86
     And the middle line is dashed
@@ -139,7 +157,7 @@ Feature: Tracing helplines
     Then the guide lines are hidden
 
   Scenario: Helplines are available in Hard mode after preview
-    Given the child is tracing in Hard mode
+    Given the child is tracing in Hard mode in Train
     And the 2-second shadow preview has ended
     When Helplines is toggled on
     Then three horizontal guide lines are visible on the tracing surface
@@ -185,13 +203,15 @@ Feature: Letter navigation (MVP)
     Then the Tracing screen shows the first segment of letter "B"
 
 Feature: Top-bar navigation (M3 — Great tier)
-  Scenario: Advancing to the next letter via top-right Next
+  Scenario: Advancing to the next letter via top-right Next in Train
     Given the Tracing screen is displayed for letter "B"
+    And the child is in Train mode
     When the child taps the top-right "Next" button
     Then the Tracing screen is displayed for letter "C"
 
-  Scenario: Top-right Next wraps from Z to A
+  Scenario: Top-right Next wraps from Z to A in Train
     Given the Tracing screen is displayed for letter "Z"
+    And the child is in Train mode
     When the child taps the top-right "Next" button
     Then the Tracing screen is displayed for letter "A"
 
@@ -260,14 +280,14 @@ Feature: Letter selection (M3 — Great tier)
     Then the Tracing screen is displayed with the first segment of letter "M"
 
   Scenario: Returning to selection mid-trace
-    Given the Tracing screen is displayed for any letter and segment
+    Given the Tracing screen is displayed in Train mode for any letter and segment
     When the child taps the top-left "Menu" control
     Then the Letter Selection screen is displayed
     And the in-progress segment is discarded with no penalty
 
 Feature: Hard mode preview mode selection (M3)
-  Scenario: Hard mode starts off on app load
-    Given the app has just loaded
+  Scenario: Hard mode starts off when Train is opened
+    Given the child opens Letter Selection from the Run screen
     Then the Letter Selection screen shows Hard mode in the off state
 
   Scenario: Enabling Hard mode keeps fixtures and changes launch behavior to preview-first tracing
@@ -278,9 +298,9 @@ Feature: Hard mode preview mode selection (M3)
     And letters already open in Tracing are not hot-swapped until returning to Letter Selection
 
 Feature: Case selection (M3)
-  Scenario: Case toggle defaults to uppercase on app load
-    Given the app has just loaded
-    Then the Letter Selection screen shows the case toggle in the uppercase state
+  Scenario: Case toggle defaults to lowercase when Train is opened
+    Given the child opens Letter Selection from the Run screen
+    Then the Letter Selection screen shows the case toggle in the lowercase state
 
   Scenario: Switching to lowercase updates visible letter choices and launch behavior
     Given the child is on the Letter Selection screen
@@ -298,11 +318,45 @@ Feature: Letter completion celebration
   Scenario: Completing all segments plays a celebration
     Given the child has completed every segment of letter "E"
     Then a celebration animation plays exactly once
+    And the completed letter remains drawn until the next letter opens
+
+Feature: Guided alphabet run (M3)
+  Scenario: App opens on lowercase a with only the Train control
+    Given the app has just loaded
+    Then Tracing shows lowercase "a" at segment 1 in Run mode
+    And the only button is the icon-only Train button with accessible name "Train"
+    And Easy mode and Helplines are on
+    And Next, Menu, and the Helplines toggle are not shown
+
+  Scenario: Run advances after completion and the celebration animation
+    Given Run is tracing lowercase "a"
+    When the child completes all segments
+    Then the completed letter remains drawn while its celebration animation plays
+    And the next lowercase letter opens 1 second after the animation ends
+
+  Scenario: Lowercase round completes automatically into uppercase
+    Given Run is tracing the final lowercase letter "z"
+    When the child completes all segments and the letter celebration ends
+    Then a button-free Round Complete screen shows "You did it!" and an illustration
+    And uppercase "A" opens automatically after 3 seconds
+
+  Scenario: Uppercase round completes and loops to lowercase
+    Given Run is tracing the final uppercase letter "Z"
+    When the child completes all segments and the letter celebration ends
+    Then a button-free Round Complete screen shows "You did it!"
+    And lowercase "a" opens automatically after 3 seconds
+
+  Scenario: Train opens practice and Home restarts Run
+    Given Run is tracing any letter
+    When the child taps the icon-only Train button
+    Then lowercase Letter Selection opens with case and Hard mode toggles
+    When the child taps Home
+    Then Run restarts at lowercase "a"
 ```
 
 ## 5. Accessibility Requirements
 
-- Minimum touch target size 44x44px for Next/Previous (MVP), letter tiles, and the M3 top-bar Menu/Next controls.
+- Minimum touch target size 44x44px for the Train/Home buttons, letter tiles, and Train-mode Menu/Next controls.
 - Text/marker contrast ratio ≥ 4.5:1 against background (WCAG AA).
 - All interactive controls reachable and operable via keyboard for desktop fallback (Tab + Enter/Space).
 - The boundary box is shown as a soft band so the child can see the allowed area (since task 013).
@@ -320,6 +374,7 @@ Feature: Letter completion celebration
 
 | Date       | Decision                                                                                                                                                                                                                                              | Rationale                                                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-27 | App launch enters Run at lowercase "a"; Run shows only the Train button, keeps Easy mode and Helplines on, and advances one second after each per-letter celebration animation ends. Letter Selection and its controls are Train-only, default to lowercase, and Home restarts Run. A button-free "You did it!" screen displays for 3 seconds between case rounds, then the run continues lowercase→uppercase→lowercase. This supersedes the 2026-10-01 uppercase-default selection decision. | Task 014 play-testing decision: Run is an uninterrupted, low-choice experience while individual practice remains available via Train. |
 | 2026-10-22 | Direction indicator style resolved: flowing guide dashes, arrows, a gliding demo dot (replayed on a wrong touch), a pulsing green start disc and an orange star end marker (closes the arrow-style open question)                                     | Play-testing: children did not know which way to trace or where the stroke ends                                                                                          |
 | 2026-10-22 | The boundary box is drawn as a soft light-green band under the letter shadow (supersedes the 2026-09-03 "never rendered" decision)                                                                                                                    | Feedback asked for a visible "bubble letter" background so the child can see the allowed area                                                                            |
 | 2026-10-22 | New `segment-paused` state after a finger-up with 10–80% coverage: green progress stays, a pulsing resume dot marks where to continue, and the start marker is dimmed                                                                                 | Feedback: "Correct from before." Long curves were rarely finished when every lift discarded progress                                                                     |
@@ -342,6 +397,7 @@ Feature: Letter completion celebration
 
 _Newest first. Format: `YYYY-MM-DD — <author> — <one-sentence description of change>`_
 
+- 2026-10-27 — Copilot — Task 014 spec-update pass: updated the screen inventory and Run/Train visibility, specified lowercase-to-uppercase automatic progression with a one-second post-animation pause, added Round Complete and its Gherkin flows, revised Train case/Hard/Helplines defaults and added test IDs, and bumped UISPEC to v0.11.0 with `Traces to:` PRD v0.10.0 / DEVSPEC v0.13.0.
 - 2026-10-22 — Copilot — Task 013 spec-update pass: made the boundary box a visible band, added the direction aids (flowing dashes, demo dot, pulsing start, star end), live progress fill and resume dot to the Tracing layout/components/test IDs, added the `segment-paused` state and its transitions, narrowed `segment-reset` on finger-up to <10% coverage, added Gherkin for resume after lift, direction guidance, Hard-mode aids and long-curve forgiveness, added reduced-motion accessibility, closed the arrow-style open question, and bumped UISPEC to v0.10.0 with `Traces to:` PRD v0.9.0 / DEVSPEC v0.12.0.
 - 2026-10-09 — Copilot — Task 011 spec-update pass: reconciled Hard mode to preview-mode selection (no fixture swap), updated Helplines geometry to y=0.14/0.50/0.86 with lowercase descender y=1.22, added Tracing test IDs for shadow/descender guide, updated M3 Gherkin wording, and bumped UISPEC to v0.9.0 with `Traces to:` PRD v0.8.0 / DEVSPEC v0.11.0.
 - 2026-10-01 — Copilot — Task 009 spec-update pass: added Letter Selection case-toggle UI (layout/components/states/transitions), added M3 case-selection Gherkin scenarios (default uppercase, lowercase launch behavior, and independence from Hard mode), added a resolved decision, and bumped UISPEC to v0.8.0 with `Traces to:` PRD v0.7.0 / DEVSPEC v0.10.0.

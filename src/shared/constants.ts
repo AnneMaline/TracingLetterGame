@@ -23,6 +23,9 @@ export const END_REGION_RADIUS = 0.035;
 export const CELEBRATION_DURATION_MS = 1500;
 // Pause between letter completion and the celebration appearing.
 export const CELEBRATION_DELAY_MS = 500;
+// Delay after the per-letter celebration has finished before opening the next letter.
+export const AUTO_ADVANCE_DELAY_MS = 200;
+export const ROUND_COMPLETE_DISPLAY_MS = 2000;
 // Pause on the completed-segment state before the next segment's guide appears.
 export const SEGMENT_ADVANCE_DELAY_MS = 250;
 // Hard mode: how long the shadow-only preview blocks tracing when a letter opens.

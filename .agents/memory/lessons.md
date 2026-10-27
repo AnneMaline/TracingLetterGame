@@ -17,6 +17,10 @@ actively misleading — in that case, mark it "SUPERSEDED" rather than deleting 
 
 ## Lessons
 
+## 2026-10-27 — Lowercase SVG pointer tests must account for the letterboxed viewBox
+
+The lowercase tracing surface has a 1:1.36 viewBox rendered with `preserveAspectRatio="xMidYMid meet"`, so a square test rectangle letterboxes the artwork and shifts/scales pointer coordinates. Use the actual SVG transform or a matching rectangle when scripting lowercase traces.
+
 ## 2026-10-01 — Committed test reports and local node_modules go stale; re-measure first
 
 Task 010's draft plan quoted 4 failing tests from a committed `vitest-report.json` (from

@@ -33,6 +33,7 @@ describe("LetterSelectionScreen (T-011)", () => {
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
+        onHome={vi.fn()}
       />,
     );
 
@@ -53,6 +54,7 @@ describe("LetterSelectionScreen (T-011)", () => {
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
+        onHome={vi.fn()}
       />,
     );
 
@@ -72,6 +74,7 @@ describe("LetterSelectionScreen (T-011)", () => {
         isHardMode={true}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
+        onHome={vi.fn()}
       />,
     );
 
@@ -90,6 +93,7 @@ describe("LetterSelectionScreen (T-011)", () => {
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
+        onHome={vi.fn()}
       />,
     );
 
@@ -108,6 +112,7 @@ describe("LetterSelectionScreen (T-011)", () => {
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
+        onHome={vi.fn()}
       />,
     );
 
@@ -128,6 +133,7 @@ describe("LetterSelectionScreen (T-011)", () => {
         isHardMode={false}
         onToggleHardMode={onToggleHardMode}
         onSelectLetter={onSelect}
+        onHome={vi.fn()}
       />,
     );
 

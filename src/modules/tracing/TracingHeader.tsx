@@ -1,17 +1,22 @@
 import type { CSSProperties } from "react";
+import { TrainButton } from "../game-flow/TrainButton";
 
 interface Props {
+  mode?: "run" | "train";
   displayLabel?: string;
   onBackToMenu?: () => void;
   onNext?: () => void;
+  onTrain?: () => void;
   showHelplines?: boolean;
   onToggleHelplines?: () => void;
 }
 
 export function TracingHeader({
+  mode = "train",
   displayLabel,
   onBackToMenu,
   onNext,
+  onTrain,
   showHelplines = false,
   onToggleHelplines,
 }: Props) {
@@ -35,15 +40,19 @@ export function TracingHeader({
           gap: "0.5rem",
         }}
       >
-        <button
-          type="button"
-          onClick={onBackToMenu}
-          data-testid="menu-button"
-          aria-label="Back to menu"
-          style={navButtonStyle}
-        >
-          ← Menu
-        </button>
+        {mode === "run" ? (
+          <TrainButton onClick={onTrain} />
+        ) : (
+          <button
+            type="button"
+            onClick={onBackToMenu}
+            data-testid="menu-button"
+            aria-label="Back to menu"
+            style={navButtonStyle}
+          >
+            ← Menu
+          </button>
+        )}
 
         <div style={{ textAlign: "center", flex: 1 }}>
           <h1
@@ -72,28 +81,32 @@ export function TracingHeader({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onNext}
-          data-testid="next-letter"
-          aria-label="Next letter"
-          style={navButtonStyle}
-        >
-          Next →
-        </button>
+        {mode === "train" && (
+          <button
+            type="button"
+            onClick={onNext}
+            data-testid="next-letter"
+            aria-label="Next letter"
+            style={navButtonStyle}
+          >
+            Next →
+          </button>
+        )}
       </div>
 
-      <button
-        type="button"
-        role="switch"
-        aria-checked={showHelplines}
-        onClick={onToggleHelplines}
-        data-testid="helplines-toggle"
-        aria-label="Toggle helplines"
-        style={toggleButtonStyle}
-      >
-        Helplines {showHelplines ? "On" : "Off"}
-      </button>
+      {mode === "train" && (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showHelplines}
+          onClick={onToggleHelplines}
+          data-testid="helplines-toggle"
+          aria-label="Toggle helplines"
+          style={toggleButtonStyle}
+        >
+          Helplines {showHelplines ? "On" : "Off"}
+        </button>
+      )}
     </header>
   );
 }

@@ -9,6 +9,7 @@ interface Props {
   isHardMode: boolean;
   onToggleHardMode: () => void;
   onSelectLetter: (index: number) => void;
+  onHome: () => void;
 }
 
 export function LetterSelectionScreen({
@@ -18,11 +19,13 @@ export function LetterSelectionScreen({
   isHardMode,
   onToggleHardMode,
   onSelectLetter,
+  onHome,
 }: Props) {
   return (
     <main
       data-testid="letter-selection-screen"
       style={{
+        position: "relative",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -32,6 +35,28 @@ export function LetterSelectionScreen({
         background: "#f4f7fb",
       }}
     >
+      <button
+        type="button"
+        onClick={onHome}
+        data-testid="home-button"
+        aria-label="Home"
+        style={{
+          position: "absolute",
+          top: "0.75rem",
+          left: "0.75rem",
+          minWidth: 48,
+          minHeight: 48,
+          borderRadius: 12,
+          border: "2px solid #17324d",
+          background: "#fffdf6",
+          color: "#17324d",
+          fontSize: "1.25rem",
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        Home
+      </button>
       <div
         style={{
           width: "100%",

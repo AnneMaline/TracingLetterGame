@@ -1,6 +1,6 @@
 # Task 014 — Game opens on letter "a", guided alphabet run, Train icon button, lowercase default, fixed settings
 
-**Status:** Draft (2026-10-26)
+**Status:** Completed (2026-10-27 — PRD v0.10.0, DEVSPEC v0.13.0, UISPEC v0.11.0, TESTSPEC v0.12.0)
 **Milestone:** PRD M3 refinement — navigation and game flow (play-testing feedback, round 2)
 **Source feedback:** items 1, 2 and 4 of the 2026-10-26 feedback round
 **Interacts with:** task 015 (letter audio plays when each letter appears in the run), task 016
@@ -36,7 +36,7 @@ Human decision, combining 1, 2 and 4 into this task:
   lowercase `a`.
 - Because there is no Exit, the **game summary page is removed** from this task.
 - The next letter shows only after the current letter is completed. It appears automatically
-  **5–10 seconds** later, after the completed letter has been shown.
+  **one second after the per-letter celebration animation ends** (Q4 revised 2026-10-27).
 
 ## Current behavior (verified in code, 2026-10-26)
 
@@ -76,16 +76,20 @@ Human decision, combining 1, 2 and 4 into this task:
 - **C6 — Completed letter stays on screen.** This makes the code match the existing UISPEC
   transition. It is not a new conflict, but the change in behavior must be noted.
 
-## Open questions (recommendations in **bold**; answer before moving to `active/`)
+## Accepted decisions (2026-10-27; Q4 revised 2026-10-27)
+
+The recommendations in Q1–Q3, Q5, and Q7–Q10 are accepted. Q4 is revised per the human's
+2026-10-27 request: wait **1,000 ms after the per-letter celebration animation ends** before
+advancing. For Q6, create an original SVG illustration in `src/assets/round-complete.svg`.
 
 | #   | Question                                                                                 | Options                                                                                                                                                  | Recommendation                                                                                                                                                                                     |
 | --- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Q1  | (Revised) Helplines in the game run: always **on** or **off**? (Train keeps its toggle.) | On / Off                                                                                                                                                 | **Always on in the game.** They show where lowercase letters sit (x-height, baseline, descender). They never affect scoring.                                                                       |
 | Q2  | (Revised) Hard mode is hidden in the game but kept in Train. How?                        | (a) `isHardMode` app state and the Letter Selection toggle stay. The game run passes `false`. (b) Remove hard mode entirely.                             | **(a).** No code is removed. `hard_mode` in events is `true` only for Train letters traced in hard mode.                                                                                           |
 | Q3  | Does **Train** also auto-advance?                                                        | (a) Yes, same delay, wraps within the selected case, and Next stays available. (b) No. Train stays on the finished letter until Next or Menu is pressed. | **(a).** Feedback item 1 was general, and one rule is easier for children to learn.                                                                                                                |
-| Q4  | Exact auto-advance delay (the range given was 5–10 s)?                                   | Any value from 5,000 to 10,000 ms                                                                                                                        | **6,000 ms from `letter-complete`.** The celebration ends at about 2 s, so the finished letter then shows for about 4 s. Make it one constant, `AUTO_ADVANCE_DELAY_MS`, and tune it on the device. |
+| Q4  | Exact auto-advance delay (original range was 5–10 s)?                                    | Original recommendation: 6,000 ms from `letter-complete`; revised by human to 1,000 ms after the per-letter animation ends                               | **1,000 ms after the animation ends**, per the human's 2026-10-27 request. `AUTO_ADVANCE_DELAY_MS` is the post-animation pause.                                                                        |
 | Q5  | What does "after the complete letter has shown itself" mean?                             | (a) The finished, all-green letter stays on screen until the auto-advance. (b) A replay animation draws the whole letter.                                | **(a).** It needs no new animation and fixes C6.                                                                                                                                                   |
-| Q6  | Which picture goes on the celebration page?                                              | The human adds a file. It must be PNG, JPEG, WebP or SVG in its **true** format (third-party spec §4), and ideally under 200 KB.                         | **Add it as `src/assets/round-complete.<ext>` and import it.** Vite then bundles it into the engine ZIP with a relative URL that works on `file://`. **Blocking:** it does not exist yet.          |
+| Q6  | Which picture goes on the celebration page?                                              | The human adds a file, or the AI creates an original SVG. It must be SVG in its **true** format (third-party spec §4), and ideally under 200 KB.          | **Create an original illustration at `src/assets/round-complete.svg` and import it.** Vite bundles it into the engine ZIP with a relative URL that works on `file://`.                           |
 | Q7  | (Revised) What happens after the uppercase round?                                        | (a) Celebration, then loop back to lowercase a. (b) Celebration, then stay on the last letter.                                                           | **(a).** There are no buttons to choose with, so the game just keeps going.                                                                                                                        |
 | Q8  | (Removed) Summary page                                                                   | —                                                                                                                                                        | Dropped. Its only entry points were Exit and the 30 s timeout, which no longer exist.                                                                                                              |
 | Q9  | (Revised) What does the icon Train button do during the game?                            | (a) Opens Train (Letter Selection) and drops the run. (b) Pauses the run and returns to it afterwards.                                                   | **(a).** Simplest. Letter Selection's Home button restarts the game at lowercase `a`. There is no other way out of the game screen.                                                                |
@@ -180,7 +184,8 @@ This traces to [PRD](../../specs/PRD.md) v0.9.0, [DEVSPEC](../../specs/DEVSPEC.m
   - **T-042:** on launch the app shows lowercase `a` at segment 1. The only button on the screen is
     `train-button`: no `next-letter`, no menu/home button, no helplines toggle.
   - **T-043:** with fake timers, the run does not advance before `letter-complete`. After
-    completion the letter stays drawn, and `b` opens exactly at `AUTO_ADVANCE_DELAY_MS`.
+    completion the letter stays drawn through the celebration, and `b` opens exactly
+    `AUTO_ADVANCE_DELAY_MS` after the animation ends.
   - **T-044:** completing `z` shows the round-complete screen with the picture and "You did it!"
     and no buttons. With fake timers, uppercase `A` opens at `ROUND_COMPLETE_DISPLAY_MS` (≤ 5 s).
   - **T-045:** completing `Z` shows the celebration again, then lowercase `a` opens (Q7).
@@ -210,7 +215,7 @@ This traces to [PRD](../../specs/PRD.md) v0.9.0, [DEVSPEC](../../specs/DEVSPEC.m
 
 1. **Constants** ([constants.ts](../../../src/shared/constants.ts)): add `AUTO_ADVANCE_DELAY_MS`
    (Q4) and `ROUND_COMPLETE_DISPLAY_MS = 3000` (Q10, at most 5000).
-2. **Asset:** the human adds the picture (Q6). The AI imports it from `src/assets/`.
+2. **Asset:** create an original illustration at `src/assets/round-complete.svg` (Q6) and import it from `src/assets/`.
 3. **New module `src/modules/game-flow/`:**
    - `TrainButton.tsx` (icon-only, inline SVG, `aria-label`), and a button-less
      `RoundCompleteScreen.tsx` that closes itself after `ROUND_COMPLETE_DISPLAY_MS`.
@@ -235,7 +240,7 @@ This traces to [PRD](../../specs/PRD.md) v0.9.0, [DEVSPEC](../../specs/DEVSPEC.m
 7. **[LetterTracer.tsx](../../../src/modules/tracing/LetterTracer.tsx):**
    - Add an `onLetterComplete` prop.
    - After the celebration, keep the completed letter instead of calling `reset()` (Q5).
-   - Start the auto-advance timer from `letter-complete` and clear it on unmount.
+   - Start the auto-advance timer when the per-letter celebration ends and clear it on unmount.
 8. **Reporting:** pass `false` for `hard_mode` in Run mode and the real value in Train. No other
    change.
 9. **Tests:** update `App.navigation.test.tsx`, the `LetterSelectionScreen` tests and the tracing
@@ -248,6 +253,8 @@ This traces to [PRD](../../specs/PRD.md) v0.9.0, [DEVSPEC](../../specs/DEVSPEC.m
 
 ## Real-device checklist (human)
 
+**Passed — human verification reported 2026-10-27:** all checklist items were correct.
+
 1. The app opens directly on `a`. The only button is a small icon in the top corner, and it is
    understandable without text and hard to hit by accident.
 2. There is no Next or Menu button. The finished letter stays visible and `b` appears by
@@ -258,3 +265,13 @@ This traces to [PRD](../../specs/PRD.md) v0.9.0, [DEVSPEC](../../specs/DEVSPEC.m
    mode toggle is there. Home on that screen restarts the game at `a`.
 5. In Train tracing, the Helplines toggle, Next and Menu work as before. In the game there are no
    toggles, and helplines are always visible.
+
+## AI verification (2026-10-27)
+
+- `npm run check` passed: typecheck, lint, all 453 tests, and production dependency audit (0 vulnerabilities).
+- `npm run package:cms` passed and produced the core and English language ZIPs. No upload was performed.
+- Integrated-browser checks passed at 360×740 and 768×1024: the game opened on lowercase `a`, exposed only the Train button, had no horizontal overflow, and Train/Home returned to the run. A scripted real pointer trace completed lowercase `a` and auto-advanced to `b`.
+- 2026-10-27 follow-up: shortened the auto-advance pause to 1,000 ms after the per-letter celebration animation ends; targeted navigation tests verify the timing boundary.
+- The human confirmed the implementation was reviewed and approved, and reported all physical-device checklist items passed.
+- The spec-update pass updated PRD v0.10.0, DEVSPEC v0.13.0, UISPEC v0.11.0 and TESTSPEC v0.12.0, including downstream `Traces to:` references and dated change-log entries.
+- Per the human's explicit instruction on 2026-10-27, this task is archived before the implementation is merged. No Git operation was performed; the human will merge/commit separately.
